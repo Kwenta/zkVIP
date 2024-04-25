@@ -74,7 +74,7 @@ func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) erro
 	})
 
 	fee := sdk.Reduce(receipts, sdk.ConstUint248(0), func(accum sdk.Uint248, r sdk.Receipt) sdk.Uint248 {
-		return uint248.Add(accum, api.Int248.ABS(api.ToInt248(r.Fields[2].Value)))
+		return uint248.Add(accum, api.ToUint248(r.Fields[2].Value))
 	})
 
 	log.Infof("trader volume %s, fee: %s", volume.String(), fee.String())
