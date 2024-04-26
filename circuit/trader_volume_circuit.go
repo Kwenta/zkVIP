@@ -44,64 +44,70 @@ func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) erro
 
 	receipts := sdk.NewDataStream(api, in.Receipts)
 
-	// completeReceipts := sdk.WindowUnderlying(receipts, 2)
+	completeReceipts := sdk.WindowUnderlying(receipts, 2)
 
-	// sdk.AssertEach(completeReceipts, func(cur sdk.List[sdk.Receipt]) sdk.Uint248 {
-	// 	txAreEqual := sdk.ConstUint248(1)
-	// 	blockNum := cur[0].BlockNum
-	// 	for _, s := range cur {
-	// 		txAreEqual = uint248.IsEqual()
-	// 	}
+	sdk.AssertEach(completeReceipts, func(list sdk.List[sdk.Receipt]) sdk.Uint248 {
+		// Then first receipt contains accountId, fillPrize, sizeDelta
+		// Second receipt contains accountId, fee,
+		passed := sdk.ConstUint248(1)
+		first := list[0]
+		second := list[1]
+		passed = api.Uint248.And(passed,
+			api.Uint248.IsEqual(first.Fields[0].EventID, second.Fields[0].EventID),
+			api.Uint248.IsEqual(first.Fields[0].Contract, second.Fields[0].Contract),
+			api.Uint248.IsEqual(first.Fields[0].IsTopic, second.Fields[0].IsTopic),
+			api.Uint248.IsEqual(first.Fields[0].Index, second.Fields[0].Index),
+			api.Bytes32.IsEqual(first.Fields[0].Value, second.Fields[0].Value),
+			api.Uint248.IsEqual(first.BlockNum, second.BlockNum),
 
-	// })
+			// Account Id
+			api.Uint248.IsEqual(first.Fields[0].EventID, EventIdOrderSettled),
+			api.Uint248.IsEqual(first.Fields[0].Contract, ContractValue),
+			api.Uint248.IsEqual(first.Fields[0].IsTopic, sdk.ConstUint248(1)),
+			api.Uint248.IsEqual(first.Fields[0].Index, sdk.ConstUint248(2)),
 
-	// storages := sdk.NewDataStream(api, in.StorageSlots)
+			// fillPrize
+			api.Uint248.IsEqual(first.Fields[1].EventID, EventIdOrderSettled),
+			api.Uint248.IsEqual(first.Fields[1].Contract, ContractValue),
+			api.Uint248.IsZero(first.Fields[1].IsTopic),
+			api.Uint248.IsEqual(first.Fields[1].Index, sdk.ConstUint248(0)),
 
-	// valueCheck := sdk.ZipMap2(
-	// 	completeReceipts,
-	// 	storages,
-	// 	func(receipts sdk.List[sdk.Receipt], storageList sdk.List[sdk.StorageSlot]) sdk.Uint248 {
-	// 		return sdk.ConstUint248(0)
-	// 	},
-	// )
+			// sizeDelta
+			api.Uint248.IsEqual(first.Fields[2].EventID, EventIdOrderSettled),
+			api.Uint248.IsEqual(first.Fields[2].Contract, ContractValue),
+			api.Uint248.IsZero(first.Fields[2].IsTopic),
+			api.Uint248.IsEqual(first.Fields[2].Index, sdk.ConstUint248(3)),
 
-	// // Add assertions that every check has passed
-	// sdk.AssertEach(valueCheck, func(current sdk.Uint248) sdk.Uint248 {
-	// 	return uint248.IsEqual(current, sdk.ConstUint248(1))
-	// })
-
-	sdk.AssertEach(receipts, func(l sdk.Receipt) sdk.Uint248 {
-		assertionPassed := uint248.And(
-			uint248.IsEqual(l.Fields[0].EventID, EventIdOrderSettled),
-			uint248.IsEqual(l.Fields[0].Contract, ContractValue),
-			uint248.IsZero(l.Fields[0].IsTopic),
-			uint248.IsEqual(l.Fields[0].Index, sdk.ConstUint248(0)),
-			uint248.IsEqual(l.Fields[1].EventID, EventIdOrderSettled),
-			uint248.IsEqual(l.Fields[1].Contract, ContractValue),
-			uint248.IsZero(l.Fields[1].IsTopic),
-			uint248.IsEqual(l.Fields[1].Index, sdk.ConstUint248(3)),
-			uint248.IsEqual(l.Fields[2].EventID, EventIdOrderSettled),
-			uint248.IsEqual(l.Fields[2].Contract, ContractValue),
-			uint248.IsZero(l.Fields[2].IsTopic),
-			uint248.IsEqual(l.Fields[2].Index, sdk.ConstUint248(5)),
-			uint248.IsZero(uint248.IsLessThan(l.BlockNum, c.StartBlkNum)),  // l.BlockNum >= c.StartBlkNum
-			uint248.IsZero(uint248.IsGreaterThan(l.BlockNum, c.EndBlkNum)), // l.BlockNum <= c.EndBlkNum
+			// fee
+			api.Uint248.IsEqual(second.Fields[1].EventID, EventIdOrderSettled),
+			api.Uint248.IsEqual(second.Fields[1].Contract, ContractValue),
+			api.Uint248.IsZero(second.Fields[1].IsTopic),
+			api.Uint248.IsEqual(second.Fields[1].Index, sdk.ConstUint248(5)),
+			api.Uint248.IsZero(api.Uint248.IsLessThan(first.BlockNum, c.StartBlkNum)),  // BlockNum >= c.StartBlkNum
+			api.Uint248.IsZero(api.Uint248.IsGreaterThan(first.BlockNum, c.EndBlkNum)), // BlockNum <= c.EndBlkNum
 		)
-		return assertionPassed
+
+		return passed
 	})
 
 	api.AssertInputsAreUnique()
 
-	volume := sdk.Reduce(receipts, sdk.ConstUint248(0), func(accum sdk.Uint248, r sdk.Receipt) sdk.Uint248 {
-		fillPrice := api.ToUint521(r.Fields[0].Value)
-		absSizeDelta := api.ToUint521(api.Int248.ABS(api.ToInt248(r.Fields[1].Value)))
+	receiptVolumes := sdk.Map(completeReceipts, func(current sdk.List[sdk.Receipt]) sdk.Uint248 {
+		r := current[0]
+		fillPrice := api.ToUint521(r.Fields[1].Value)
+		absSizeDelta := api.ToUint521(api.Int248.ABS(api.ToInt248(r.Fields[2].Value)))
 		volume, _ := uint521.Div(uint521.Mul(fillPrice, absSizeDelta), sdk.ConstUint521(1000000000000000000))
 		return api.ToUint248(volume)
 	})
 
-	fee := sdk.Reduce(receipts, sdk.ConstUint248(0), func(accum sdk.Uint248, r sdk.Receipt) sdk.Uint248 {
-		return uint248.Add(accum, api.ToUint248(r.Fields[2].Value))
+	volume := sdk.Sum(receiptVolumes)
+
+	receiptFees := sdk.Map(completeReceipts, func(current sdk.List[sdk.Receipt]) sdk.Uint248 {
+		r := current[1]
+		return api.ToUint248(r.Fields[1].Value)
 	})
+
+	fee := sdk.Sum(receiptFees)
 
 	log.Infof("trader volume %s, fee: %s", volume.String(), fee.String())
 

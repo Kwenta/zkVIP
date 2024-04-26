@@ -26,6 +26,14 @@ func TestTraderVolumeCircuit(t *testing.T) {
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
 					EventID:    common.Hex2Hash(OrderSettledEventId),
+					IsTopic:    true,
+					FieldIndex: 2,
+					Value:      common.Hex2Hash("0x0000000000000000000000000000000080000000000000000000000000000312"),
+				},
+				{
+					Contract:   common.Hex2Addr(ContractAddress),
+					LogIndex:   10,
+					EventID:    common.Hex2Hash(OrderSettledEventId),
 					IsTopic:    false,
 					FieldIndex: 0,
 					Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000a984d9ce18f8b9bdd2"),
@@ -37,6 +45,31 @@ func TestTraderVolumeCircuit(t *testing.T) {
 					IsTopic:    false,
 					FieldIndex: 3,
 					Value:      common.Hex2Hash("0xfffffffffffffffffffffffffffffffffffffffffffffffff8ac2acc26980000"),
+				},
+			},
+		},
+	)
+
+	app.AddReceipt(
+		sdk.ReceiptData{
+			BlockNum: big.NewInt(13622452),
+			TxHash:   common.Hex2Hash("0x34b6d7be702aeb2eebbae9f48487ac29cd605dc174225cdb52dd35c11bbfdfb0"),
+			Fields: [3]sdk.LogFieldData{
+				{
+					Contract:   common.Hex2Addr(ContractAddress),
+					LogIndex:   10,
+					EventID:    common.Hex2Hash(OrderSettledEventId),
+					IsTopic:    true,
+					FieldIndex: 2,
+					Value:      common.Hex2Hash("0x0000000000000000000000000000000080000000000000000000000000000312"),
+				},
+				{
+					Contract:   common.Hex2Addr(ContractAddress),
+					LogIndex:   10,
+					EventID:    common.Hex2Hash(OrderSettledEventId),
+					IsTopic:    false,
+					FieldIndex: 5,
+					Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000001fb2eda8bc65aa81"),
 				},
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
@@ -50,38 +83,38 @@ func TestTraderVolumeCircuit(t *testing.T) {
 		},
 	)
 
-	app.AddReceipt(
-		sdk.ReceiptData{
-			BlockNum: big.NewInt(13620487),
-			TxHash:   common.Hex2Hash("0x0a2af931effd34b81ebcc57e3d3c9b1e1de1c9ce"),
-			Fields: [3]sdk.LogFieldData{
-				{
-					Contract:   common.Hex2Addr(ContractAddress),
-					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
-					IsTopic:    false,
-					FieldIndex: 0,
-					Value:      common.Hex2Hash("0x000000000000000000000000000000000000000000000d9a709711f5939cfcaf"),
-				},
-				{
-					Contract:   common.Hex2Addr(ContractAddress),
-					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
-					IsTopic:    false,
-					FieldIndex: 3,
-					Value:      common.Hex2Hash("0xfffffffffffffffffffffffffffffffffffffffffffffffffff4a19df0b80000"),
-				},
-				{
-					Contract:   common.Hex2Addr(ContractAddress),
-					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
-					IsTopic:    false,
-					FieldIndex: 5,
-					Value:      common.Hex2Hash("0x00000000000000000000000000000000000000000000000015ab93219eb01aea"),
-				},
-			},
-		},
-	)
+	// app.AddReceipt(
+	// 	sdk.ReceiptData{
+	// 		BlockNum: big.NewInt(13620487),
+	// 		TxHash:   common.Hex2Hash("0x0a2af931effd34b81ebcc57e3d3c9b1e1de1c9ce"),
+	// 		Fields: [3]sdk.LogFieldData{
+	// 			{
+	// 				Contract:   common.Hex2Addr(ContractAddress),
+	// 				LogIndex:   10,
+	// 				EventID:    common.Hex2Hash(OrderSettledEventId),
+	// 				IsTopic:    false,
+	// 				FieldIndex: 0,
+	// 				Value:      common.Hex2Hash("0x000000000000000000000000000000000000000000000d9a709711f5939cfcaf"),
+	// 			},
+	// 			{
+	// 				Contract:   common.Hex2Addr(ContractAddress),
+	// 				LogIndex:   10,
+	// 				EventID:    common.Hex2Hash(OrderSettledEventId),
+	// 				IsTopic:    false,
+	// 				FieldIndex: 3,
+	// 				Value:      common.Hex2Hash("0xfffffffffffffffffffffffffffffffffffffffffffffffffff4a19df0b80000"),
+	// 			},
+	// 			{
+	// 				Contract:   common.Hex2Addr(ContractAddress),
+	// 				LogIndex:   10,
+	// 				EventID:    common.Hex2Hash(OrderSettledEventId),
+	// 				IsTopic:    false,
+	// 				FieldIndex: 5,
+	// 				Value:      common.Hex2Hash("0x00000000000000000000000000000000000000000000000015ab93219eb01aea"),
+	// 			},
+	// 		},
+	// 	},
+	// )
 
 	appCircuit := &TraderVolumeCircuit{
 		StartBlkNum:   sdk.ConstUint248(13618400),

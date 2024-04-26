@@ -39,8 +39,5 @@ func startService(c sdk.AppCircuit) {
 		os.Exit(1)
 	}
 
-	if err = proverService.Serve(*port); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	proverService.Serve(*port)
 }
