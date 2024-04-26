@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "cockroachdb"
+  url      = env("DB_URL")
+}
+
+model receipt {
+  id                     String    @id
+  tx_hash                String? 
+  status                 BigInt?
+  data                   String?
+  create_time            DateTime? @db.Timestamptz(6)
+  update_time            DateTime? @db.Timestamptz(6)
+}
+
+model user_trade_volume_fee {
+  id                 String    @id
+  src_chain_id       BigInt?
+  dst_chain_id       BigInt?
+  trade_year_month   BigInt?
+  account            String?
+  volume             String?
+  fee                String?
+  receipt_ids        String?
+  storage_ids        String?
+  brevis_query_hash  String?
+  brevis_query_fee   String?
+  proof              String?
+  status             BigInt?
+  create_time        DateTime? @db.Timestamptz(6)
+  update_time        DateTime? @db.Timestamptz(6)
+}
+
+model storage {
+  id          String    @id
+  account     String?
+  key         String?
+  value       String?
+  blk_number  BigInt?
+  status      BigInt?
+  data        String?
+  create_time DateTime? @db.Timestamptz(6)
+  update_time DateTime? @db.Timestamptz(6)
+}

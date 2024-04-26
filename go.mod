@@ -7,7 +7,6 @@ toolchain go1.22.2
 require (
 	github.com/brevis-network/brevis-sdk v0.0.0-20240411060044-6354bb5b812e
 	github.com/celer-network/goutils v0.1.60
-	github.com/duneanalytics/duneapi-client-go v0.2.0-rc1-pagination
 	github.com/ethereum/go-ethereum v1.13.8
 	github.com/stretchr/testify v1.8.4
 )
@@ -41,11 +40,9 @@ require (
 	github.com/ingonyama-zk/iciclegnark v0.1.2-0.20240120100015-8653136f9db4 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jedib0t/go-pretty/v6 v6.5.4 // indirect
-	github.com/lib/pq v1.3.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/mattn/go-runewidth v0.0.15 // indirect
-	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

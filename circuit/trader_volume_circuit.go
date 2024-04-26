@@ -34,7 +34,7 @@ func (c *TraderVolumeCircuit) Allocate() (maxReceipts, maxStorage, maxTransactio
 	// Our app is only ever going to use one storage data at a time so
 	// we can simply limit the max number of data for storage to 1 and
 	// 0 for all others
-	return 511, 1, 0
+	return 340, 170, 0
 }
 
 func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
@@ -43,6 +43,32 @@ func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) erro
 	uint248.AssertIsEqual(uint248.IsLessThan(c.StartBlkNum, c.EndBlkNum), sdk.ConstUint248(1))
 
 	receipts := sdk.NewDataStream(api, in.Receipts)
+
+	// completeReceipts := sdk.WindowUnderlying(receipts, 2)
+
+	// sdk.AssertEach(completeReceipts, func(cur sdk.List[sdk.Receipt]) sdk.Uint248 {
+	// 	txAreEqual := sdk.ConstUint248(1)
+	// 	blockNum := cur[0].BlockNum
+	// 	for _, s := range cur {
+	// 		txAreEqual = uint248.IsEqual()
+	// 	}
+
+	// })
+
+	// storages := sdk.NewDataStream(api, in.StorageSlots)
+
+	// valueCheck := sdk.ZipMap2(
+	// 	completeReceipts,
+	// 	storages,
+	// 	func(receipts sdk.List[sdk.Receipt], storageList sdk.List[sdk.StorageSlot]) sdk.Uint248 {
+	// 		return sdk.ConstUint248(0)
+	// 	},
+	// )
+
+	// // Add assertions that every check has passed
+	// sdk.AssertEach(valueCheck, func(current sdk.Uint248) sdk.Uint248 {
+	// 	return uint248.IsEqual(current, sdk.ConstUint248(1))
+	// })
 
 	sdk.AssertEach(receipts, func(l sdk.Receipt) sdk.Uint248 {
 		assertionPassed := uint248.And(

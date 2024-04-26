@@ -1,0 +1,61 @@
+const STATUS_UNKNOWN = BigInt(0)
+const STATUS_INIT = BigInt(1)
+const STATUS_READY = BigInt(2)
+
+const PROOF_STATUS_UNKNOWN = BigInt(0)
+const PROOF_STATUS_INIT = BigInt(1)
+const PROOF_STATUS_INPUT_READY = BigInt(2)
+const PROOF_STATUS_PROVING_SENT = BigInt(3)
+const PROOF_STATUS_PROVING_FINISHED = BigInt(4)
+const PROOF_STATUS_PROOF_UPLOADED = BigInt(5)
+const PROOF_STATUS_BREVIS_QUERY_ERROR = BigInt(6)
+const PROOF_STATUS_BREVIS_REQUEST_SUBMITTED = BigInt(7)
+const PROOF_STATUS_ONCHAIN_VERIFIED = BigInt(8)
+
+const AMOUNT_VERIFICATION_INFO_STATUS_UNDEFINED = 0
+const AMOUNT_VERIFICATION_INFO_STATUS_INIT = 1
+const AMOUNT_VERIFICATION_INFO_STATUS_NEED_TO_SUBMIT_REQUEST = 2
+const AMOUNT_VERIFICATION_INFO_STATUS_WAITING_FOR_RESULT = 3
+const AMOUNT_VERIFICATION_INFO_STATUS_AMOUNT_VERIFIED = 4
+
+const PoolAddr = "0x9616bdc926880053545675561afba23ad0455e47" // 
+
+function hexStringToUint8Array(hexString: string){
+    if (hexString.length % 2 !== 0){
+      throw "Invalid hexString";
+    }/*from  w w w.  j  av a 2s  . c  o  m*/
+    var arrayBuffer = new Uint8Array(hexString.length / 2);
+  
+    for (var i = 0; i < hexString.length; i += 2) {
+      var byteValue = parseInt(hexString.substr(i, 2), 16);
+      if (isNaN(byteValue)){
+        throw "Invalid hexString";
+      }
+      arrayBuffer[i/2] = byteValue;
+    }
+  
+    return arrayBuffer;
+}
+
+export {
+    STATUS_UNKNOWN,
+    STATUS_INIT,
+    STATUS_READY,
+    PROOF_STATUS_UNKNOWN,
+    PROOF_STATUS_INIT,
+    PROOF_STATUS_INPUT_READY,
+    PROOF_STATUS_PROVING_SENT,
+    PROOF_STATUS_PROVING_FINISHED,
+    PROOF_STATUS_PROOF_UPLOADED,
+    PROOF_STATUS_BREVIS_QUERY_ERROR,
+    PROOF_STATUS_BREVIS_REQUEST_SUBMITTED,
+    PROOF_STATUS_ONCHAIN_VERIFIED,
+    
+    AMOUNT_VERIFICATION_INFO_STATUS_UNDEFINED,
+    AMOUNT_VERIFICATION_INFO_STATUS_INIT,
+    AMOUNT_VERIFICATION_INFO_STATUS_NEED_TO_SUBMIT_REQUEST,
+    AMOUNT_VERIFICATION_INFO_STATUS_WAITING_FOR_RESULT,
+    AMOUNT_VERIFICATION_INFO_STATUS_AMOUNT_VERIFIED,
+    PoolAddr,
+    hexStringToUint8Array
+}
