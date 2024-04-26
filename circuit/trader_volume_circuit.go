@@ -34,7 +34,7 @@ func (c *TraderVolumeCircuit) Allocate() (maxReceipts, maxStorage, maxTransactio
 	// Our app is only ever going to use one storage data at a time so
 	// we can simply limit the max number of data for storage to 1 and
 	// 0 for all others
-	return 340, 170, 0
+	return 1000, 0, 0
 }
 
 func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {

@@ -7,6 +7,7 @@ import {
   STATUS_INIT,
   STATUS_READY,
 } from "../constants/index.ts";
+import { equal } from "assert";
 
 const prisma = new PrismaClient();
 
@@ -163,12 +164,16 @@ async function getUserTradeVolumeFee(id: string): Promise<any> {
   });
 }
 
-async function findUserExistingTVF(
-  account: string
+async function findUserExistingUTVF(
+  account: string,
+  trade_year_month: bigint
 ): Promise<any> {
   return prisma.user_trade_volume_fee.findFirst({
     where: {
       account: account?.toLocaleLowerCase(),
+      trade_year_month: {
+        equals: trade_year_month,
+      }
     },
   });
 }
@@ -214,7 +219,7 @@ export {
   insertUserTradeVolumeFee,
   updateUserTradeVolumeFee,
   getUserTradeVolumeFee,
-  findUserExistingTVF,
+  findUserExistingUTVF,
   findUserTradeVolumeFees,
   updateBrevisRequestStatus,
   insertStorage,

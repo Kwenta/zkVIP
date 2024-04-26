@@ -27,4 +27,16 @@ type Receipt = {
   reason: string;
 };
 
-export { UserTradeVolumeFee, Receipt };
+type Storage = {
+  id: string;
+  account: string;
+  key: string;
+  value: string;
+  blk_number: bigint;
+  status: bigint;
+  data: string;
+  create_time: Date;
+  update_time: Date;
+}; 
+
+export { UserTradeVolumeFee, Receipt, Storage };

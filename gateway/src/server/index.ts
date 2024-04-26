@@ -1,5 +1,5 @@
 import express from "express";
-import { findUserExistingUSA, getUserSwapAmount, insertUserSwapAmount } from "../db/index.ts";
+import { findUserExistingUTVF, getUserTradeVolumeFee, insertUserTradeVolumeFee } from "../db/index.ts";
 import {
   PROOF_STATUS_ONCHAIN_VERIFIED,
   PROOF_STATUS_PROOF_UPLOADED,
@@ -8,17 +8,20 @@ import {
   AMOUNT_VERIFICATION_INFO_STATUS_NEED_TO_SUBMIT_REQUEST,
   AMOUNT_VERIFICATION_INFO_STATUS_UNDEFINED,
   AMOUNT_VERIFICATION_INFO_STATUS_WAITING_FOR_RESULT,
-  AMOUNT_VERIFICATION_INFO_STATUS_AMOUNT_VERIFIED,
+  AMOUNT_VERIFICATION_INFO_STATUS_FEE_REIMBURSED,
   PROOF_STATUS_BREVIS_REQUEST_SUBMITTED,
 } from "../constants/index.ts";
 import {
   getReceiptInfos,
+  getStorageInfos,
   prepareUserSwapAmounts,
 } from "../interval_jobs/index.ts";
 import {
-  monitorSwapAmountVerified,
+  monitorFeeReimbursed,
   monitorBrevisRequest,
 } from "../ether_interactions/index.ts";
+import { UserTradeVolumeFee } from "./type.ts";
+import { BigNumber } from "ethers";
 
 const app = express();
 
@@ -32,48 +35,58 @@ app.use((req, res, next) => {
 });
 getReceiptInfos().then();
 setInterval(getReceiptInfos, 10000);
+getStorageInfos().then();
+setInterval(getStorageInfos, 10000);
 prepareUserSwapAmounts().then();
-setInterval(prepareUserSwapAmounts, 300000);
+setInterval(prepareUserSwapAmounts, 10000);
 
-monitorSwapAmountVerified();
+monitorFeeReimbursed();
 monitorBrevisRequest();
 
-app.post("/algebra/newSwapAmtVerification", async (req, res) => {
+app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
   try {
-    const { account } = req.body;
+    const { account, trade_year_month } = req.body;
 
-    var usa = await findUserExistingUSA(account);
-    if (usa != undefined && usa != null && usa) {
-      res.json({ query_id: usa.id });
+    const tym = Number(trade_year_month)
+
+    if (isNaN(tym) || tym < 202402 || tym > 205001) {
+      res.status(500);
+      res.send({ error: true, message: "invalid claim trade time period" });
+    }
+    
+    var utvf = await findUserExistingUTVF(account, BigInt(tym));
+    if (utvf != undefined && utvf != null && utvf) {
+      res.json({ query_id: utvf.id });
       return;
     }
 
-    const src_chain_id = BigInt(process.env.SRC_CHAIN_ID ?? 0);
-    const dst_chain_id = BigInt(process.env.DST_CHAIN_ID ?? 0);
+    const src_chain_id = BigInt(process.env.SRC_CHAIN_ID ?? 8453);
+    const dst_chain_id = BigInt(process.env.DST_CHAIN_ID ?? 8453);
 
-    var usa = await insertUserSwapAmount(
+    var utvf = await insertUserTradeVolumeFee(
       src_chain_id,
       dst_chain_id,
-      account
+      account,
+      BigInt(tym),
     );
-    res.json({ query_id: usa.id });
+    res.json({ query_id: utvf.id });
   } catch (error) {
     res.status(500);
     res.send({ error: true, message: error });
   }
 });
 
-app.get("/algebra/getVerificationInfo", async (req, res) => {
+app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
   try {
     const { query_id } = req.query;
     if (query_id?.toString() == null || query_id?.toString() == undefined) {
       res.status(500);
-      res.send({ error: true, message: "info not found" });
+      res.send({ error: true, message: "query id not found" });
       return;
     }
-    const usa = await getUserSwapAmount(query_id?.toString());
+    const utvf = await getUserTradeVolumeFee(query_id?.toString()) as UserTradeVolumeFee
 
-    if (usa == null || usa == undefined) {
+    if (utvf == null || utvf == undefined) {
       res.status(500);
       res.send({ error: true, message: "info not found" });
       return;
@@ -83,19 +96,19 @@ app.get("/algebra/getVerificationInfo", async (req, res) => {
     let status = AMOUNT_VERIFICATION_INFO_STATUS_UNDEFINED;
     let brevisRequest =
       "" + process.env.BREVIS_REQUEST;
-    if (Number(usa.status) == Number(PROOF_STATUS_ONCHAIN_VERIFIED)) {
-      status = AMOUNT_VERIFICATION_INFO_STATUS_AMOUNT_VERIFIED;
-      message = "Swap amount verified";
+    if (Number(utvf.status) == Number(PROOF_STATUS_ONCHAIN_VERIFIED)) {
+      status = AMOUNT_VERIFICATION_INFO_STATUS_FEE_REIMBURSED;
+      message = "Fee reimbursed";
     } else if (
-      Number(usa.status) == Number(PROOF_STATUS_PROOF_UPLOADED)
+      Number(utvf.status) == Number(PROOF_STATUS_PROOF_UPLOADED)
     ) {
       status = AMOUNT_VERIFICATION_INFO_STATUS_NEED_TO_SUBMIT_REQUEST;
       message =
         "You need to submit SendRequest transaction with query_hash and query_fee on brevis request contract." +
         "And use address(" +
-        process.env.USER_SWAP_AMOUNT +
+        process.env.FEE_REIMBURSEMENT +
         ") as _callback";
-    } else if ( Number(usa.status) == Number(PROOF_STATUS_BREVIS_REQUEST_SUBMITTED)) {
+    } else if ( Number(utvf.status) == Number(PROOF_STATUS_BREVIS_REQUEST_SUBMITTED)) {
       status = AMOUNT_VERIFICATION_INFO_STATUS_WAITING_FOR_RESULT;
       message = "Brevis is preparing swap amount proof";
     } else {
@@ -103,12 +116,43 @@ app.get("/algebra/getVerificationInfo", async (req, res) => {
       message = "Wait until query_hash and query_fee is ready";
     }
 
+    var volume = utvf.volume
+    if (volume === "") {
+      volume = "0"
+    }
+    const volumeBN = BigNumber.from(volume).div(BigNumber.from(1000000000000000000))
+
+    var fee = utvf.fee
+    if (fee === "") {
+      fee = "0"
+    }
+    var feeBN = BigNumber.from(fee).div(BigNumber.from(1000000000000000000))
+
+    var tier = -1
+    if (volumeBN.toNumber() <= 100000) {
+      tier = -1
+    } else if (volumeBN.toNumber() <= 100000) {
+      tier = 0
+      feeBN = feeBN.mul(BigNumber.from(2)).div(BigNumber.from(10))
+    } else if (volumeBN.toNumber() <= 1000000) {
+      tier = 1
+      feeBN = feeBN.mul(BigNumber.from(5)).div(BigNumber.from(10))
+    } else if (volumeBN.toNumber() <= 10000000) {
+      tier = 2    
+      feeBN = feeBN.mul(BigNumber.from(75)).div(BigNumber.from(100))
+    } else if (volumeBN.toNumber() <= 100000000) {
+      tier = 3
+      feeBN = feeBN.mul(BigNumber.from(9)).div(BigNumber.from(10))
+    } 
+
     res.json({
       status: status,
-      query_hash: usa.brevis_query_hash,
-      query_fee: usa.brevis_query_fee,
+      query_hash: utvf.brevis_query_hash,
+      query_fee: utvf.brevis_query_fee,
       brevis_request_contract_address: brevisRequest,
       message: message,
+      tier: tier,
+      fee_to_reimbursed: feeBN.toString(),
     });
   } catch (error) {
     res.status(500);

@@ -5,13 +5,14 @@ import {
 } from "../constants/index.ts";
 import {
   findNotReadyReceipts, 
-  findUserSwapAmounts,
+  findNotReadyStorages, 
+  findUserTradeVolumeFees,
   insertReceipt,
-  updateUserSwapAmount,
+  updateUserTradeVolumeFee,
 } from "../db/index.ts";
 import { postSwapsQuery } from "../graphql/index.ts";
 import { sendUSAProvingRequest, uploadUSAProof } from "../prover/index.ts";
-import { querySingleReceipt } from "../rpc/index.ts";
+import { querySingleReceipt, querySingleStorage } from "../rpc/index.ts";
 
 export async function getReceiptInfos() {
   try {
@@ -19,6 +20,20 @@ export async function getReceiptInfos() {
     let promises = Array<Promise<void>>();
     for (let i = 0; i < receipts.length; i++) {
       promises.push(querySingleReceipt(receipts[i]));
+    }
+
+    await Promise.all(promises);
+  } catch (error) {
+    console.error("failed to get receipt infos");
+  }
+}
+
+export async function getStorageInfos() {
+  try {
+    const storages = await findNotReadyStorages();
+    let promises = Array<Promise<void>>();
+    for (let i = 0; i < storages.length; i++) {
+      promises.push(querySingleStorage(storages[i]));
     }
 
     await Promise.all(promises);
@@ -41,7 +56,7 @@ export async function prepareUserSwapAmounts() {
 
 async function prepareUserSwapAmountInput() {
   try {
-    const usas = await findUserSwapAmounts(PROOF_STATUS_INIT);
+    const usas = await findUserTradeVolumeFees(PROOF_STATUS_INIT);
     let promises = Array<Promise<void>>();
     for (let i = 0; i < usas.length; i++) {
       promises.push(queryUserSwapAmountInput(usas[i]));
@@ -80,12 +95,12 @@ async function queryUserSwapAmountInput(userSwapAmount: any) {
     (accumulator, currentValue) => accumulator + "," + currentValue
   );
   userSwapAmount.status = PROOF_STATUS_INPUT_READY;
-  updateUserSwapAmount(userSwapAmount);
+  updateUserTradeVolumeFee(userSwapAmount);
 }
 
 async function prepareUserSwapAmountProof() {
   try {
-    const usas = await findUserSwapAmounts(PROOF_STATUS_INPUT_READY);
+    const usas = await findUserTradeVolumeFees(PROOF_STATUS_INPUT_READY);
     let promises = Array<Promise<void>>();
     for (let i = 0; i < usas.length; i++) {
       promises.push(sendUSAProvingRequest(usas[i]));
@@ -98,7 +113,7 @@ async function prepareUserSwapAmountProof() {
 
 async function uploadUserSwapAmountProof() {
   try {
-    const usas = await findUserSwapAmounts(PROOF_STATUS_PROVING_FINISHED);
+    const usas = await findUserTradeVolumeFees(PROOF_STATUS_PROVING_FINISHED);
     let promises = Array<Promise<void>>();
     for (let i = 0; i < usas.length; i++) {
       promises.push(uploadUSAProof(usas[i]));

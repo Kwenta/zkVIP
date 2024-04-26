@@ -1,6 +1,6 @@
 import { BigNumber, ethers } from "ethers";
 import { STATUS_READY } from "../constants/index.ts";
-import { updateReceipt } from "../db/index.ts";
+import { updateReceipt, updateStorage } from "../db/index.ts";
 import { sourceChainProvider } from "../ether_interactions/index.ts";
 
 async function querySingleReceipt(receipt: any) {
@@ -19,8 +19,6 @@ async function querySingleReceipt(receipt: any) {
         transactionReceipt.logs.forEach((log, i) => {
           console.log("log.idx", log.logIndex, i)
           if (log.topics.length < 3) {
-            // https://holesky.etherscan.io/tx/0x01e85fb445de6ad871565aeec390dab1d0c94bfa353e4142cf5584412812da51#eventlog
-            // topics length not met, return 
             return 
           }
 
@@ -80,7 +78,27 @@ async function querySingleReceipt(receipt: any) {
       }, null);
 }
 
+async function querySingleStorage(storage: any) {
+  return sourceChainProvider.getStorageAt(storage.account, storage.key, Number(storage.blk_number)).then((value) => {
+    if (value == null || value == void 0) {
+      console.debug("storage not found", storage.id, storage.tx_hash);
+      return;
+    }
+    updateStorage(
+      storage.id,
+      STATUS_READY,
+      value,
+      JSON.stringify({
+        account: storage.account,
+        key: storage.key,
+        value,
+        blk_number: storage.blk_number
+      })
+    );
+  }, null);
+}
 
 export {
     querySingleReceipt,
+    querySingleStorage,
 }

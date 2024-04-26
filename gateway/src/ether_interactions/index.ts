@@ -3,8 +3,9 @@ import * as typeChain from "../../../contract/typechain/index.ts";
 
 import { BrevisRequest__factory } from "../brevis_request/BrevisRequest__factory.ts";
 import {
-  findUserExistingUSA,
+  findUserExistingUTVF,
   updateBrevisRequestStatus,
+  updateUserTradeVolumeFee,
 } from "../db/index.ts";
 import {
   PROOF_STATUS_ONCHAIN_VERIFIED,
@@ -13,10 +14,10 @@ import {
 } from "../constants/index.ts";
 
 import * as dotenv from "dotenv";
-import { UserSwapAmount } from "../server/type.ts";
+import { UserTradeVolumeFee } from "../server/type.ts";
 dotenv.config();
 
-const { UserSwapAmountApp__factory } = typeChain;
+const { FeeReimbursementApp__factory } = typeChain;
 // DstChain Provider uses Arbitrum Sepolia RPC to submit transaction on AS
 const dstChainProvider = new ethers.providers.JsonRpcProvider(
   process.env.DEST_RPC ?? ""
@@ -34,46 +35,43 @@ const brevisRequest = BrevisRequest__factory.connect(
   process.env.BREVIS_REQUEST ?? "",
   wallet
 );
-const userSwapAmountApp = UserSwapAmountApp__factory.connect(
-  process.env.USER_SWAP_AMOUNT ?? "",
+const userSwapAmountApp = FeeReimbursementApp__factory.connect(
+  process.env.FEE_REIMBURSEMENT ?? "",
   wallet
 );
 
-async function monitorSwapAmountVerified() {
-  userSwapAmountApp.on("UserSwapVerified", (user, amount0, amount1) => {
+async function monitorFeeReimbursed() {
+  userSwapAmountApp.on("FeeReimbursed", (user, trade_year_month, fee) => {
     const userAddress = user as string;
-    const amount0BN = amount0 as BigNumber;
-    const amount1BN = amount1 as BigNumber;
+    const tradeYearMonthBN = trade_year_month as BigNumber;
 
     if (
       userAddress === undefined ||
       userAddress === null ||
-      amount0BN === undefined ||
-      amount0BN === null ||
-      amount1BN === undefined ||
-      amount1BN === null
+      tradeYearMonthBN === undefined ||
+      tradeYearMonthBN === null 
     ) {
       console.log(
-        "claimed triggered with unexpected value:: ",
+        "reimbursement triggered with unexpected value:: ",
         user,
-        amount0,
-        amount1,
+        trade_year_month,
+        fee
       );
       return;
     }
 
-    findUserExistingUSA(userAddress)
-      .then(usa => {
-        if (usa) {
-          usa.token0_amount = amount0BN.toString()
-          usa.token1_amount = amount1BN.toString()
+    findUserExistingUTVF(userAddress, BigInt(tradeYearMonthBN.toNumber()))
+      .then(utvf => {
+        if (utvf) {
+          utvf.status = PROOF_STATUS_ONCHAIN_VERIFIED
+          return updateUserTradeVolumeFee(utvf)
         }
       }).catch(error => {
         console.error(
           "failed to update user swap amount",
           user,
-          amount0,
-          amount1,
+          user,
+          trade_year_month,
           error
         );
       })
@@ -100,6 +98,6 @@ export {
   wallet,
   brevisRequest,
   userSwapAmountApp,
-  monitorSwapAmountVerified,
+  monitorFeeReimbursed,
   monitorBrevisRequest,
 };

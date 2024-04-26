@@ -28,3 +28,7 @@ gateway/node_modules/.prisma/client/
 
 gateway/node_modules/
 gateway/.env
+
+contract/node_modules/
+contract/cache/
+contract/artifacts/
