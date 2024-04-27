@@ -15,13 +15,13 @@ func TestTraderVolumeCircuit(t *testing.T) {
 	app, err := sdk.NewBrevisApp()
 	assert.NoError(t, err)
 
-	userAddress := common.Hex2Bytes("0x58b529F9084D7eAA598EB3477Fe36064C5B7bbC1")
+	userAddress := common.Hex2Bytes("0x0000000000000000000000000000000080000000000000000000000000000312")
 
 	app.AddReceipt(
 		sdk.ReceiptData{
 			BlockNum: big.NewInt(13622452),
 			TxHash:   common.Hex2Hash("0x34b6d7be702aeb2eebbae9f48487ac29cd605dc174225cdb52dd35c11bbfdfb0"),
-			Fields: [3]sdk.LogFieldData{
+			Fields: [sdk.NumMaxLogFields]sdk.LogFieldData{
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
@@ -46,31 +46,6 @@ func TestTraderVolumeCircuit(t *testing.T) {
 					FieldIndex: 3,
 					Value:      common.Hex2Hash("0xfffffffffffffffffffffffffffffffffffffffffffffffff8ac2acc26980000"),
 				},
-			},
-		},
-	)
-
-	app.AddReceipt(
-		sdk.ReceiptData{
-			BlockNum: big.NewInt(13622452),
-			TxHash:   common.Hex2Hash("0x34b6d7be702aeb2eebbae9f48487ac29cd605dc174225cdb52dd35c11bbfdfb0"),
-			Fields: [3]sdk.LogFieldData{
-				{
-					Contract:   common.Hex2Addr(ContractAddress),
-					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
-					IsTopic:    true,
-					FieldIndex: 2,
-					Value:      common.Hex2Hash("0x0000000000000000000000000000000080000000000000000000000000000312"),
-				},
-				{
-					Contract:   common.Hex2Addr(ContractAddress),
-					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
-					IsTopic:    false,
-					FieldIndex: 5,
-					Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000001fb2eda8bc65aa81"),
-				},
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
@@ -82,49 +57,16 @@ func TestTraderVolumeCircuit(t *testing.T) {
 			},
 		},
 	)
-
-	// app.AddReceipt(
-	// 	sdk.ReceiptData{
-	// 		BlockNum: big.NewInt(13620487),
-	// 		TxHash:   common.Hex2Hash("0x0a2af931effd34b81ebcc57e3d3c9b1e1de1c9ce"),
-	// 		Fields: [3]sdk.LogFieldData{
-	// 			{
-	// 				Contract:   common.Hex2Addr(ContractAddress),
-	// 				LogIndex:   10,
-	// 				EventID:    common.Hex2Hash(OrderSettledEventId),
-	// 				IsTopic:    false,
-	// 				FieldIndex: 0,
-	// 				Value:      common.Hex2Hash("0x000000000000000000000000000000000000000000000d9a709711f5939cfcaf"),
-	// 			},
-	// 			{
-	// 				Contract:   common.Hex2Addr(ContractAddress),
-	// 				LogIndex:   10,
-	// 				EventID:    common.Hex2Hash(OrderSettledEventId),
-	// 				IsTopic:    false,
-	// 				FieldIndex: 3,
-	// 				Value:      common.Hex2Hash("0xfffffffffffffffffffffffffffffffffffffffffffffffffff4a19df0b80000"),
-	// 			},
-	// 			{
-	// 				Contract:   common.Hex2Addr(ContractAddress),
-	// 				LogIndex:   10,
-	// 				EventID:    common.Hex2Hash(OrderSettledEventId),
-	// 				IsTopic:    false,
-	// 				FieldIndex: 5,
-	// 				Value:      common.Hex2Hash("0x00000000000000000000000000000000000000000000000015ab93219eb01aea"),
-	// 			},
-	// 		},
-	// 	},
-	// )
 
 	appCircuit := &TraderVolumeCircuit{
-		StartBlkNum:   sdk.ConstUint248(13618400),
-		EndBlkNum:     sdk.ConstUint248(13622452),
-		TraderAddress: sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
+		StartBlkNum: sdk.ConstUint248(13618400),
+		EndBlkNum:   sdk.ConstUint248(13622452),
+		AccountId:   sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
 	}
 	appCircuitAssignment := &TraderVolumeCircuit{
-		StartBlkNum:   sdk.ConstUint248(13618400),
-		EndBlkNum:     sdk.ConstUint248(13622452),
-		TraderAddress: sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
+		StartBlkNum: sdk.ConstUint248(13618400),
+		EndBlkNum:   sdk.ConstUint248(13622452),
+		AccountId:   sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
 	}
 
 	circuitInput, err := app.BuildCircuitInput(appCircuit)
@@ -134,5 +76,5 @@ func TestTraderVolumeCircuit(t *testing.T) {
 
 	test.IsSolved(t, appCircuit, appCircuitAssignment, circuitInput)
 
-	assert.Equal(t, fmt.Sprintf("0x%x", out), "0x0000000000cfcce00000000000cfd320000000000000000000000000000000000000000000000067bee8e019d68bd3")
+	assert.Equal(t, fmt.Sprintf("0x%x", out), "0x0000000000cfcce00000000000cfdcb4800000000000000000000000000003120000000000000000000000000000000000000000000059818987718978997900000000000000000000000000000000000000000000001fb2eda8bc65aa81")
 }

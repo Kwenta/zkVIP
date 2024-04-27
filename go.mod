@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.2
 
 require (
-	github.com/brevis-network/brevis-sdk v0.0.0-20240417063228-46698ec1787f
+	github.com/brevis-network/brevis-sdk v0.0.0-20240426104141-784c4c452acf
 	github.com/celer-network/goutils v0.1.60
 	github.com/ethereum/go-ethereum v1.13.8
 	github.com/stretchr/testify v1.8.4
