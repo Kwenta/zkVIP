@@ -14,7 +14,7 @@ import {
 import {
   getReceiptInfos,
   getStorageInfos,
-  prepareUserSwapAmounts,
+  prepareUserTradeVolumeFees,
 } from "../interval_jobs/index.ts";
 import {
   monitorFeeReimbursed,
@@ -37,8 +37,8 @@ getReceiptInfos().then();
 setInterval(getReceiptInfos, 10000);
 getStorageInfos().then();
 setInterval(getStorageInfos, 10000);
-prepareUserSwapAmounts().then();
-setInterval(prepareUserSwapAmounts, 10000);
+prepareUserTradeVolumeFees().then();
+setInterval(prepareUserTradeVolumeFees, 10000);
 
 monitorFeeReimbursed();
 monitorBrevisRequest();

@@ -34,7 +34,7 @@ func (c *TraderVolumeCircuit) Allocate() (maxReceipts, maxStorage, maxTransactio
 	// Our app is only ever going to use one storage data at a time so
 	// we can simply limit the max number of data for storage to 1 and
 	// 0 for all others
-	return 1000, 0, 0
+	return 1500, 0, 0
 }
 
 func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
@@ -45,23 +45,6 @@ func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) erro
 	receipts := sdk.NewDataStream(api, in.Receipts)
 
 	api.AssertInputsAreUnique()
-
-	// receiptVolumes := sdk.Map(completeReceipts, func(current sdk.List[sdk.Receipt]) sdk.Uint248 {
-	// 	r := current[0]
-	// 	fillPrice := api.ToUint521(r.Fields[1].Value)
-	// 	absSizeDelta := api.ToUint521(api.Int248.ABS(api.ToInt248(r.Fields[2].Value)))
-	// 	volume, _ := uint521.Div(uint521.Mul(fillPrice, absSizeDelta), sdk.ConstUint521(1000000000000000000))
-	// 	return api.ToUint248(volume)
-	// })
-
-	// volume := sdk.Sum(receiptVolumes)
-
-	// receiptFees := sdk.Map(completeReceipts, func(current sdk.List[sdk.Receipt]) sdk.Uint248 {
-	// 	r := current[1]
-	// 	return api.ToUint248(r.Fields[1].Value)
-	// })
-
-	// fee := sdk.Sum(receiptFees)
 
 	sdk.AssertEach(receipts, func(r sdk.Receipt) sdk.Uint248 {
 		assertionPassed := uint248.And(

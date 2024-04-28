@@ -27,16 +27,16 @@ async function querySingleReceipt(receipt: any) {
           
           if (
             logAddress ===
-              "0x9616BDC926880053545675561afbA23aD0455e47".toLowerCase() &&
+              "0x0A2AF931eFFd34b81ebcc57E3d3c9B1E1dE1C9Ce".toLowerCase() &&
             topic0.toLowerCase() ===
-              "0xc42079f94a6350d7e6235f29174924f928cc2ac818eb64fed8004e115fbcca67"
+              "0x460080a757ec90719fe90ab2384c0196cdeed071a9fd7ce1ada43481d96b7db5"
           ) {
             logsFound = true;
             data = JSON.stringify({
               block_num: transactionReceipt.blockNumber,
               tx_hash: transactionReceipt.transactionHash,
               fields: [
-                // User Account
+                // accountId
                 {
                   contract: logAddress,
                   log_index: i,
@@ -45,7 +45,7 @@ async function querySingleReceipt(receipt: any) {
                   field_index: 2,
                   value: log.topics[2].toLowerCase(),
                 },
-                // Amount 0
+                // fillPrice
                 {
                   contract: logAddress,
                   log_index: i,
@@ -54,15 +54,24 @@ async function querySingleReceipt(receipt: any) {
                   field_index: 0,
                   value: "0x" + log.data.replace("0x", "").slice(0, 64),
                 },
-                // Amount 1
+                // sizeDelta
                 {
                   contract: logAddress,
                   log_index: i,
                   event_id: topic0,
                   is_topic: false,
-                  field_index: 1,
-                  value: "0x" + log.data.replace("0x", "").slice(64, 128),
-                },                
+                  field_index: 3,
+                  value: "0x" + log.data.replace("0x", "").slice(64 * 3, 64 * 4),
+                },  
+                // totalFees
+                {
+                  contract: logAddress,
+                  log_index: i,
+                  event_id: topic0,
+                  is_topic: false,
+                  field_index: 5,
+                  value: "0x" + log.data.replace("0x", "").slice(64 * 5, 64 * 6),
+                },   
               ],
             });
           }

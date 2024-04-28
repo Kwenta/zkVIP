@@ -11,7 +11,7 @@ import {
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
 import { postSwapsQuery } from "../graphql/index.ts";
-import { sendUSAProvingRequest, uploadUSAProof } from "../prover/index.ts";
+import { sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { querySingleReceipt, querySingleStorage } from "../rpc/index.ts";
 
 export async function getReceiptInfos() {
@@ -42,7 +42,7 @@ export async function getStorageInfos() {
   }
 }
 
-export async function prepareUserSwapAmounts() {
+export async function prepareUserTradeVolumeFees() {
   try {
     let promises = Array<Promise<void>>();
     promises.push(prepareUserSwapAmountInput());
@@ -50,20 +50,20 @@ export async function prepareUserSwapAmounts() {
     promises.push(uploadUserSwapAmountProof());
     await Promise.all(promises);
   } catch (error) {
-    console.error("failed to prepare usas", error);
+    console.error("failed to prepare utvfs", error);
   }
 }
 
 async function prepareUserSwapAmountInput() {
   try {
-    const usas = await findUserTradeVolumeFees(PROOF_STATUS_INIT);
+    const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_INIT);
     let promises = Array<Promise<void>>();
-    for (let i = 0; i < usas.length; i++) {
-      promises.push(queryUserSwapAmountInput(usas[i]));
+    for (let i = 0; i < utvfs.length; i++) {
+      promises.push(queryUserSwapAmountInput(utvfs[i]));
     }
     await Promise.all(promises);
   } catch (error) {
-    console.error("failed to prepare usa input", error);
+    console.error("failed to prepare utvf input", error);
   }
 }
 
@@ -100,10 +100,10 @@ async function queryUserSwapAmountInput(userSwapAmount: any) {
 
 async function prepareUserSwapAmountProof() {
   try {
-    const usas = await findUserTradeVolumeFees(PROOF_STATUS_INPUT_READY);
+    const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_INPUT_READY);
     let promises = Array<Promise<void>>();
-    for (let i = 0; i < usas.length; i++) {
-      promises.push(sendUSAProvingRequest(usas[i]));
+    for (let i = 0; i < utvfs.length; i++) {
+      promises.push(sendUserTradeVolumeFeeProvingRequest(utvfs[i]));
     }
     await Promise.all(promises);
   } catch (error) {
@@ -113,10 +113,10 @@ async function prepareUserSwapAmountProof() {
 
 async function uploadUserSwapAmountProof() {
   try {
-    const usas = await findUserTradeVolumeFees(PROOF_STATUS_PROVING_FINISHED);
+    const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_PROVING_FINISHED);
     let promises = Array<Promise<void>>();
-    for (let i = 0; i < usas.length; i++) {
-      promises.push(uploadUSAProof(usas[i]));
+    for (let i = 0; i < utvfs.length; i++) {
+      promises.push(uploadUserTradeVolumeFeeProof(utvfs[i]));
     }
     await Promise.all(promises);
   } catch (error) {

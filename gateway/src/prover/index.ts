@@ -23,12 +23,12 @@ const {
   asUint521,
 } = sdk;
 
-const usaProver = new Prover("localhost:33247");
+const prover = new Prover("localhost:33247");
 const brevis = new Brevis("appsdk.brevis.network:11080");
 
-const buildUSAProofReq = async (usa: UserTradeVolumeFee) => {
+const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   const proofReq = new ProofRequest();
-  const ids = usa.receipt_ids.split(",");
+  const ids = utvf.receipt_ids.split(",");
   let promises = Array<Promise<Receipt | undefined>>();
 
   for (let i = 0; i < ids.length; i++) {
@@ -67,10 +67,24 @@ const buildUSAProofReq = async (usa: UserTradeVolumeFee) => {
       new ReceiptData({
         block_num: Number(data.block_num),
         tx_hash: receipt.tx_hash,
+        // 14 fields needed. 
         fields: [
           new sdk.Field(data.fields[0]),
           new sdk.Field(data.fields[1]),
           new sdk.Field(data.fields[2]),
+          new sdk.Field(data.fields[3]), 
+
+          // Placeholders
+          new sdk.Field(data.fields[3]), 
+          new sdk.Field(data.fields[3]), 
+          new sdk.Field(data.fields[3]), 
+          new sdk.Field(data.fields[3]), 
+          new sdk.Field(data.fields[3]), 
+          new sdk.Field(data.fields[3]), 
+          new sdk.Field(data.fields[3]), 
+          new sdk.Field(data.fields[3]), 
+          new sdk.Field(data.fields[3]), 
+          new sdk.Field(data.fields[3]), 
         ],
       }),
       index++
@@ -78,7 +92,7 @@ const buildUSAProofReq = async (usa: UserTradeVolumeFee) => {
   }
 
   proofReq.setCustomInput({
-    UserAddress: asUint248(usa.account || ""),
+    UserAddress: asUint248(utvf.account || ""),
   });
 
   console.log("proofReq", proofReq)
@@ -86,9 +100,9 @@ const buildUSAProofReq = async (usa: UserTradeVolumeFee) => {
   return proofReq;
 };
 
-async function sendUSAProvingRequest(reward: UserTradeVolumeFee) {
-  const proofReq = await buildUSAProofReq(reward);
-  const proofRes = await usaProver.prove(proofReq);
+async function sendUserTradeVolumeFeeProvingRequest(reward: UserTradeVolumeFee) {
+  const proofReq = await buildUserTradeVolumeFeeProofReq(reward);
+  const proofRes = await prover.prove(proofReq);
   // // error handling
   if (proofRes.has_err) {
     const err = proofRes.err;
@@ -116,10 +130,10 @@ async function sendUSAProvingRequest(reward: UserTradeVolumeFee) {
   updateUserTradeVolumeFee(reward);
 }
 
-async function uploadUSAProof(usa: UserTradeVolumeFee) {
+async function uploadUserTradeVolumeFeeProof(utvf: UserTradeVolumeFee) {
   try {
-    const proofReq = await buildUSAProofReq(usa);
-    const proof = ethers.utils.arrayify(usa.proof || "");
+    const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
+    const proof = ethers.utils.arrayify(utvf.proof || "");
     let proofRes = sdk.ProveResponse.deserializeBinary(proof);
 
     console.log("proofRes", proofRes)
@@ -127,21 +141,21 @@ async function uploadUSAProof(usa: UserTradeVolumeFee) {
     const brevisRes = await brevis.submit(
       proofReq,
       proofRes,
-      Number(usa.src_chain_id),
-      Number(usa.dst_chain_id)
+      Number(utvf.src_chain_id),
+      Number(utvf.dst_chain_id)
     );
-    usa.brevis_query_fee = brevisRes.fee;
-    usa.brevis_query_hash = brevisRes.id;
-    usa.status = PROOF_STATUS_PROOF_UPLOADED;
-    updateUserTradeVolumeFee(usa);
+    utvf.brevis_query_fee = brevisRes.fee;
+    utvf.brevis_query_hash = brevisRes.id;
+    utvf.status = PROOF_STATUS_PROOF_UPLOADED;
+    updateUserTradeVolumeFee(utvf);
   } catch (err) {
-    usa.status = PROOF_STATUS_BREVIS_QUERY_ERROR;
-    updateUserTradeVolumeFee(usa);
+    utvf.status = PROOF_STATUS_BREVIS_QUERY_ERROR;
+    updateUserTradeVolumeFee(utvf);
     console.error(err);
   }
 }
 
 export {
-  sendUSAProvingRequest,
-  uploadUSAProof,
+  sendUserTradeVolumeFeeProvingRequest,
+  uploadUserTradeVolumeFeeProof,
 };
