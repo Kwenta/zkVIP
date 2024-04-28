@@ -16,7 +16,7 @@ export async function QueryOrderTxsByAccount(
       query_parameters: [
         QueryParameter.text("from", from),
         QueryParameter.text("to", end),
-        QueryParameter.text("accountId", accountId),
+        QueryParameter.text("account_id", accountId),
       ],
     });
     const txs = Array<string>();
