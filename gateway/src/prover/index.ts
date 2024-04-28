@@ -10,7 +10,7 @@ import {
   PROOF_STATUS_PROVING_FINISHED,
   STATUS_READY,
 } from "../constants/index.ts";
-import { ethers } from "ethers";
+import { BigNumber, ethers } from "ethers";
 
 const {
   Brevis,
@@ -91,8 +91,10 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     );
   }
 
+  const accountIdHex = BigNumber.from(utvf.account).toHexString()
+  
   proofReq.setCustomInput({
-    UserAddress: asUint248(utvf.account || ""),
+    UserAddress: asUint248(accountIdHex),
   });
 
   console.log("proofReq", proofReq)

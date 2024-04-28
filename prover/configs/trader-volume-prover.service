@@ -4,9 +4,9 @@ After=network-online.target
 
 [Service]
 Environment=HOME=/home/ubuntu
-ExecStart=/home/ubuntu/go/bin/algebra-prover -service="fee-discount" -port=33247
-StandardOutput=append:/var/log/algebra-fee-discount-prover/app.log
-StandardError=append:/var/log/algebra-fee-discount-prover/app.log
+ExecStart=/home/ubuntu/go/bin/kwenta-prover -service="fee-reimbursement" -port=33248
+StandardOutput=append:/var/log/kwenta-fee-reimbursement-prover/app.log
+StandardError=append:/var/log/kwenta-fee-reimbursement-prover/app.log
 Restart=always
 RestartSec=3
 LimitNOFILE=4096

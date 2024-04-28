@@ -11,7 +11,7 @@ import (
 )
 
 var serviceName = flag.String("service", "", "the name of the service to start")
-var port = flag.Uint("port", 33247, "the port to start the service at")
+var port = flag.Uint("port", 33248, "the port to start the service at")
 
 // example usage: prover -service="totalfee" -port=33248
 func main() {
