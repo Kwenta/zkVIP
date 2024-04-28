@@ -5,9 +5,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon  src/index.ts",
-    "db push": "prisma db push",
-    "db pull": "prisma db pull",
-    "db studio": "prisma studio",
+    "db_push": "prisma db push",
+    "db_pull": "prisma db pull",
+    "db_studio": "prisma studio",
     "migrate": "prisma migrate",
     "generate": "prisma generate",
     "start": "pm2 start ecosystem.config.cjs",

@@ -59,6 +59,7 @@ app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
     if (isNaN(tym) || tym < 202402 || (tym >= utcMonth + fullYear * 100) || month > 13) {
       res.status(500);
       res.send({ error: true, message: "invalid claim trade time period" });
+      return
     }
     
     var utvf = await findUserExistingUTVF(account, BigInt(tym));
