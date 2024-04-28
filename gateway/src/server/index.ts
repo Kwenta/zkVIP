@@ -53,7 +53,7 @@ app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
     const month = tym % 100
 
     const now = new Date();
-    const utcMonth = now.getUTCMonth()
+    const utcMonth = now.getUTCMonth() + 1 // 1--->12
     const fullYear = now.getUTCFullYear()
   
     if (isNaN(tym) || tym < 202402 || (tym >= utcMonth + fullYear * 100) || month > 13) {
