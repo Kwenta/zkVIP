@@ -168,7 +168,7 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
   }
 });
 
-const port = 11083;
+const port = 11084;
 export const server = app.listen(port, () =>
   console.log(`
 🚀 Server ready at: http://localhost:${port}!`)
