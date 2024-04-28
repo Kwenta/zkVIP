@@ -23,7 +23,7 @@ const {
   asUint521,
 } = sdk;
 
-const prover = new Prover("localhost:33247");
+const prover = new Prover("localhost:33248");
 const brevis = new Brevis("appsdk.brevis.network:11080");
 
 const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {

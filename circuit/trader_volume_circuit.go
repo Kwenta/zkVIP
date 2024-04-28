@@ -33,9 +33,7 @@ func DefaultTraderVolumeCircuit() *TraderVolumeCircuit {
 var _ sdk.AppCircuit = &TraderVolumeCircuit{}
 
 func (c *TraderVolumeCircuit) Allocate() (maxReceipts, maxStorage, maxTransactions int) {
-	// Our app is only ever going to use one storage data at a time so
-	// we can simply limit the max number of data for storage to 1 and
-	// 0 for all others
+	// Maximum receipts used for one month is 1500
 	return 1500, 0, 0
 }
 
@@ -45,8 +43,6 @@ func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) erro
 	uint248.AssertIsEqual(uint248.IsLessThan(c.StartBlkNum, c.EndBlkNum), sdk.ConstUint248(1))
 
 	receipts := sdk.NewDataStream(api, in.Receipts)
-
-	api.AssertInputsAreUnique()
 
 	sdk.AssertEach(receipts, func(r sdk.Receipt) sdk.Uint248 {
 		assertionPassed := uint248.And(
