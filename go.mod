@@ -1,14 +1,12 @@
 module github.com/brevis-network/kwenta
 
-go 1.22
-
-toolchain go1.22.2
+go 1.19
 
 require (
 	github.com/brevis-network/brevis-sdk v0.0.0-20240428031102-91939633fcf6
+	github.com/celer-network/goutils v0.1.60
 	github.com/ethereum/go-ethereum v1.13.8
 	github.com/stretchr/testify v1.8.4
-	google.golang.org/appengine v1.6.7
 )
 
 require (
@@ -18,7 +16,6 @@ require (
 	github.com/blang/semver/v4 v4.0.0 // indirect
 	github.com/brevis-network/zk-utils v0.0.0-20240223081048-7daf41d41dee // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
-	github.com/celer-network/goutils v0.1.60 // indirect
 	github.com/consensys/bavard v0.1.13 // indirect
 	github.com/consensys/gnark v0.9.2-0.20231206193932-4199bb354d89 // indirect
 	github.com/consensys/gnark-crypto v0.12.2-0.20231221171913-5d5eded6bb15 // indirect
