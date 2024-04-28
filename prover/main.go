@@ -22,7 +22,7 @@ func main() {
 	}
 
 	switch *serviceName {
-	case "trader-volume":
+	case "fee-reimbursement":
 		startService(circuit.DefaultTraderVolumeCircuit())
 	default:
 		panic("invalid -service flag")
