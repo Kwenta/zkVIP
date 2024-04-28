@@ -1,4 +1,5 @@
 import {
+  PROOF_STATUS_INELIGIBLE_ACCOUNT_ID,
   PROOF_STATUS_INIT,
   PROOF_STATUS_INPUT_READY,
   PROOF_STATUS_PROVING_FINISHED,
@@ -12,6 +13,7 @@ import {
 } from "../db/index.ts";
 import { postSwapsQuery } from "../graphql/index.ts";
 import { sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
+import { QueryOrderTxsByAccount } from "../query/index.ts";
 import { querySingleReceipt, querySingleStorage } from "../rpc/index.ts";
 
 export async function getReceiptInfos() {
@@ -68,21 +70,31 @@ async function prepareUserSwapAmountInput() {
 }
 
 async function queryUserSwapAmountInput(userSwapAmount: any) {
-  const result = await postSwapsQuery(userSwapAmount.account)
+  const ym = Number(userSwapAmount.trade_year_month)
 
-  if (result.error !== null) {
-    console.error("failed to get swaps", result.error)
-    return 
+  const month = ym % 100
+  const monthString = (month + "").padStart(2, "0")
+  const nextMonth = (month + 1) % 12
+  const nextMonthString = (nextMonth + "").padStart(2, "0")
+
+  const year0 = Math.floor(ym / 100)
+  var year1 = year0
+  if (nextMonth < month) {
+    year1++
   }
 
-  if (result.txs.length === 0) {
-    console.error("no swap found")
+  const txs = await QueryOrderTxsByAccount(year0+"-"+monthString+"-01", year1+"-"+nextMonthString+"-01", userSwapAmount.account)
+
+  if (txs.length === 0) {
+    console.error("no order settled found")
+    userSwapAmount.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID
+    updateUserTradeVolumeFee(userSwapAmount)
     return
   }
 
   const promises = Array<Promise<string>>();
 
-  result.txs.forEach((tx) => {
+  txs.forEach((tx) => {
     promises.push(
       insertReceipt(tx).then((receipt) => {
         return receipt.id;

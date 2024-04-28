@@ -4,12 +4,13 @@ import {
   PROOF_STATUS_ONCHAIN_VERIFIED,
   PROOF_STATUS_PROOF_UPLOADED,
   
-  AMOUNT_VERIFICATION_INFO_STATUS_INIT,
-  AMOUNT_VERIFICATION_INFO_STATUS_NEED_TO_SUBMIT_REQUEST,
-  AMOUNT_VERIFICATION_INFO_STATUS_UNDEFINED,
-  AMOUNT_VERIFICATION_INFO_STATUS_WAITING_FOR_RESULT,
-  AMOUNT_VERIFICATION_INFO_STATUS_FEE_REIMBURSED,
+  FEE_REIMBURSEMENT_INFO_STATUS_INIT,
+  FEE_REIMBURSEMENT_INFO_STATUS_NEED_TO_SUBMIT_REQUEST,
+  FEE_REIMBURSEMENT_INFO_STATUS_UNDEFINED,
+  FEE_REIMBURSEMENT_INFO_STATUS_WAITING_FOR_RESULT,
+  FEE_REIMBURSEMENT_INFO_STATUS_FEE_REIMBURSED,
   PROOF_STATUS_BREVIS_REQUEST_SUBMITTED,
+  FEE_REIMBURSEMENT_INFO_STATUS_INELIGIBLE_ACCOUNT_ID,
 } from "../constants/index.ts";
 import {
   getReceiptInfos,
@@ -49,7 +50,13 @@ app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
 
     const tym = Number(trade_year_month)
 
-    if (isNaN(tym) || tym < 202402 || tym > 205001) {
+    const month = tym % 100
+
+    const now = new Date();
+    const utcMonth = now.getUTCMonth()
+    const fullYear = now.getUTCFullYear()
+  
+    if (isNaN(tym) || tym < 202402 || (tym >= utcMonth + fullYear * 100) || month > 13) {
       res.status(500);
       res.send({ error: true, message: "invalid claim trade time period" });
     }
@@ -93,26 +100,27 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     }
 
     let message = "";
-    let status = AMOUNT_VERIFICATION_INFO_STATUS_UNDEFINED;
+    let status = FEE_REIMBURSEMENT_INFO_STATUS_UNDEFINED;
     let brevisRequest =
       "" + process.env.BREVIS_REQUEST;
     if (Number(utvf.status) == Number(PROOF_STATUS_ONCHAIN_VERIFIED)) {
-      status = AMOUNT_VERIFICATION_INFO_STATUS_FEE_REIMBURSED;
+      status = FEE_REIMBURSEMENT_INFO_STATUS_FEE_REIMBURSED;
       message = "Fee reimbursed";
-    } else if (
-      Number(utvf.status) == Number(PROOF_STATUS_PROOF_UPLOADED)
-    ) {
-      status = AMOUNT_VERIFICATION_INFO_STATUS_NEED_TO_SUBMIT_REQUEST;
+    } else if ( Number(utvf.status) == Number(PROOF_STATUS_PROOF_UPLOADED)) {
+      status = FEE_REIMBURSEMENT_INFO_STATUS_NEED_TO_SUBMIT_REQUEST;
       message =
         "You need to submit SendRequest transaction with query_hash and query_fee on brevis request contract." +
         "And use address(" +
         process.env.FEE_REIMBURSEMENT +
         ") as _callback";
     } else if ( Number(utvf.status) == Number(PROOF_STATUS_BREVIS_REQUEST_SUBMITTED)) {
-      status = AMOUNT_VERIFICATION_INFO_STATUS_WAITING_FOR_RESULT;
+      status = FEE_REIMBURSEMENT_INFO_STATUS_WAITING_FOR_RESULT;
       message = "Brevis is preparing swap amount proof";
+    } else if ( Number(utvf.status) == Number(PROOF_STATUS_PROOF_UPLOADED)) {
+      status = FEE_REIMBURSEMENT_INFO_STATUS_INELIGIBLE_ACCOUNT_ID
+      message = "No order settled info found for this account id";
     } else {
-      status = AMOUNT_VERIFICATION_INFO_STATUS_INIT;
+      status = FEE_REIMBURSEMENT_INFO_STATUS_INIT;
       message = "Wait until query_hash and query_fee is ready";
     }
 
