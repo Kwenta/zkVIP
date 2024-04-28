@@ -9,6 +9,7 @@ import (
 type TraderVolumeCircuit struct {
 	StartBlkNum sdk.Uint248
 	EndBlkNum   sdk.Uint248
+	YearMonth   sdk.Uint248
 	AccountId   sdk.Uint248
 }
 
@@ -24,6 +25,7 @@ func DefaultTraderVolumeCircuit() *TraderVolumeCircuit {
 	return &TraderVolumeCircuit{
 		StartBlkNum: sdk.ConstUint248(0),
 		EndBlkNum:   sdk.ConstUint248(1),
+		YearMonth:   sdk.ConstUint248(0),
 		AccountId:   sdk.ConstUint248(0),
 	}
 }
@@ -90,6 +92,7 @@ func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) erro
 
 	api.OutputUint(64, c.StartBlkNum)
 	api.OutputUint(64, c.EndBlkNum)
+	api.OutputUint(24, c.YearMonth)
 	api.OutputUint(128, c.AccountId)
 	api.OutputUint(248, volume)
 	api.OutputUint(248, fee)
