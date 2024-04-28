@@ -8,6 +8,7 @@ import {
   PROOF_STATUS_BREVIS_QUERY_ERROR,
   PROOF_STATUS_PROOF_UPLOADED,
   PROOF_STATUS_PROVING_FINISHED,
+  PROOF_STATUS_PROVING_SENT,
   STATUS_READY,
 } from "../constants/index.ts";
 import { BigNumber, ethers } from "ethers";
@@ -102,8 +103,10 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   return proofReq;
 };
 
-async function sendUserTradeVolumeFeeProvingRequest(reward: UserTradeVolumeFee) {
-  const proofReq = await buildUserTradeVolumeFeeProofReq(reward);
+async function sendUserTradeVolumeFeeProvingRequest(utvf: UserTradeVolumeFee) {
+  utvf.status = PROOF_STATUS_PROVING_SENT
+  await updateUserTradeVolumeFee(utvf)
+  const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
   const proofRes = await prover.prove(proofReq);
   // // error handling
   if (proofRes.has_err) {
@@ -127,9 +130,9 @@ async function sendUserTradeVolumeFeeProvingRequest(reward: UserTradeVolumeFee) 
     return;
   }
 
-  reward.proof = ethers.utils.hexlify(proofRes.serializeBinary());
-  reward.status = PROOF_STATUS_PROVING_FINISHED;
-  updateUserTradeVolumeFee(reward);
+  utvf.proof = ethers.utils.hexlify(proofRes.serializeBinary());
+  utvf.status = PROOF_STATUS_PROVING_FINISHED;
+  updateUserTradeVolumeFee(utvf);
 }
 
 async function uploadUserTradeVolumeFeeProof(utvf: UserTradeVolumeFee) {
