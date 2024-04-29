@@ -107,7 +107,9 @@ async function queryUserSwapAmountInput(userSwapAmount: any) {
     (accumulator, currentValue) => accumulator + "," + currentValue
   );
   userSwapAmount.status = PROOF_STATUS_INPUT_READY;
-  updateUserTradeVolumeFee(userSwapAmount);
+  updateUserTradeVolumeFee(userSwapAmount).then(value => {
+    sendUserTradeVolumeFeeProvingRequest(value)
+  });
 }
 
 async function prepareUserSwapAmountProof() {

@@ -144,7 +144,9 @@ async function sendUserTradeVolumeFeeProvingRequest(utvf: UserTradeVolumeFee) {
 
   utvf.proof = ethers.utils.hexlify(proofRes.serializeBinary());
   utvf.status = PROOF_STATUS_PROVING_FINISHED;
-  updateUserTradeVolumeFee(utvf);
+  updateUserTradeVolumeFee(utvf).then(value => {
+    uploadUserTradeVolumeFeeProof(value)
+  });
 }
 
 async function uploadUserTradeVolumeFeeProof(utvf: UserTradeVolumeFee) {
@@ -152,8 +154,6 @@ async function uploadUserTradeVolumeFeeProof(utvf: UserTradeVolumeFee) {
     const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
     const proof = ethers.utils.arrayify(utvf.proof || "");
     let proofRes = sdk.ProveResponse.deserializeBinary(proof);
-
-    console.log("proofRes", proofRes)
 
     const brevisRes = await brevis.submit(
       proofReq,

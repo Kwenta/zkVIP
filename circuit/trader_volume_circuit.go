@@ -33,7 +33,7 @@ func DefaultTraderVolumeCircuit() *TraderVolumeCircuit {
 var _ sdk.AppCircuit = &TraderVolumeCircuit{}
 
 func (c *TraderVolumeCircuit) Allocate() (maxReceipts, maxStorage, maxTransactions int) {
-	return 400, 0, 0
+	return 256, 0, 0
 }
 
 func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
