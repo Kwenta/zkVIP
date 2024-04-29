@@ -20,12 +20,12 @@ var PROOF_STATUS_INIT = BigInt(1);
 var PROOF_STATUS_INPUT_REQUEST_SENT = BigInt(2);
 var PROOF_STATUS_INPUT_READY = BigInt(3);
 var PROOF_STATUS_PROVING_SENT = BigInt(4);
-var PROOF_STATUS_PROVING_FINISHED = BigInt(5);
-var PROOF_STATUS_PROOF_UPLOAD_SENT = BigInt(6);
-var PROOF_STATUS_PROOF_UPLOADED = BigInt(7);
-var PROOF_STATUS_BREVIS_QUERY_ERROR = BigInt(8);
-var PROOF_STATUS_BREVIS_REQUEST_SUBMITTED = BigInt(9);
-var PROOF_STATUS_ONCHAIN_VERIFIED = BigInt(10);
+var PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED = BigInt(5);
+var PROOF_STATUS_PROOF_UPLOAD_SENT = BigInt(7);
+var PROOF_STATUS_PROOF_UPLOADED = BigInt(8);
+var PROOF_STATUS_BREVIS_QUERY_ERROR = BigInt(9);
+var PROOF_STATUS_BREVIS_REQUEST_SUBMITTED = BigInt(10);
+var PROOF_STATUS_ONCHAIN_VERIFIED = BigInt(11);
 var PROOF_STATUS_INELIGIBLE_ACCOUNT_ID = BigInt(99);
 var FEE_REIMBURSEMENT_INFO_STATUS_UNDEFINED = 0;
 var FEE_REIMBURSEMENT_INFO_STATUS_INIT = 1;
@@ -69,7 +69,7 @@ async function getReceipt(id) {
 async function findNotReadyReceipts() {
   var now = /* @__PURE__ */ new Date();
   return prisma.receipt.findMany({
-    take: 20,
+    take: 10,
     where: {
       status: STATUS_INIT,
       update_time: {
@@ -132,7 +132,8 @@ async function updateUserTradeVolumeFee(utvf) {
       brevis_query_fee: utvf.brevis_query_fee,
       proof: utvf.proof,
       status: utvf.status,
-      update_time: /* @__PURE__ */ new Date()
+      update_time: /* @__PURE__ */ new Date(),
+      prover_id: utvf.prover_id
     }
   });
 }
@@ -179,7 +180,7 @@ async function updateBrevisRequestStatus(brevis_query_hash) {
 
 // src/prover/index.ts
 import * as sdk from "brevis-sdk-typescript";
-import { BigNumber, ethers } from "ethers";
+import { BigNumber } from "ethers";
 var {
   Brevis,
   ErrCode,
@@ -269,7 +270,8 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld) {
     console.log("Start to Build Proof Request: ", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
     const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
     console.log("User Circuit Proof Request Sent: ", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
-    const proofRes = await prover.prove(proofReq);
+    const proofRes = await prover.proveAsync(proofReq);
+    console.log("proofRes proof_id", proofRes.proof_id, (/* @__PURE__ */ new Date()).toLocaleString());
     if (proofRes.has_err) {
       const err = proofRes.err;
       switch (err.code) {
@@ -287,12 +289,26 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld) {
       }
       return;
     }
-    utvf.proof = ethers.utils.hexlify(proofRes.serializeBinary());
-    utvf.status = PROOF_STATUS_PROVING_FINISHED;
-    console.log("User Circuit Proved: ", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
-    updateUserTradeVolumeFee(utvf).then((value) => {
-      uploadUserTradeVolumeFeeProof(value);
-    }).then();
+    try {
+      const prepareQueryResponse = await brevis.prepareQuery(
+        proofReq,
+        proofRes.circuit_info,
+        Number(utvf.src_chain_id),
+        Number(utvf.dst_chain_id)
+      );
+      console.log("Ready to submit brevis query hash", prepareQueryResponse.query_hash, (/* @__PURE__ */ new Date()).toLocaleString());
+      utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED;
+      utvf.brevis_query_fee = prepareQueryResponse.fee;
+      utvf.brevis_query_hash = prepareQueryResponse.query_hash;
+      utvf.prover_id = proofRes.proof_id;
+      updateUserTradeVolumeFee(utvf).then((value) => {
+        uploadUserTradeVolumeFeeProof(value);
+      }).then();
+    } catch (error) {
+      console.error("Failed to prepare query", error, utvf.id);
+      utvf.status = PROOF_STATUS_BREVIS_QUERY_ERROR;
+      updateUserTradeVolumeFee(utvf);
+    }
   } catch (error) {
     console.log("Prove failed back to PROOF_STATUS_INPUT_READY: ", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
     utvf.status = PROOF_STATUS_INPUT_READY;
@@ -301,29 +317,34 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld) {
 }
 async function uploadUserTradeVolumeFeeProof(utvfOld) {
   const utvf = await getUserTradeVolumeFee(utvfOld.id);
-  if (utvf.status != PROOF_STATUS_PROVING_FINISHED) {
+  if (utvf.status != PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED) {
     return;
   }
   utvf.status = PROOF_STATUS_PROOF_UPLOAD_SENT;
   await updateUserTradeVolumeFee(utvf);
   try {
-    const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
-    const proof = ethers.utils.arrayify(utvf.proof || "");
-    let proofRes = sdk.ProveResponse.deserializeBinary(proof);
-    console.log("Request sent: ", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
-    const brevisRes = await brevis.submit(
-      proofReq,
-      proofRes,
-      Number(utvf.src_chain_id),
-      Number(utvf.dst_chain_id)
+    console.log("Proof upload sent: ", utvf.id, utvf.prover_id, (/* @__PURE__ */ new Date()).toLocaleString());
+    const getProofRes = await prover.getProof(utvf.prover_id);
+    if (getProofRes.has_err) {
+      console.error(getProofRes.err.msg);
+      utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED;
+      await updateUserTradeVolumeFee(utvf);
+      return;
+    } else if (getProofRes.proof.length === 0) {
+      utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED;
+      await updateUserTradeVolumeFee(utvf);
+      return;
+    }
+    await brevis.submitProof(
+      utvf.brevis_query_hash,
+      Number(utvf.dst_chain_id),
+      getProofRes.proof
     );
-    utvf.brevis_query_fee = brevisRes.fee;
-    utvf.brevis_query_hash = brevisRes.id;
     utvf.status = PROOF_STATUS_PROOF_UPLOADED;
-    console.log("Request submitted: ", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
+    console.log("Proof uploaded: ", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
     updateUserTradeVolumeFee(utvf);
   } catch (err) {
-    utvf.status = PROOF_STATUS_BREVIS_QUERY_ERROR;
+    utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED;
     updateUserTradeVolumeFee(utvf);
     console.error(err);
   }
@@ -2151,19 +2172,21 @@ var userSwapAmountApp = FeeReimbursementApp__factory2.connect(
   wallet
 );
 async function monitorFeeReimbursed() {
-  userSwapAmountApp.on("FeeReimbursed", (user, trade_year_month, fee) => {
+  userSwapAmountApp.on("FeeReimbursed", (user, accountId, tradeYearMonth, fee) => {
     const userAddress = user;
-    const tradeYearMonthBN = trade_year_month;
-    if (userAddress === void 0 || userAddress === null || tradeYearMonthBN === void 0 || tradeYearMonthBN === null) {
+    const accountIdBN = accountId;
+    const tradeYearMonthBN = tradeYearMonth;
+    if (userAddress === void 0 || userAddress === null || tradeYearMonthBN === void 0 || tradeYearMonthBN === null || accountIdBN === void 0 || accountIdBN === null) {
       console.log(
         "reimbursement triggered with unexpected value:: ",
         user,
-        trade_year_month,
+        accountId,
+        tradeYearMonth,
         fee
       );
       return;
     }
-    findUserExistingUTVF(userAddress, BigInt(tradeYearMonthBN.toNumber())).then((utvf) => {
+    findUserExistingUTVF(accountIdBN.toString(), BigInt(tradeYearMonthBN.toNumber())).then((utvf) => {
       if (utvf) {
         utvf.status = PROOF_STATUS_ONCHAIN_VERIFIED;
         return updateUserTradeVolumeFee(utvf);
@@ -2172,8 +2195,8 @@ async function monitorFeeReimbursed() {
       console.error(
         "failed to update user swap amount",
         user,
-        user,
-        trade_year_month,
+        accountId,
+        tradeYearMonth,
         error
       );
     });
@@ -2391,7 +2414,7 @@ async function prepareUserSwapAmountProof() {
 }
 async function uploadUserSwapAmountProof() {
   try {
-    const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_PROVING_FINISHED);
+    const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED);
     let promises = Array();
     for (let i = 0; i < utvfs.length; i++) {
       promises.push(uploadUserTradeVolumeFeeProof(utvfs[i]));
@@ -2413,11 +2436,11 @@ app.use((req, res, next) => {
   next();
 });
 getReceiptInfos().then();
-setInterval(getReceiptInfos, 4e3);
+setInterval(getReceiptInfos, 1e3);
 getStorageInfos().then();
 setInterval(getStorageInfos, 1e4);
 prepareUserTradeVolumeFees().then();
-setInterval(prepareUserTradeVolumeFees, 1e4);
+setInterval(prepareUserTradeVolumeFees, 2e3);
 monitorFeeReimbursed();
 monitorBrevisRequest();
 app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
@@ -2474,7 +2497,7 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     if (Number(utvf.status) == Number(PROOF_STATUS_ONCHAIN_VERIFIED)) {
       status = FEE_REIMBURSEMENT_INFO_STATUS_FEE_REIMBURSED;
       message = "Fee reimbursed";
-    } else if (Number(utvf.status) == Number(PROOF_STATUS_PROOF_UPLOADED)) {
+    } else if (Number(utvf.status) == Number(PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED)) {
       status = FEE_REIMBURSEMENT_INFO_STATUS_NEED_TO_SUBMIT_REQUEST;
       message = "You need to submit SendRequest transaction with query_hash and query_fee on brevis request contract.And use address(" + process.env.FEE_REIMBURSEMENT + ") as _callback";
     } else if (Number(utvf.status) == Number(PROOF_STATUS_BREVIS_REQUEST_SUBMITTED)) {
@@ -2498,20 +2521,18 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     }
     var feeBN = BigNumber4.from(fee).div(BigNumber4.from("1000000000000000000"));
     var tier = -1;
-    if (volumeBN.toNumber() <= 1e5) {
-      tier = -1;
-    } else if (volumeBN.toNumber() <= 1e5) {
-      tier = 0;
-      feeBN = feeBN.mul(BigNumber4.from(2)).div(BigNumber4.from(10));
-    } else if (volumeBN.toNumber() <= 1e6) {
-      tier = 1;
-      feeBN = feeBN.mul(BigNumber4.from(5)).div(BigNumber4.from(10));
-    } else if (volumeBN.toNumber() <= 1e7) {
-      tier = 2;
-      feeBN = feeBN.mul(BigNumber4.from(75)).div(BigNumber4.from(100));
-    } else if (volumeBN.toNumber() <= 1e8) {
+    if (volumeBN.toNumber() > 1e8) {
       tier = 3;
       feeBN = feeBN.mul(BigNumber4.from(9)).div(BigNumber4.from(10));
+    } else if (volumeBN.toNumber() > 1e7) {
+      tier = 2;
+      feeBN = feeBN.mul(BigNumber4.from(75)).div(BigNumber4.from(100));
+    } else if (volumeBN.toNumber() > 1e6) {
+      tier = 1;
+      feeBN = feeBN.mul(BigNumber4.from(5)).div(BigNumber4.from(10));
+    } else if (volumeBN.toNumber() > 1e5) {
+      tier = 0;
+      feeBN = feeBN.mul(BigNumber4.from(2)).div(BigNumber4.from(10));
     }
     res.json({
       status,

@@ -33,6 +33,7 @@ model user_trade_volume_fee {
   create_time       DateTime? @db.Timestamptz(6)
   update_time       DateTime? @db.Timestamptz(6)
   prover_id         String?
+  request_sent      Boolean?
 }
 
 model storage {
