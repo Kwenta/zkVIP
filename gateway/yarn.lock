@@ -1036,10 +1036,10 @@ braces@^3.0.2, braces@~3.0.2:
   dependencies:
     fill-range "^7.0.1"
 
-brevis-sdk-typescript@^1.1.1:
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/brevis-sdk-typescript/-/brevis-sdk-typescript-1.1.1.tgz#51c1587b3c2ad0e6d815420a7be74b8dcc269f67"
-  integrity sha512-obprY4UNy1Ahee++mCfdPfjWBAK8aTmvPOvAN/Hsr9+xGVkHV7CHCRJJXPDZ5TqVfg9z8M26ooOYkip8IeTHtA==
+brevis-sdk-typescript@^1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/brevis-sdk-typescript/-/brevis-sdk-typescript-1.2.0.tgz#e856ee82a3cdca19ef7d4f67b366616ebc13a908"
+  integrity sha512-h0XOeQo7KIEWJgwAgVSUB2uh3iSRfPCaJ4qXoQaCFTzpkbXpHj0lHe6KXjMV4uHjwpVDFxZ/Bi1LIdtZ4tMT3A==
   dependencies:
     "@grpc/grpc-js" "^1.10.4"
     ethers "^6.11.1"

@@ -14,6 +14,7 @@ type UserTradeVolumeFee = {
   status: bigint;
   create_time: Date;
   update_time: Date;
+  prover_id: string;
 };
 
 type Receipt = {

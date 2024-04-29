@@ -11,7 +11,7 @@ import {
   PROOF_STATUS_INPUT_READY,
   PROOF_STATUS_PROOF_UPLOAD_SENT,
   PROOF_STATUS_PROOF_UPLOADED,
-  PROOF_STATUS_PROVING_FINISHED,
+  PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
   PROOF_STATUS_PROVING_SENT,
   STATUS_READY,
 } from "../constants/index.ts";
@@ -119,7 +119,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
     const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
     console.log("User Circuit Proof Request Sent: ", utvf.id, (new Date()).toLocaleString())
 
-    const proofRes = await prover.prove(proofReq);
+    const proofRes = await prover.proveAsync(proofReq);
 
     // error handling
     if (proofRes.has_err) {
@@ -143,14 +143,27 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
       return;
     }
 
-    utvf.proof = ethers.utils.hexlify(proofRes.serializeBinary());
-    utvf.status = PROOF_STATUS_PROVING_FINISHED;
+    try {
+      const prepareQueryResponse = await brevis.prepareQuery(
+        proofReq, 
+        proofRes.circuit_info, 
+        Number(utvf.src_chain_id),
+        Number(utvf.dst_chain_id)
+      )
+      console.log('brevis query hash', prepareQueryResponse.query_hash);
+      utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
+      utvf.brevis_query_fee = prepareQueryResponse.fee
+      utvf.brevis_query_hash = prepareQueryResponse.query_hash
+      utvf.prover_id = proofRes.proof_id
 
-    console.log("User Circuit Proved: ", utvf.id, (new Date()).toLocaleString())
-
-    updateUserTradeVolumeFee(utvf).then(value => {
-      uploadUserTradeVolumeFeeProof(value)
-    }).then();
+      updateUserTradeVolumeFee(utvf).then(value => {
+        uploadUserTradeVolumeFeeProof(value)
+      }).then();
+    } catch (error) {
+      console.error("Failed to prepare query", error, utvf.id)
+      utvf.status = PROOF_STATUS_BREVIS_QUERY_ERROR
+      updateUserTradeVolumeFee(utvf)
+    }
   } catch (error) {
     console.log("Prove failed back to PROOF_STATUS_INPUT_READY: ", utvf.id, (new Date()).toLocaleString())
     utvf.status = PROOF_STATUS_INPUT_READY
@@ -160,7 +173,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
 
 async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
   const utvf = await getUserTradeVolumeFee(utvfOld.id)
-  if (utvf.status != PROOF_STATUS_PROVING_FINISHED) {
+  if (utvf.status != PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED) {
     return 
   }
 
@@ -168,26 +181,33 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
   await updateUserTradeVolumeFee(utvf)
 
   try {
-    const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
-    const proof = ethers.utils.arrayify(utvf.proof || "");
-    let proofRes = sdk.ProveResponse.deserializeBinary(proof);
+   
     console.log("Request sent: ", utvf.id, (new Date()).toLocaleString())
+    const getProofRes = await prover.getProof(utvf.prover_id)
+    if (getProofRes.has_err) {
+      console.error(getProofRes.err.msg);
+      utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
+      await updateUserTradeVolumeFee(utvf)
+      return;
+    } else if (getProofRes.proof.length === 0) {
+      utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
+      await updateUserTradeVolumeFee(utvf)
+      return;
+    }
 
-    const brevisRes = await brevis.submit(
-      proofReq,
-      proofRes,
-      Number(utvf.src_chain_id),
-      Number(utvf.dst_chain_id)
+    await brevis.submitProof(
+      utvf.brevis_query_hash,
+      Number(utvf.dst_chain_id),
+      getProofRes.proof
     );
-    utvf.brevis_query_fee = brevisRes.fee;
-    utvf.brevis_query_hash = brevisRes.id;
+   
     utvf.status = PROOF_STATUS_PROOF_UPLOADED;
 
-    console.log("Request submitted: ", utvf.id, (new Date()).toLocaleString())
+    console.log("Proof uploaded: ", utvf.id, (new Date()).toLocaleString())
 
     updateUserTradeVolumeFee(utvf);
   } catch (err) {
-    utvf.status = PROOF_STATUS_BREVIS_QUERY_ERROR;
+    utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED;
     updateUserTradeVolumeFee(utvf);
     console.error(err);
   }

@@ -11,6 +11,7 @@ import {
   FEE_REIMBURSEMENT_INFO_STATUS_FEE_REIMBURSED,
   PROOF_STATUS_BREVIS_REQUEST_SUBMITTED,
   FEE_REIMBURSEMENT_INFO_STATUS_INELIGIBLE_ACCOUNT_ID,
+  PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
 } from "../constants/index.ts";
 import {
   getReceiptInfos,
@@ -112,7 +113,7 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     if (Number(utvf.status) == Number(PROOF_STATUS_ONCHAIN_VERIFIED)) {
       status = FEE_REIMBURSEMENT_INFO_STATUS_FEE_REIMBURSED;
       message = "Fee reimbursed";
-    } else if ( Number(utvf.status) == Number(PROOF_STATUS_PROOF_UPLOADED)) {
+    } else if ( Number(utvf.status) == Number(PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED)) {
       status = FEE_REIMBURSEMENT_INFO_STATUS_NEED_TO_SUBMIT_REQUEST;
       message =
         "You need to submit SendRequest transaction with query_hash and query_fee on brevis request contract." +

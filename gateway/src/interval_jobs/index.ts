@@ -3,7 +3,7 @@ import {
   PROOF_STATUS_INIT,
   PROOF_STATUS_INPUT_READY,
   PROOF_STATUS_INPUT_REQUEST_SENT,
-  PROOF_STATUS_PROVING_FINISHED,
+  PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
 } from "../constants/index.ts";
 import {
   findNotReadyReceipts, 
@@ -146,7 +146,7 @@ async function prepareUserSwapAmountProof() {
 
 async function uploadUserSwapAmountProof() {
   try {
-    const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_PROVING_FINISHED);
+    const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED);
     let promises = Array<Promise<void>>();
     for (let i = 0; i < utvfs.length; i++) {
       promises.push(uploadUserTradeVolumeFeeProof(utvfs[i]));
