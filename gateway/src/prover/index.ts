@@ -143,7 +143,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
     utvf.status = PROOF_STATUS_PROVING_FINISHED;
 
     const now = new Date()
-    console.log("User Circuit Proved: ", utvf.id, now.toLocaleDateString())
+    console.log("User Circuit Proved: ", utvf.id, now.getUTCSeconds())
 
     updateUserTradeVolumeFee(utvf).then(value => {
       uploadUserTradeVolumeFeeProof(value)
@@ -171,7 +171,7 @@ async function uploadUserTradeVolumeFeeProof(utvf: UserTradeVolumeFee) {
     utvf.status = PROOF_STATUS_PROOF_UPLOADED;
 
     const now = new Date()
-    console.log("Request submitted: ", utvf.id, now.toLocaleDateString())
+    console.log("Request submitted: ", utvf.id, now.getUTCSeconds())
 
     updateUserTradeVolumeFee(utvf);
   } catch (err) {
