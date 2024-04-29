@@ -42,7 +42,7 @@ export async function getStorageInfos() {
 
     await Promise.all(promises);
   } catch (error) {
-    console.error("failed to get receipt infos");
+    console.error("failed to get storage infos");
   }
 }
 

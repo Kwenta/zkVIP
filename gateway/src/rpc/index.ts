@@ -17,7 +17,6 @@ async function querySingleReceipt(receipt: any) {
         let logsFound = false;
         let data = "";
         transactionReceipt.logs.forEach((log, i) => {
-          console.log("log.idx", log.logIndex, i)
           if (log.topics.length < 3) {
             return 
           }
