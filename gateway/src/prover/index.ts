@@ -182,7 +182,7 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
 
   try {
    
-    console.log("Proof upload sent: ", utvf.id, (new Date()).toLocaleString())
+    console.log("Proof upload sent: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())
     const getProofRes = await prover.getProof(utvf.prover_id)
     if (getProofRes.has_err) {
       console.error(getProofRes.err.msg);

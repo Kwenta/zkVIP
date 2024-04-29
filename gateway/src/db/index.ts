@@ -151,6 +151,7 @@ async function updateUserTradeVolumeFee(utvf: any): Promise<any> {
       proof: utvf.proof,
       status: utvf.status,
       update_time: new Date(),
+      prover_id: utvf.prover_id,
     },
   });
 }
