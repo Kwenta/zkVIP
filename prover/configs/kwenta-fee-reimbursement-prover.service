@@ -4,7 +4,7 @@ After=network-online.target
 
 [Service]
 Environment=HOME=/home/ubuntu
-ExecStart=/home/ubuntu/go/bin/kwenta-prover -service="fee-reimbursement" -port=33248
+ExecStart=/home/ubuntu/go/bin/kwenta-prover -service="fee-reimbursement" -port=33248 -numMaxDataPoints=512 -maxReceipts=256
 StandardOutput=append:/var/log/kwenta-fee-reimbursement-prover/app.log
 StandardError=append:/var/log/kwenta-fee-reimbursement-prover/app.log
 Restart=always
