@@ -26,6 +26,8 @@ const arbitrumSepoliaEndpoint = process.env.ARBITRUM_SEPOLIA_ENDPOINT || DEFAULT
 const arbitrumSepoliaPrivateKey = process.env.ARBITRUM_SEPOLIA_PRIVATE_KEY || DEFAULT_PRIVATE_KEY;
 const holeskyEndpoint = process.env.HOLESKY_ENDPOINT || 'https://holesky.drpc.org';
 const holeskyPrivateKey =  process.env.HOLESKY_PRIVATE_KEY || DEFAULT_PRIVATE_KEY;
+const baseEndpoint = process.env.BASE_ENDPOINT || DEFAULT_ENDPOINT;
+const basePrivateKey = process.env.BASE_PRIVATE_KEY || DEFAULT_PRIVATE_KEY;
 
 const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
@@ -58,6 +60,10 @@ const config: HardhatUserConfig = {
     holesky:{
       url: holeskyEndpoint,
       accounts: [`0x${holeskyPrivateKey}`]
+    },
+    base: {
+      url: baseEndpoint,
+      accounts: [`0x${basePrivateKey}`]
     }
   },
   namedAccounts: {

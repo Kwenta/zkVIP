@@ -32,3 +32,4 @@ gateway/.env
 contract/node_modules/
 contract/cache/
 contract/artifacts/
+contract/.env

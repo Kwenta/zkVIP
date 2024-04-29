@@ -149,16 +149,25 @@ export declare namespace Brevis {
 export interface FeeReimbursementAppInterface extends utils.Interface {
   contractName: "FeeReimbursementApp";
   functions: {
+    "accountModule()": FunctionFragment;
     "brevisCallback(bytes32,bytes)": FunctionFragment;
     "brevisProof()": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
+    "rewardToken()": FunctionFragment;
+    "rewardTokenDecimals()": FunctionFragment;
+    "setAccountModule(address)": FunctionFragment;
+    "setRewardToken(address,uint24)": FunctionFragment;
     "setVkHash(bytes32)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "validateRequest(bytes32,uint64,(bytes32,(uint64,uint64,tuple[5])[],(bytes32,address,bytes32,bytes32,uint64)[],(bytes32,bytes32,uint64,uint64,bytes)[]))": FunctionFragment;
     "vkHash()": FunctionFragment;
   };
 
+  encodeFunctionData(
+    functionFragment: "accountModule",
+    values?: undefined
+  ): string;
   encodeFunctionData(
     functionFragment: "brevisCallback",
     values: [BytesLike, BytesLike]
@@ -171,6 +180,22 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "rewardToken",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "rewardTokenDecimals",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setAccountModule",
+    values: [string]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setRewardToken",
+    values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "setVkHash",
@@ -187,6 +212,10 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "vkHash", values?: undefined): string;
 
   decodeFunctionResult(
+    functionFragment: "accountModule",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "brevisCallback",
     data: BytesLike
   ): Result;
@@ -197,6 +226,22 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "rewardToken",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "rewardTokenDecimals",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setAccountModule",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setRewardToken",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setVkHash", data: BytesLike): Result;
@@ -211,7 +256,7 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "vkHash", data: BytesLike): Result;
 
   events: {
-    "FeeReimbursed(address,uint24,uint256)": EventFragment;
+    "FeeReimbursed(address,uint128,uint24,uint248)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
   };
 
@@ -220,8 +265,13 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
 }
 
 export type FeeReimbursedEvent = TypedEvent<
-  [string, number, BigNumber],
-  { user: string; tradeYearMonth: number; fee: BigNumber }
+  [string, BigNumber, number, BigNumber],
+  {
+    user: string;
+    accountId: BigNumber;
+    tradeYearMonth: number;
+    feeRebate: BigNumber;
+  }
 >;
 
 export type FeeReimbursedEventFilter = TypedEventFilter<FeeReimbursedEvent>;
@@ -262,6 +312,8 @@ export interface FeeReimbursementApp extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    accountModule(overrides?: CallOverrides): Promise<[string]>;
+
     brevisCallback(
       _requestId: BytesLike,
       _appCircuitOutput: BytesLike,
@@ -273,6 +325,21 @@ export interface FeeReimbursementApp extends BaseContract {
     owner(overrides?: CallOverrides): Promise<[string]>;
 
     renounceOwnership(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    rewardToken(overrides?: CallOverrides): Promise<[string]>;
+
+    rewardTokenDecimals(overrides?: CallOverrides): Promise<[number]>;
+
+    setAccountModule(
+      _accountModule: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setRewardToken(
+      _rewardToken: string,
+      _decimals: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -296,6 +363,8 @@ export interface FeeReimbursementApp extends BaseContract {
     vkHash(overrides?: CallOverrides): Promise<[string]>;
   };
 
+  accountModule(overrides?: CallOverrides): Promise<string>;
+
   brevisCallback(
     _requestId: BytesLike,
     _appCircuitOutput: BytesLike,
@@ -307,6 +376,21 @@ export interface FeeReimbursementApp extends BaseContract {
   owner(overrides?: CallOverrides): Promise<string>;
 
   renounceOwnership(
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  rewardToken(overrides?: CallOverrides): Promise<string>;
+
+  rewardTokenDecimals(overrides?: CallOverrides): Promise<number>;
+
+  setAccountModule(
+    _accountModule: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setRewardToken(
+    _rewardToken: string,
+    _decimals: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -330,6 +414,8 @@ export interface FeeReimbursementApp extends BaseContract {
   vkHash(overrides?: CallOverrides): Promise<string>;
 
   callStatic: {
+    accountModule(overrides?: CallOverrides): Promise<string>;
+
     brevisCallback(
       _requestId: BytesLike,
       _appCircuitOutput: BytesLike,
@@ -341,6 +427,21 @@ export interface FeeReimbursementApp extends BaseContract {
     owner(overrides?: CallOverrides): Promise<string>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
+
+    rewardToken(overrides?: CallOverrides): Promise<string>;
+
+    rewardTokenDecimals(overrides?: CallOverrides): Promise<number>;
+
+    setAccountModule(
+      _accountModule: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    setRewardToken(
+      _rewardToken: string,
+      _decimals: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     setVkHash(_vkHash: BytesLike, overrides?: CallOverrides): Promise<void>;
 
@@ -360,15 +461,17 @@ export interface FeeReimbursementApp extends BaseContract {
   };
 
   filters: {
-    "FeeReimbursed(address,uint24,uint256)"(
+    "FeeReimbursed(address,uint128,uint24,uint248)"(
       user?: string | null,
+      accountId?: null,
       tradeYearMonth?: null,
-      fee?: null
+      feeRebate?: null
     ): FeeReimbursedEventFilter;
     FeeReimbursed(
       user?: string | null,
+      accountId?: null,
       tradeYearMonth?: null,
-      fee?: null
+      feeRebate?: null
     ): FeeReimbursedEventFilter;
 
     "OwnershipTransferred(address,address)"(
@@ -382,6 +485,8 @@ export interface FeeReimbursementApp extends BaseContract {
   };
 
   estimateGas: {
+    accountModule(overrides?: CallOverrides): Promise<BigNumber>;
+
     brevisCallback(
       _requestId: BytesLike,
       _appCircuitOutput: BytesLike,
@@ -393,6 +498,21 @@ export interface FeeReimbursementApp extends BaseContract {
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     renounceOwnership(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    rewardToken(overrides?: CallOverrides): Promise<BigNumber>;
+
+    rewardTokenDecimals(overrides?: CallOverrides): Promise<BigNumber>;
+
+    setAccountModule(
+      _accountModule: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setRewardToken(
+      _rewardToken: string,
+      _decimals: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -417,6 +537,8 @@ export interface FeeReimbursementApp extends BaseContract {
   };
 
   populateTransaction: {
+    accountModule(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     brevisCallback(
       _requestId: BytesLike,
       _appCircuitOutput: BytesLike,
@@ -428,6 +550,23 @@ export interface FeeReimbursementApp extends BaseContract {
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     renounceOwnership(
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    rewardToken(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    rewardTokenDecimals(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    setAccountModule(
+      _accountModule: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setRewardToken(
+      _rewardToken: string,
+      _decimals: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

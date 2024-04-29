@@ -37,9 +37,9 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.FeeReimbursementApp__factory>;
     getContractFactory(
-      name: "FeeReimbursementApp",
+      name: "IAccountModule",
       signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.FeeReimbursementApp__factory>;
+    ): Promise<Contracts.IAccountModule__factory>;
 
     getContractAt(
       name: "Ownable",
@@ -72,10 +72,10 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.FeeReimbursementApp>;
     getContractAt(
-      name: "FeeReimbursementApp",
+      name: "IAccountModule",
       address: string,
       signer?: ethers.Signer
-    ): Promise<Contracts.FeeReimbursementApp>;
+    ): Promise<Contracts.IAccountModule>;
 
     // default types
     getContractFactory(
