@@ -112,8 +112,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 		YearMonth:   asUint248(utvf.trade_year_month.toString()),
   });
 
-  console.log("proofReq", proofReq)
-
   return proofReq;
 };
 
