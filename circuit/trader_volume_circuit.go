@@ -33,8 +33,7 @@ func DefaultTraderVolumeCircuit() *TraderVolumeCircuit {
 var _ sdk.AppCircuit = &TraderVolumeCircuit{}
 
 func (c *TraderVolumeCircuit) Allocate() (maxReceipts, maxStorage, maxTransactions int) {
-	// Maximum receipts used for one month is 1500
-	return 512, 0, 0
+	return 400, 0, 0
 }
 
 func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
