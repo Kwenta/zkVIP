@@ -92,9 +92,9 @@ export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
     year1++
   }
 
-  const txs = await QueryOrderTxsByAccount(year0+"-"+monthString+"-01", year1+"-"+nextMonthString+"-01", userSwapAmount.account)
+  const duneResult = await QueryOrderTxsByAccount(year0+"-"+monthString+"-01", year1+"-"+nextMonthString+"-01", userSwapAmount.account)
 
-  if (txs.length === 0) {
+  if (duneResult.txs.length === 0) {
     console.error("no order settled found")
     userSwapAmount.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID
     updateUserTradeVolumeFee(userSwapAmount)
@@ -103,7 +103,7 @@ export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
 
   const promises = Array<Promise<string>>();
 
-  txs.forEach((tx) => {
+  duneResult.txs.forEach((tx) => {
     promises.push(
       insertReceipt(tx).then((receipt) => {
         return receipt.id;
@@ -116,6 +116,8 @@ export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
     (accumulator, currentValue) => accumulator + "," + currentValue
   );
   userSwapAmount.status = PROOF_STATUS_INPUT_READY;
+  userSwapAmount.volume = duneResult.volume
+  userSwapAmount.fee = duneResult.fee
   updateUserTradeVolumeFee(userSwapAmount).then(value => {
     sendUserTradeVolumeFeeProvingRequest(value)
   });

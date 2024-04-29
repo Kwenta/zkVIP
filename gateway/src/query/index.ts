@@ -1,15 +1,21 @@
 import { QueryParameter, DuneClient } from "@duneanalytics/client-sdk";
 import * as dotenv from "dotenv";
+import { BigNumber } from "ethers";
 
 dotenv.config();
 const client = new DuneClient(process.env.DUNE_API_KEY ?? "");
 const queryId = 3677895;
 
+type DuneResult = {
+  txs: Array<string>,
+  fee: string,
+  volume: string,
+}
 export async function QueryOrderTxsByAccount(
   from: string,
   end: string,
   accountId: string
-): Promise<Array<string>> {
+): Promise<DuneResult> {
   try {
     const results = await client.runQuery({
       queryId: queryId,
@@ -20,17 +26,28 @@ export async function QueryOrderTxsByAccount(
       ],
     });
     const txs = Array<string>();
+    var fee = BigNumber.from(0)
+    var volume = BigNumber.from(0)
+
     results.result?.rows.map((record) => {
+      console.log(record)
       const tx_hash = record["evt_tx_hash"];
+      const totalFees = record["totalFees"]
+      const sizeDelta = record["sizeDelta"]
+      const fillPrice = record["fillPrice"]
+
+      fee = fee.add(BigNumber.from(totalFees))
+      volume = volume.add(BigNumber.from(sizeDelta).abs().mul(BigNumber.from(fillPrice)))
+
       if (typeof tx_hash === "string" || tx_hash instanceof String) {
         txs.push(tx_hash.toString());
       } else {
         console.error("unknown type of dune result: ", tx_hash);
       }
     });
-    return txs;
+    return {txs: txs, fee: fee.toString(), volume: volume.toString()};
   } catch (error) {
     console.log("dune error", error);
-    return [];
+    return {txs: [], fee: "0", volume: "0"};
   }
 }
