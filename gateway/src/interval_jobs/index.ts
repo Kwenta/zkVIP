@@ -47,7 +47,6 @@ export async function getStorageInfos() {
 }
 
 export async function prepareUserTradeVolumeFees() {
-  console.log("prepareUserTradeVolumeFees triggered: ", (new Date()).toLocaleString())
   try {
     let promises = Array<Promise<void>>();
     promises.push(prepareUserSwapAmountInput());

@@ -178,16 +178,11 @@ async function findUserExistingUTVF(
 }
 
 async function findUserTradeVolumeFees(status: bigint): Promise<any> {
-  const now = new Date();
-  now.setMinutes(now.getMinutes() - 2);
   return prisma.user_trade_volume_fee.findMany({
     take: 10,
     where: {
       status: {
         equals: status,
-      },
-      update_time: {
-        lte: now,
       },
     },
   });

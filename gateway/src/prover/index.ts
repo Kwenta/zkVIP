@@ -9,6 +9,7 @@ import {
   PROOF_STATUS_BREVIS_QUERY_ERROR,
   PROOF_STATUS_BREVIS_REQUEST_SUBMITTED,
   PROOF_STATUS_INPUT_READY,
+  PROOF_STATUS_PROOF_UPLOAD_SENT,
   PROOF_STATUS_PROOF_UPLOADED,
   PROOF_STATUS_PROVING_FINISHED,
   PROOF_STATUS_PROVING_SENT,
@@ -157,7 +158,15 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
   }
 }
 
-async function uploadUserTradeVolumeFeeProof(utvf: UserTradeVolumeFee) {
+async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
+  const utvf = await getUserTradeVolumeFee(utvfOld.id)
+  if (utvf.status != PROOF_STATUS_PROVING_FINISHED) {
+    return 
+  }
+
+  utvf.status = PROOF_STATUS_PROOF_UPLOAD_SENT
+  await updateUserTradeVolumeFee(utvf)
+
   try {
     const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
     const proof = ethers.utils.arrayify(utvf.proof || "");
