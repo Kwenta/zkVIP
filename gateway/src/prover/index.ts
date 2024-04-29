@@ -141,6 +141,10 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
 
     utvf.proof = ethers.utils.hexlify(proofRes.serializeBinary());
     utvf.status = PROOF_STATUS_PROVING_FINISHED;
+
+    const now = new Date()
+    console.log("User Circuit Proved: ", utvf.id, now.toLocaleDateString())
+
     updateUserTradeVolumeFee(utvf).then(value => {
       uploadUserTradeVolumeFeeProof(value)
     });
@@ -165,6 +169,10 @@ async function uploadUserTradeVolumeFeeProof(utvf: UserTradeVolumeFee) {
     utvf.brevis_query_fee = brevisRes.fee;
     utvf.brevis_query_hash = brevisRes.id;
     utvf.status = PROOF_STATUS_PROOF_UPLOADED;
+
+    const now = new Date()
+    console.log("Request submitted: ", utvf.id, now.toLocaleDateString())
+
     updateUserTradeVolumeFee(utvf);
   } catch (err) {
     utvf.status = PROOF_STATUS_BREVIS_QUERY_ERROR;

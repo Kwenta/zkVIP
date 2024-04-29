@@ -79,6 +79,8 @@ app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
       BigInt(tym),
     );
 
+    console.log("New User Come In: ", utvf.id, now.toLocaleDateString())
+
     queryUserSwapAmountInput(utvf)
     res.json({ query_id: utvf.id });
   } catch (error) {
