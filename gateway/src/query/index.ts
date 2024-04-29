@@ -30,14 +30,15 @@ export async function QueryOrderTxsByAccount(
     var volume = BigNumber.from(0)
 
     results.result?.rows.map((record) => {
-      console.log(record)
       const tx_hash = record["evt_tx_hash"];
       const totalFees = record["totalFees"]
       const sizeDelta = record["sizeDelta"]
       const fillPrice = record["fillPrice"]
 
       fee = fee.add(BigNumber.from(totalFees))
-      volume = volume.add(BigNumber.from(sizeDelta).abs().mul(BigNumber.from(fillPrice)))
+      volume = volume.add(
+        BigNumber.from(sizeDelta).abs().mul(BigNumber.from(fillPrice)).div(BigNumber.from(1000000000000000000))
+      )
 
       if (typeof tx_hash === "string" || tx_hash instanceof String) {
         txs.push(tx_hash.toString());
