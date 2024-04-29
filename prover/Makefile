@@ -26,5 +26,5 @@ config-large:
 	sudo systemctl daemon-reload
 	sudo systemctl enable kwenta-fee-reimbursement-large-prover
 
-start-fee-reimbursement: config-large install-large
+start-fee-reimbursement-large: config-large install-large
 	sudo systemctl restart kwenta-fee-reimbursement-large-prover
