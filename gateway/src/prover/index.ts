@@ -150,7 +150,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
         Number(utvf.src_chain_id),
         Number(utvf.dst_chain_id)
       )
-      console.log('brevis query hash', prepareQueryResponse.query_hash);
+      console.log('Ready to submit brevis query hash', prepareQueryResponse.query_hash, (new Date()).toLocaleString());
       utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
       utvf.brevis_query_fee = prepareQueryResponse.fee
       utvf.brevis_query_hash = prepareQueryResponse.query_hash
@@ -181,9 +181,8 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
   await updateUserTradeVolumeFee(utvf)
 
   try {
-   
     console.log("Proof upload sent: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())
-    const getProofRes = await prover.getProof("61a6cc0c-4219-df9d-2e56-ea2125e143e7")
+    const getProofRes = await prover.getProof(utvf.prover_id)
     if (getProofRes.has_err) {
       console.error(getProofRes.err.msg);
       utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
