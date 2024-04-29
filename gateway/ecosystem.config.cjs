@@ -1,7 +1,7 @@
 module.exports = {
   apps: [
     {
-      name: "AlgebraGateway",
+      name: "KwentaGateway",
       script: "dist/index.js",
       // interpreter: "./node_modules/.bin/nodemon",
       exec_mode: "cluster",
