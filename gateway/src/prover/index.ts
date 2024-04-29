@@ -82,23 +82,10 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       new ReceiptData({
         block_num: Number(data.block_num),
         tx_hash: receipt.tx_hash,
-        // 14 fields needed. 
         fields: [
           new sdk.Field(data.fields[0]),
           new sdk.Field(data.fields[1]),
           new sdk.Field(data.fields[2]),
-          new sdk.Field(data.fields[3]), 
-
-          // Placeholders
-          new sdk.Field(data.fields[3]), 
-          new sdk.Field(data.fields[3]), 
-          new sdk.Field(data.fields[3]), 
-          new sdk.Field(data.fields[3]), 
-          new sdk.Field(data.fields[3]), 
-          new sdk.Field(data.fields[3]), 
-          new sdk.Field(data.fields[3]), 
-          new sdk.Field(data.fields[3]), 
-          new sdk.Field(data.fields[3]), 
           new sdk.Field(data.fields[3]), 
         ],
       }),
