@@ -52,6 +52,8 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   const results = await Promise.all(promises);
 
   let index = 0;
+  var earlistBlk = 0
+  var latestBlk = 1
 
   for (let i = 0; i < results.length; i++) {
     const receipt = results[i];
@@ -62,8 +64,17 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       throw new Error("receipts not ready");
     }
     const data = JSON.parse(receipt.data);
+    const blkNumber= Number(data.block_num)
+    if (isNaN(blkNumber)) {
+      console.error("invalid receipt block number", data)
+    }
 
-    console.log("data", data)
+    if (earlistBlk > blkNumber) {
+      earlistBlk = blkNumber
+    } 
+    if (latestBlk < blkNumber) {
+      latestBlk = blkNumber
+    }
     proofReq.addReceipt(
       new ReceiptData({
         block_num: Number(data.block_num),
@@ -95,7 +106,10 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   const accountIdHex = BigNumber.from(utvf.account).toHexString()
   
   proofReq.setCustomInput({
-    UserAddress: asUint248(accountIdHex),
+    AccountId: asUint248(accountIdHex),
+    StartBlkNum: asUint248(earlistBlk.toString()),
+    EndBlkNum: asUint248(latestBlk.toString()),
+		YearMonth:   asUint248(utvf.trade_year_month.toString()),
   });
 
   console.log("proofReq", proofReq)
