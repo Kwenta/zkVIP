@@ -49,7 +49,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         if (feeRebate > 0) {
             user = accountModule.getAccountOwner(accountId);
             if (user != address(0)) {
-                uint256 feeInRewardToken = feeRebate * (1 ** rewardTokenDecimals) / 1e18;
+                uint256 feeInRewardToken = feeRebate * (10 ** rewardTokenDecimals) / 1e18;
                 IERC20(rewardToken).safeTransfer(user, feeInRewardToken);
             }
         }
