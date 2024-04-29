@@ -37,7 +37,7 @@ export async function QueryOrderTxsByAccount(
 
       fee = fee.add(BigNumber.from(totalFees))
       volume = volume.add(
-        BigNumber.from(sizeDelta).abs().mul(BigNumber.from(fillPrice)).div(BigNumber.from(1000000000000000000))
+        BigNumber.from(sizeDelta).abs().mul(BigNumber.from(fillPrice)).div(BigNumber.from("1000000000000000000"))
       )
 
       if (typeof tx_hash === "string" || tx_hash instanceof String) {

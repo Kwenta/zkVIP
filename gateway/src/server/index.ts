@@ -45,6 +45,9 @@ setInterval(prepareUserTradeVolumeFees, 10000);
 monitorFeeReimbursed();
 monitorBrevisRequest();
 
+const a = BigNumber.from("1000000000000000000")
+console.log("a1231313131", a)
+
 app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
   try {
     const { account, trade_year_month } = req.body;
@@ -134,13 +137,13 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     if (volume === "") {
       volume = "0"
     }
-    const volumeBN = BigNumber.from(volume).div(BigNumber.from(1000000000000000000))
+    const volumeBN = BigNumber.from(volume).div(BigNumber.from("1000000000000000000"))
 
     var fee = utvf.fee
     if (fee === "") {
       fee = "0"
     }
-    var feeBN = BigNumber.from(fee).div(BigNumber.from(1000000000000000000))
+    var feeBN = BigNumber.from(fee).div(BigNumber.from("1000000000000000000"))
 
     var tier = -1
     if (volumeBN.toNumber() <= 100000) {
