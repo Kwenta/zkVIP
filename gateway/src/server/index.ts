@@ -144,21 +144,20 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     var feeBN = BigNumber.from(fee).div(BigNumber.from("1000000000000000000"))
 
     var tier = -1
-    if (volumeBN.toNumber() <= 100000) {
-      tier = -1
-    } else if (volumeBN.toNumber() <= 100000) {
-      tier = 0
-      feeBN = feeBN.mul(BigNumber.from(2)).div(BigNumber.from(10))
-    } else if (volumeBN.toNumber() <= 1000000) {
-      tier = 1
-      feeBN = feeBN.mul(BigNumber.from(5)).div(BigNumber.from(10))
-    } else if (volumeBN.toNumber() <= 10000000) {
-      tier = 2    
-      feeBN = feeBN.mul(BigNumber.from(75)).div(BigNumber.from(100))
-    } else if (volumeBN.toNumber() <= 100000000) {
+
+    if (volumeBN.toNumber() > 100000000) {
       tier = 3
       feeBN = feeBN.mul(BigNumber.from(9)).div(BigNumber.from(10))
-    } 
+    } else if (volumeBN.toNumber() > 10000000) {
+      tier = 2    
+      feeBN = feeBN.mul(BigNumber.from(75)).div(BigNumber.from(100))
+    } else if (volumeBN.toNumber() > 1000000) {
+      tier = 1
+      feeBN = feeBN.mul(BigNumber.from(5)).div(BigNumber.from(10))
+    } else if (volumeBN.toNumber() > 100000) {
+      tier = 0
+      feeBN = feeBN.mul(BigNumber.from(2)).div(BigNumber.from(10))
+    }
 
     res.json({
       status: status,
