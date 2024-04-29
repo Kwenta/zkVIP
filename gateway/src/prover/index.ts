@@ -2,10 +2,13 @@ import * as sdk from "brevis-sdk-typescript";
 import { Receipt, UserTradeVolumeFee } from "../server/type.ts";
 import {
   getReceipt,
+  getUserTradeVolumeFee,
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
 import {
   PROOF_STATUS_BREVIS_QUERY_ERROR,
+  PROOF_STATUS_BREVIS_REQUEST_SUBMITTED,
+  PROOF_STATUS_INPUT_READY,
   PROOF_STATUS_PROOF_UPLOADED,
   PROOF_STATUS_PROVING_FINISHED,
   PROOF_STATUS_PROVING_SENT,
@@ -115,7 +118,12 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   return proofReq;
 };
 
-async function sendUserTradeVolumeFeeProvingRequest(utvf: UserTradeVolumeFee) {
+async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee) {
+  const utvf = await getUserTradeVolumeFee(utvfOld.id)
+  if (utvf.status != PROOF_STATUS_INPUT_READY) {
+    return 
+  }
+
   utvf.status = PROOF_STATUS_PROVING_SENT
   await updateUserTradeVolumeFee(utvf)
   const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);

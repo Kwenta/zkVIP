@@ -16,6 +16,7 @@ import {
   getReceiptInfos,
   getStorageInfos,
   prepareUserTradeVolumeFees,
+  queryUserSwapAmountInput,
 } from "../interval_jobs/index.ts";
 import {
   monitorFeeReimbursed,
@@ -77,6 +78,8 @@ app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
       account,
       BigInt(tym),
     );
+
+    queryUserSwapAmountInput(utvf)
     res.json({ query_id: utvf.id });
   } catch (error) {
     res.status(500);

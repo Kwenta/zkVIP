@@ -2,12 +2,14 @@ import {
   PROOF_STATUS_INELIGIBLE_ACCOUNT_ID,
   PROOF_STATUS_INIT,
   PROOF_STATUS_INPUT_READY,
+  PROOF_STATUS_INPUT_REQUEST_SENT,
   PROOF_STATUS_PROVING_FINISHED,
 } from "../constants/index.ts";
 import {
   findNotReadyReceipts, 
   findNotReadyStorages, 
   findUserTradeVolumeFees,
+  getUserTradeVolumeFee,
   insertReceipt,
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
@@ -69,7 +71,14 @@ async function prepareUserSwapAmountInput() {
   }
 }
 
-async function queryUserSwapAmountInput(userSwapAmount: any) {
+export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
+  const userSwapAmount = await getUserTradeVolumeFee(userSwapAmountOld.id)
+
+  if (userSwapAmount.status != PROOF_STATUS_INIT) {
+    return 
+  }
+  userSwapAmount.status = PROOF_STATUS_INPUT_REQUEST_SENT
+  await updateUserTradeVolumeFee(userSwapAmount)
   const ym = Number(userSwapAmount.trade_year_month)
 
   const month = ym % 100
