@@ -115,6 +115,9 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
   await updateUserTradeVolumeFee(utvf)
   try {
     const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
+    const now = new Date()
+    console.log("User Circuit Proof Request Sent: ", utvf.id, now.getUTCSeconds())
+
     const proofRes = await prover.prove(proofReq);
 
     // error handling
@@ -142,8 +145,8 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
     utvf.proof = ethers.utils.hexlify(proofRes.serializeBinary());
     utvf.status = PROOF_STATUS_PROVING_FINISHED;
 
-    const now = new Date()
-    console.log("User Circuit Proved: ", utvf.id, now.getUTCSeconds())
+    const now1 = new Date()
+    console.log("User Circuit Proved: ", utvf.id, now1.getUTCSeconds())
 
     updateUserTradeVolumeFee(utvf).then(value => {
       uploadUserTradeVolumeFeeProof(value)
@@ -159,6 +162,8 @@ async function uploadUserTradeVolumeFeeProof(utvf: UserTradeVolumeFee) {
     const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
     const proof = ethers.utils.arrayify(utvf.proof || "");
     let proofRes = sdk.ProveResponse.deserializeBinary(proof);
+    const now = new Date()
+    console.log("Request sent: ", utvf.id, now.getUTCSeconds())
 
     const brevisRes = await brevis.submit(
       proofReq,
@@ -170,8 +175,8 @@ async function uploadUserTradeVolumeFeeProof(utvf: UserTradeVolumeFee) {
     utvf.brevis_query_hash = brevisRes.id;
     utvf.status = PROOF_STATUS_PROOF_UPLOADED;
 
-    const now = new Date()
-    console.log("Request submitted: ", utvf.id, now.getUTCSeconds())
+    const now1 = new Date()
+    console.log("Request submitted: ", utvf.id, now1.getUTCSeconds())
 
     updateUserTradeVolumeFee(utvf);
   } catch (err) {
