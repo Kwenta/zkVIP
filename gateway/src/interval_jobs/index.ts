@@ -119,12 +119,11 @@ export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
   userSwapAmount.volume = duneResult.volume
   userSwapAmount.fee = duneResult.fee
 
-  const now = new Date()
-  console.log("User Circuit Input Ready: ", userSwapAmount.id, now.getUTCSeconds())
+  console.log("User Circuit Input Ready: ", userSwapAmount.id, (new Date()).toLocaleString())
 
   updateUserTradeVolumeFee(userSwapAmount).then(value => {
     sendUserTradeVolumeFeeProvingRequest(value)
-  });
+  }).then();
 }
 
 async function prepareUserSwapAmountProof() {

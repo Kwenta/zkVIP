@@ -114,9 +114,9 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
   utvf.status = PROOF_STATUS_PROVING_SENT
   await updateUserTradeVolumeFee(utvf)
   try {
+    console.log("Start to Build Proof Request: ", utvf.id, (new Date()).toLocaleString())
     const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
-    const now = new Date()
-    console.log("User Circuit Proof Request Sent: ", utvf.id, now.getUTCSeconds())
+    console.log("User Circuit Proof Request Sent: ", utvf.id, (new Date()).toLocaleString())
 
     const proofRes = await prover.prove(proofReq);
 
@@ -145,13 +145,13 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
     utvf.proof = ethers.utils.hexlify(proofRes.serializeBinary());
     utvf.status = PROOF_STATUS_PROVING_FINISHED;
 
-    const now1 = new Date()
-    console.log("User Circuit Proved: ", utvf.id, now1.getUTCSeconds())
+    console.log("User Circuit Proved: ", utvf.id, (new Date()).toLocaleString())
 
     updateUserTradeVolumeFee(utvf).then(value => {
       uploadUserTradeVolumeFeeProof(value)
-    });
+    }).then();
   } catch (error) {
+    console.log("Prove failed back to PROOF_STATUS_INPUT_READY: ", utvf.id, (new Date()).toLocaleString())
     utvf.status = PROOF_STATUS_INPUT_READY
     await updateUserTradeVolumeFee(utvf)
   }
@@ -162,8 +162,7 @@ async function uploadUserTradeVolumeFeeProof(utvf: UserTradeVolumeFee) {
     const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
     const proof = ethers.utils.arrayify(utvf.proof || "");
     let proofRes = sdk.ProveResponse.deserializeBinary(proof);
-    const now = new Date()
-    console.log("Request sent: ", utvf.id, now.getUTCSeconds())
+    console.log("Request sent: ", utvf.id, (new Date()).toLocaleString())
 
     const brevisRes = await brevis.submit(
       proofReq,
@@ -175,8 +174,7 @@ async function uploadUserTradeVolumeFeeProof(utvf: UserTradeVolumeFee) {
     utvf.brevis_query_hash = brevisRes.id;
     utvf.status = PROOF_STATUS_PROOF_UPLOADED;
 
-    const now1 = new Date()
-    console.log("Request submitted: ", utvf.id, now1.getUTCSeconds())
+    console.log("Request submitted: ", utvf.id, (new Date()).toLocaleString())
 
     updateUserTradeVolumeFee(utvf);
   } catch (err) {

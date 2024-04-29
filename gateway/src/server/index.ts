@@ -36,7 +36,7 @@ app.use((req, res, next) => {
   next();
 });
 getReceiptInfos().then();
-setInterval(getReceiptInfos, 10000);
+setInterval(getReceiptInfos, 4000);
 getStorageInfos().then();
 setInterval(getStorageInfos, 10000);
 prepareUserTradeVolumeFees().then();
@@ -82,7 +82,7 @@ app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
       BigInt(tym),
     );
 
-    console.log("New User Comes In: ", utvf.id, now.getUTCSeconds())
+    console.log("New User Comes In: ", utvf.id, (new Date()).toLocaleString())
 
     queryUserSwapAmountInput(utvf)
     res.json({ query_id: utvf.id });
