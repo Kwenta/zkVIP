@@ -92,7 +92,12 @@ export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
     year1++
   }
 
+  console.log("Start to send dune query: ", userSwapAmount.id, (new Date()).toLocaleString())
+
   const duneResult = await QueryOrderTxsByAccount(year0+"-"+monthString+"-01", year1+"-"+nextMonthString+"-01", userSwapAmount.account)
+
+  console.log("Dune resule returned: ", userSwapAmount.id, (new Date()).toLocaleString())
+
 
   if (duneResult.txs.length === 0) {
     console.error("no order settled found")

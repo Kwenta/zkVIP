@@ -45,9 +45,6 @@ setInterval(prepareUserTradeVolumeFees, 10000);
 monitorFeeReimbursed();
 monitorBrevisRequest();
 
-const a = BigNumber.from("1000000000000000000")
-console.log("a1231313131", a)
-
 app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
   try {
     const { account, trade_year_month } = req.body;
@@ -84,7 +81,7 @@ app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
 
     console.log("New User Comes In: ", utvf.id, (new Date()).toLocaleString())
 
-    queryUserSwapAmountInput(utvf)
+    queryUserSwapAmountInput(utvf).then()
     res.json({ query_id: utvf.id });
   } catch (error) {
     res.status(500);
