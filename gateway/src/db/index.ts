@@ -51,7 +51,7 @@ async function getReceipt(id: string): Promise<any> {
 async function findNotReadyReceipts(): Promise<any> {
   var now = new Date();
   return prisma.receipt.findMany({
-    take: 20,
+    take: 10,
     where: {
       status: STATUS_INIT,
       update_time: {

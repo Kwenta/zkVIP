@@ -37,11 +37,11 @@ app.use((req, res, next) => {
   next();
 });
 getReceiptInfos().then();
-setInterval(getReceiptInfos, 4000);
+setInterval(getReceiptInfos, 1000);
 getStorageInfos().then();
 setInterval(getStorageInfos, 10000);
 prepareUserTradeVolumeFees().then();
-setInterval(prepareUserTradeVolumeFees, 10000);
+setInterval(prepareUserTradeVolumeFees, 2000);
 
 monitorFeeReimbursed();
 monitorBrevisRequest();
