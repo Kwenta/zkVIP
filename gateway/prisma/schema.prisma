@@ -8,30 +8,31 @@ datasource db {
 }
 
 model receipt {
-  id                     String    @id
-  tx_hash                String? 
-  status                 BigInt?
-  data                   String?
-  create_time            DateTime? @db.Timestamptz(6)
-  update_time            DateTime? @db.Timestamptz(6)
+  id          String    @id
+  tx_hash     String?
+  status      BigInt?
+  data        String?
+  create_time DateTime? @db.Timestamptz(6)
+  update_time DateTime? @db.Timestamptz(6)
 }
 
 model user_trade_volume_fee {
-  id                 String    @id
-  src_chain_id       BigInt?
-  dst_chain_id       BigInt?
-  trade_year_month   BigInt?
-  account            String?
-  volume             String?
-  fee                String?
-  receipt_ids        String?
-  storage_ids        String?
-  brevis_query_hash  String?
-  brevis_query_fee   String?
-  proof              String?
-  status             BigInt?
-  create_time        DateTime? @db.Timestamptz(6)
-  update_time        DateTime? @db.Timestamptz(6)
+  id                String    @id
+  src_chain_id      BigInt?
+  dst_chain_id      BigInt?
+  trade_year_month  BigInt?
+  account           String?
+  volume            String?
+  fee               String?
+  receipt_ids       String?
+  storage_ids       String?
+  brevis_query_hash String?
+  brevis_query_fee  String?
+  proof             String?
+  status            BigInt?
+  create_time       DateTime? @db.Timestamptz(6)
+  update_time       DateTime? @db.Timestamptz(6)
+  prover_id         String?
 }
 
 model storage {
