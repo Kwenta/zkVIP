@@ -120,7 +120,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
     console.log("User Circuit Proof Request Sent: ", utvf.id, (new Date()).toLocaleString())
 
     const proofRes = await prover.proveAsync(proofReq);
-    console.log("proofRes proof_id",proofRes.proof_id)
+    console.log("proofRes proof_id",proofRes.proof_id, (new Date()).toLocaleString())
     // error handling
     if (proofRes.has_err) {
       const err = proofRes.err;

@@ -41,26 +41,31 @@ const userSwapAmountApp = FeeReimbursementApp__factory.connect(
 );
 
 async function monitorFeeReimbursed() {
-  userSwapAmountApp.on("FeeReimbursed", (user, trade_year_month, fee) => {
+  // event FeeReimbursed(address indexed user, uint128 accountId, uint24 tradeYearMonth, uint248 feeRebate)
+  userSwapAmountApp.on("FeeReimbursed", (user, accountId, tradeYearMonth, fee) => {
     const userAddress = user as string;
-    const tradeYearMonthBN = trade_year_month as BigNumber;
+    const accountIdBN = accountId as BigNumber;
+    const tradeYearMonthBN = tradeYearMonth as BigNumber;
 
     if (
       userAddress === undefined ||
       userAddress === null ||
       tradeYearMonthBN === undefined ||
-      tradeYearMonthBN === null 
+      tradeYearMonthBN === null ||
+      accountIdBN === undefined ||
+      accountIdBN === null
     ) {
       console.log(
         "reimbursement triggered with unexpected value:: ",
         user,
-        trade_year_month,
+        accountId,
+        tradeYearMonth,
         fee
       );
       return;
     }
 
-    findUserExistingUTVF(userAddress, BigInt(tradeYearMonthBN.toNumber()))
+    findUserExistingUTVF(accountIdBN.toString(), BigInt(tradeYearMonthBN.toNumber()))
       .then(utvf => {
         if (utvf) {
           utvf.status = PROOF_STATUS_ONCHAIN_VERIFIED
@@ -70,8 +75,8 @@ async function monitorFeeReimbursed() {
         console.error(
           "failed to update user swap amount",
           user,
-          user,
-          trade_year_month,
+          accountId,
+          tradeYearMonth,
           error
         );
       })
