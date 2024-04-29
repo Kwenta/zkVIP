@@ -15,6 +15,7 @@ type UserTradeVolumeFee = {
   create_time: Date;
   update_time: Date;
   prover_id: string;
+  request_sent: boolean;
 };
 
 type Receipt = {

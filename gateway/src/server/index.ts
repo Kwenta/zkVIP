@@ -2,16 +2,16 @@ import express from "express";
 import { findUserExistingUTVF, getUserTradeVolumeFee, insertUserTradeVolumeFee } from "../db/index.ts";
 import {
   PROOF_STATUS_ONCHAIN_VERIFIED,
-  PROOF_STATUS_PROOF_UPLOADED,
   
   FEE_REIMBURSEMENT_INFO_STATUS_INIT,
   FEE_REIMBURSEMENT_INFO_STATUS_NEED_TO_SUBMIT_REQUEST,
   FEE_REIMBURSEMENT_INFO_STATUS_UNDEFINED,
   FEE_REIMBURSEMENT_INFO_STATUS_WAITING_FOR_RESULT,
   FEE_REIMBURSEMENT_INFO_STATUS_FEE_REIMBURSED,
-  PROOF_STATUS_BREVIS_REQUEST_SUBMITTED,
   FEE_REIMBURSEMENT_INFO_STATUS_INELIGIBLE_ACCOUNT_ID,
   PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
+  PROOF_STATUS_INELIGIBLE_ACCOUNT_ID,
+  PROOF_STATUS_BREVIS_QUERY_ERROR,
 } from "../constants/index.ts";
 import {
   getReceiptInfos,
@@ -113,17 +113,23 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     if (Number(utvf.status) == Number(PROOF_STATUS_ONCHAIN_VERIFIED)) {
       status = FEE_REIMBURSEMENT_INFO_STATUS_FEE_REIMBURSED;
       message = "Fee reimbursed";
-    } else if ( Number(utvf.status) == Number(PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED)) {
+    } else if (Number(utvf.status) == Number(PROOF_STATUS_BREVIS_QUERY_ERROR)) {
+      status = FEE_REIMBURSEMENT_INFO_STATUS_FEE_REIMBURSED;
+      message = "unsupported user, please contact custom support";
+    } else if (Number(utvf.status) >= Number(PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED)
+      && Number(utvf.status) < Number(PROOF_STATUS_BREVIS_QUERY_ERROR)
+      && !utvf.request_sent
+    ) {
       status = FEE_REIMBURSEMENT_INFO_STATUS_NEED_TO_SUBMIT_REQUEST;
       message =
         "You need to submit SendRequest transaction with query_hash and query_fee on brevis request contract." +
         "And use address(" +
         process.env.FEE_REIMBURSEMENT +
         ") as _callback";
-    } else if ( Number(utvf.status) == Number(PROOF_STATUS_BREVIS_REQUEST_SUBMITTED)) {
+    } else if (utvf.request_sent) {
       status = FEE_REIMBURSEMENT_INFO_STATUS_WAITING_FOR_RESULT;
       message = "Brevis is preparing swap amount proof";
-    } else if ( Number(utvf.status) == Number(PROOF_STATUS_PROOF_UPLOADED)) {
+    } else if ( Number(utvf.status) == Number(PROOF_STATUS_INELIGIBLE_ACCOUNT_ID)) {
       status = FEE_REIMBURSEMENT_INFO_STATUS_INELIGIBLE_ACCOUNT_ID
       message = "No order settled info found for this account id";
     } else {

@@ -1,7 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import {
-  PROOF_STATUS_BREVIS_REQUEST_SUBMITTED,
   PROOF_STATUS_INIT,
   PROOF_STATUS_INPUT_READY,
   STATUS_INIT,
@@ -152,6 +151,7 @@ async function updateUserTradeVolumeFee(utvf: any): Promise<any> {
       status: utvf.status,
       update_time: new Date(),
       prover_id: utvf.prover_id,
+      request_sent: utvf.request_sent,
     },
   });
 }
@@ -195,12 +195,12 @@ async function updateBrevisRequestStatus(
   return prisma.user_trade_volume_fee.updateMany({
     where: {
       brevis_query_hash: brevis_query_hash?.toLocaleLowerCase(),
-      status: {
-        lt: PROOF_STATUS_BREVIS_REQUEST_SUBMITTED,
+      request_sent: {
+        equals: false,
       }
     },
     data: {
-      status: PROOF_STATUS_BREVIS_REQUEST_SUBMITTED,
+      request_sent: true,
     },
   });
 }
