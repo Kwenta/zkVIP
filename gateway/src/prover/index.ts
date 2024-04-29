@@ -64,7 +64,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       continue;
     }
     if (receipt.status !== STATUS_READY) {
-      throw new Error("receipts not ready");
+      throw new Error("receipts not ready"); 
     }
     const data = JSON.parse(receipt.data);
     const blkNumber= Number(data.block_num)
@@ -126,35 +126,41 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
 
   utvf.status = PROOF_STATUS_PROVING_SENT
   await updateUserTradeVolumeFee(utvf)
-  const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
-  const proofRes = await prover.prove(proofReq);
-  // // error handling
-  if (proofRes.has_err) {
-    const err = proofRes.err;
-    switch (err.code) {
-      case ErrCode.ERROR_INVALID_INPUT:
-        console.error("invalid receipt/storage/transaction input:", err.msg);
-        // handle invalid data input...
-        break;
-      case ErrCode.ERROR_INVALID_CUSTOM_INPUT:
-        console.error("invalid custom input:", err.msg);
-        // handle invalid custom input assignment...
-        break;
-      case ErrCode.ERROR_FAILED_TO_PROVE:
-        console.error("failed to prove:", err.msg);
-        // handle failed to prove case...
-        break;
-      default:
-        break;
-    }
-    return;
-  }
+  try {
+    const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
+    const proofRes = await prover.prove(proofReq);
 
-  utvf.proof = ethers.utils.hexlify(proofRes.serializeBinary());
-  utvf.status = PROOF_STATUS_PROVING_FINISHED;
-  updateUserTradeVolumeFee(utvf).then(value => {
-    uploadUserTradeVolumeFeeProof(value)
-  });
+    // error handling
+    if (proofRes.has_err) {
+      const err = proofRes.err;
+      switch (err.code) {
+        case ErrCode.ERROR_INVALID_INPUT:
+          console.error("invalid receipt/storage/transaction input:", err.msg);
+          // handle invalid data input...
+          break;
+        case ErrCode.ERROR_INVALID_CUSTOM_INPUT:
+          console.error("invalid custom input:", err.msg);
+          // handle invalid custom input assignment...
+          break;
+        case ErrCode.ERROR_FAILED_TO_PROVE:
+          console.error("failed to prove:", err.msg);
+          // handle failed to prove case...
+          break;
+        default:
+          break;
+      }
+      return;
+    }
+
+    utvf.proof = ethers.utils.hexlify(proofRes.serializeBinary());
+    utvf.status = PROOF_STATUS_PROVING_FINISHED;
+    updateUserTradeVolumeFee(utvf).then(value => {
+      uploadUserTradeVolumeFeeProof(value)
+    });
+  } catch (error) {
+    utvf.status = PROOF_STATUS_INPUT_READY
+    await updateUserTradeVolumeFee(utvf)
+  }
 }
 
 async function uploadUserTradeVolumeFeeProof(utvf: UserTradeVolumeFee) {
