@@ -12,7 +12,7 @@ import (
 
 var serviceName = flag.String("service", "", "the name of the service to start")
 var port = flag.Uint("port", 43248, "the port to start the service at")
-var numMaxDataPoints = flag.Uint("numMaxDataPoints", 512, "sdk NumMaxDataPoints")
+var numMaxDataPoints = flag.Uint("numMaxDataPoints", 256, "sdk NumMaxDataPoints")
 var maxReceipts = flag.Int("maxReceipts", 256, "maxReceipts")
 
 // example usage: prover -service="totalfee" -port=33248
