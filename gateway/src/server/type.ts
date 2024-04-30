@@ -27,6 +27,7 @@ type Receipt = {
   update_time: Date;
   should_be_filtered_out: boolean;
   reason: string;
+  account: string;
 };
 
 type Storage = {

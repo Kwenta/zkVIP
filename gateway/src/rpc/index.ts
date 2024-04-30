@@ -28,7 +28,8 @@ async function querySingleReceipt(receipt: any) {
             logAddress ===
               "0x0A2AF931eFFd34b81ebcc57E3d3c9B1E1dE1C9Ce".toLowerCase() &&
             topic0.toLowerCase() ===
-              "0x460080a757ec90719fe90ab2384c0196cdeed071a9fd7ce1ada43481d96b7db5"
+              "0x460080a757ec90719fe90ab2384c0196cdeed071a9fd7ce1ada43481d96b7db5" &&
+            BigNumber.from(log.topics[2]).eq(BigNumber.from(receipt.account))
           ) {
             logsFound = true;
             data = JSON.stringify({

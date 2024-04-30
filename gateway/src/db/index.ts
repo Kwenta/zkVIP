@@ -10,11 +10,12 @@ import { equal } from "assert";
 
 const prisma = new PrismaClient();
 
-async function insertReceipt(tx_hash: string): Promise<any> {
+async function insertReceipt(tx_hash: string, account: string): Promise<any> {
   return prisma.receipt.create({
     data: {
       id: uuidv4(),
       tx_hash: tx_hash?.toLocaleLowerCase(),
+      account: account,
       status: STATUS_INIT,
       create_time: new Date(),
       update_time: new Date(),

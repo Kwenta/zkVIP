@@ -110,7 +110,7 @@ export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
 
   duneResult.txs.forEach((tx) => {
     promises.push(
-      insertReceipt(tx).then((receipt) => {
+      insertReceipt(tx, userSwapAmount.account).then((receipt) => {
         return receipt.id;
       })
     );
