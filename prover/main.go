@@ -57,5 +57,5 @@ func startService(c sdk.AppCircuit, numMaxDataPoints uint, maxReceipts int) {
 		os.Exit(1)
 	}
 
-	proverService.Serve(*port)
+	proverService.Serve("", *port)
 }
