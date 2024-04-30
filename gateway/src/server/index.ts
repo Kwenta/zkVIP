@@ -25,6 +25,7 @@ import {
 } from "../ether_interactions/index.ts";
 import { UserTradeVolumeFee } from "./type.ts";
 import { BigNumber } from "ethers";
+import { QueryOrderTxsByAccount } from "../query/index.ts";
 
 const app = express();
 
@@ -36,15 +37,19 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Headers", "Content-Type");
   next();
 });
-getReceiptInfos().then();
-setInterval(getReceiptInfos, 1000);
-getStorageInfos().then();
-setInterval(getStorageInfos, 10000);
-prepareUserTradeVolumeFees().then();
-setInterval(prepareUserTradeVolumeFees, 2000);
+// getReceiptInfos().then();
+// setInterval(getReceiptInfos, 1000);
+// getStorageInfos().then();
+// setInterval(getStorageInfos, 10000);
+// prepareUserTradeVolumeFees().then();
+// setInterval(prepareUserTradeVolumeFees, 2000);
 
-monitorFeeReimbursed();
-monitorBrevisRequest();
+// monitorFeeReimbursed();
+// monitorBrevisRequest();
+
+QueryOrderTxsByAccount("2024-03-01", "2024-04-01", "170141183460469231731687303715884106075").then().catch(error => {
+console.log(error)
+})
 
 app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
   try {
