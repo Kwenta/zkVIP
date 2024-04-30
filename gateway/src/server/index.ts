@@ -163,6 +163,9 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     } else if (volumeBN.toNumber() > 100000) {
       tier = 0
       feeBN = feeBN.mul(BigNumber.from(2)).div(BigNumber.from(10))
+    } else {
+      feeBN = BigNumber.from(0)
+      message = "Ineligble user"
     }
 
     res.json({
