@@ -45,13 +45,10 @@ async function monitorFeeReimbursed() {
   userSwapAmountApp.on("FeeReimbursed", (user, accountId, tradeYearMonth, fee) => {
     const userAddress = user as string;
     const accountIdBN = accountId as BigNumber;
-    const tradeYearMonthBN = tradeYearMonth as BigNumber;
     console.log("Fee Reimbursed Event", user, accountId, tradeYearMonth, fee)
     if (
       userAddress === undefined ||
       userAddress === null ||
-      tradeYearMonthBN === undefined ||
-      tradeYearMonthBN === null ||
       accountIdBN === undefined ||
       accountIdBN === null
     ) {
@@ -65,7 +62,7 @@ async function monitorFeeReimbursed() {
       return;
     }
 
-    findUserExistingUTVF(accountIdBN.toString(), BigInt(tradeYearMonthBN.toNumber()))
+    findUserExistingUTVF(accountIdBN.toString(), BigInt(tradeYearMonth.toString()))
       .then(utvf => {
         if (utvf) {
           utvf.status = PROOF_STATUS_ONCHAIN_VERIFIED

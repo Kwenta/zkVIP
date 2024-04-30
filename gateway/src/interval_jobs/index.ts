@@ -1,3 +1,4 @@
+import { BigNumber } from "ethers";
 import {
   PROOF_STATUS_INELIGIBLE_ACCOUNT_ID,
   PROOF_STATUS_INIT,
@@ -101,6 +102,11 @@ export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
 
   if (duneResult.txs.length === 0) {
     console.error("no order settled found")
+    userSwapAmount.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID
+    updateUserTradeVolumeFee(userSwapAmount)
+    return
+  } else if (BigNumber.from(duneResult.volume).lte(BigNumber.from("100000000000000000000000"))) {
+    console.error("invalid volume")
     userSwapAmount.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID
     updateUserTradeVolumeFee(userSwapAmount)
     return
