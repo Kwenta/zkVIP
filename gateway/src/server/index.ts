@@ -131,7 +131,15 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       message = "Brevis is preparing swap amount proof";
     } else if ( Number(utvf.status) == Number(PROOF_STATUS_INELIGIBLE_ACCOUNT_ID)) {
       status = FEE_REIMBURSEMENT_INFO_STATUS_INELIGIBLE_ACCOUNT_ID
-      message = "No order settled info found for this account id";
+      message = "Ineligible account id";
+
+      res.json({
+        status: status,
+        message: message,
+        tier: -1,
+        fee_to_reimbursed: 0,
+      });
+      return 
     } else {
       status = FEE_REIMBURSEMENT_INFO_STATUS_INIT;
       message = "Wait until query_hash and query_fee is ready";
