@@ -17,7 +17,7 @@ export async function QueryOrderTxsByAccount(
   accountId: string
 ): Promise<DuneResult> {
   try {
-    console.log("Client send dune query: ", (new Date()).toLocaleString())
+    console.log("Client send dune query: ", (new Date()).toLocaleString(), from, end, accountId)
     const results = await client.runQuery({
       queryId: queryId,
       query_parameters: [
