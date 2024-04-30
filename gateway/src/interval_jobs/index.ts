@@ -106,7 +106,7 @@ export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
     updateUserTradeVolumeFee(userSwapAmount)
     return
   } else if (BigNumber.from(duneResult.volume).lte(BigNumber.from("100000000000000000000000"))) {
-    console.error("invalid volume")
+    console.error("invalid volume", duneResult.volume, userSwapAmount.account)
     userSwapAmount.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID
     updateUserTradeVolumeFee(userSwapAmount)
     return
