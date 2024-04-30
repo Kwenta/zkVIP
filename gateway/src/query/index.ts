@@ -1,4 +1,4 @@
-import { QueryParameter, DuneClient } from "@duneanalytics/client-sdk";
+import { QueryParameter, DuneClient, ExecutionPerformance } from "@duneanalytics/client-sdk";
 import * as dotenv from "dotenv";
 import { BigNumber } from "ethers";
 
@@ -21,6 +21,7 @@ export async function QueryOrderTxsByAccount(
     const results = await client.runQuery({
       queryId: queryId,
       limit: 100,
+      performance: ExecutionPerformance.Large,
       query_parameters: [
         QueryParameter.text("from", from),
         QueryParameter.text("to", end),
