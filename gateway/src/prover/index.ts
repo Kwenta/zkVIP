@@ -128,7 +128,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
       p = largeProver
     }
     const proofRes = await p.proveAsync(r.proofReq);
-    console.log("proofRes proof_id",proofRes.proof_id, (new Date()).toLocaleString())
+    console.log("proofRes proof_id ready",proofRes.proof_id, (new Date()).toLocaleString())
     // error handling
     if (proofRes.has_err) {
       const err = proofRes.err;
@@ -152,6 +152,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
     }
 
     try {
+      console.log("send prepare query request", (new Date()).toLocaleString())
       const prepareQueryResponse = await brevis.prepareQuery(
         r.proofReq, 
         proofRes.circuit_info, 
