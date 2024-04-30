@@ -14,6 +14,7 @@ model receipt {
   data        String?
   create_time DateTime? @db.Timestamptz(6)
   update_time DateTime? @db.Timestamptz(6)
+  account     String?
 }
 
 model user_trade_volume_fee {
