@@ -27,8 +27,14 @@ const {
   asUint521,
 } = sdk;
 
-const prover = new Prover("localhost:33248");
+const prover = new Prover("localhost:43248");
+const largeProver = new Prover("localhost:43249")
 const brevis = new Brevis("appsdk.brevis.network:11080");
+
+type ProofReq = {
+  proofReq: sdk.ProofRequest
+  useLarge: boolean
+}
 
 const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   const proofReq = new ProofRequest();
@@ -102,7 +108,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 		YearMonth:   asUint248(utvf.trade_year_month.toString()),
   });
 
-  return proofReq;
+  return {proofReq: proofReq, useLarge: results.length>256};
 };
 
 async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee) {
@@ -115,10 +121,13 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
   await updateUserTradeVolumeFee(utvf)
   try {
     console.log("Start to Build Proof Request: ", utvf.id, (new Date()).toLocaleString())
-    const proofReq = await buildUserTradeVolumeFeeProofReq(utvf);
+    const r = await buildUserTradeVolumeFeeProofReq(utvf);
     console.log("User Circuit Proof Request Sent: ", utvf.id, (new Date()).toLocaleString())
-
-    const proofRes = await prover.proveAsync(proofReq);
+    var p = prover
+    if (r.useLarge) {
+      p = largeProver
+    }
+    const proofRes = await p.proveAsync(r.proofReq);
     console.log("proofRes proof_id",proofRes.proof_id, (new Date()).toLocaleString())
     // error handling
     if (proofRes.has_err) {
@@ -144,7 +153,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
 
     try {
       const prepareQueryResponse = await brevis.prepareQuery(
-        proofReq, 
+        r.proofReq, 
         proofRes.circuit_info, 
         Number(utvf.src_chain_id),
         Number(utvf.dst_chain_id)
@@ -181,7 +190,12 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
 
   try {
     console.log("Proof upload sent: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())
-    const getProofRes = await prover.getProof(utvf.prover_id)
+    const ids = utvf.receipt_ids.split(",");
+    var p = prover
+    if (ids.length > 256) {
+      p = largeProver
+    }
+    const getProofRes = await p.getProof(utvf.prover_id)
     if (getProofRes.has_err) {
       console.error(getProofRes.err.msg);
       utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
