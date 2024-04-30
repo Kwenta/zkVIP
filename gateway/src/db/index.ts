@@ -196,9 +196,6 @@ async function updateBrevisRequestStatus(
   return prisma.user_trade_volume_fee.updateMany({
     where: {
       brevis_query_hash: brevis_query_hash?.toLocaleLowerCase(),
-      request_sent: {
-        equals: false,
-      }
     },
     data: {
       request_sent: true,
