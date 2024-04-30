@@ -20,40 +20,37 @@ export async function QueryOrderTxsByAccount(
     console.log("Client send dune query: ", (new Date()).toLocaleString(), from, end, accountId)
     const results = await client.runQuery({
       queryId: queryId,
-      limit: 100,
+      limit: 1500,
       query_parameters: [
         QueryParameter.text("from", from),
         QueryParameter.text("to", end),
         QueryParameter.text("account_id", accountId),
       ],
-    }).catch(error => {
-      console.log("dune error", error)
-    });
+    })
     console.log("result returned: results", results, from, end, accountId)
-    // const txs = Array<string>();
-    // var fee = BigNumber.from(0)
-    // var volume = BigNumber.from(0)
+    const txs = Array<string>();
+    var fee = BigNumber.from(0)
+    var volume = BigNumber.from(0)
 
-    // results.result?.rows.map((record) => {
-    //   const tx_hash = record["evt_tx_hash"];
-    //   const totalFees = record["totalFees"]
-    //   const sizeDelta = record["sizeDelta"]
-    //   const fillPrice = record["fillPrice"]
+    results.result?.rows.map((record) => {
+      const tx_hash = record["evt_tx_hash"];
+      const totalFees = record["totalFees"]
+      const sizeDelta = record["sizeDelta"]
+      const fillPrice = record["fillPrice"]
 
-    //   fee = fee.add(BigNumber.from(totalFees))
-    //   volume = volume.add(
-    //     BigNumber.from(sizeDelta).abs().mul(BigNumber.from(fillPrice)).div(BigNumber.from("1000000000000000000"))
-    //   )
+      fee = fee.add(BigNumber.from(totalFees))
+      volume = volume.add(
+        BigNumber.from(sizeDelta).abs().mul(BigNumber.from(fillPrice)).div(BigNumber.from("1000000000000000000"))
+      )
 
-    //   if (typeof tx_hash === "string" || tx_hash instanceof String) {
-    //     txs.push(tx_hash.toString());
-    //   } else {
-    //     console.error("unknown type of dune result: ", tx_hash);
-    //   }
-    // });
-    // console.log("dune result ready")
-    // return {txs: txs, fee: fee.toString(), volume: volume.toString()};
-    return {txs: [], fee: "0", volume: "0"};
+      if (typeof tx_hash === "string" || tx_hash instanceof String) {
+        txs.push(tx_hash.toString());
+      } else {
+        console.error("unknown type of dune result: ", tx_hash);
+      }
+    });
+    console.log("dune result ready")
+    return {txs: txs, fee: fee.toString(), volume: volume.toString()};
   } catch (error) {
     console.log("dune error", error);
     console.error("dune result ready", error)
