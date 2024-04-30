@@ -26,6 +26,7 @@ export async function QueryOrderTxsByAccount(
         QueryParameter.text("account_id", accountId),
       ],
     });
+    console.log("result returned: results", results, from, end, accountId)
     const txs = Array<string>();
     var fee = BigNumber.from(0)
     var volume = BigNumber.from(0)
@@ -47,9 +48,12 @@ export async function QueryOrderTxsByAccount(
         console.error("unknown type of dune result: ", tx_hash);
       }
     });
+    console.log("dune result ready")
     return {txs: txs, fee: fee.toString(), volume: volume.toString()};
   } catch (error) {
     console.log("dune error", error);
+    console.error("dune result ready", error)
+
     return {txs: [], fee: "0", volume: "0"};
   }
 }
