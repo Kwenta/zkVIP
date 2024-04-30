@@ -20,7 +20,7 @@ export async function QueryOrderTxsByAccount(
     console.log("Client send dune query: ", (new Date()).toLocaleString(), from, end, accountId)
     const results = await client.runQuery({
       queryId: queryId,
-      limit: 1500,
+      limit: 100,
       query_parameters: [
         QueryParameter.text("from", from),
         QueryParameter.text("to", end),
