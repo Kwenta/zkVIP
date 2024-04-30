@@ -155,7 +155,7 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     if (fee === "") {
       fee = "0"
     }
-    var feeBN = BigNumber.from(fee).div(BigNumber.from("1000000000000000000"))
+    var feeBN = BigNumber.from(fee)
 
     var tier = -1
 
@@ -183,7 +183,7 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       brevis_request_contract_address: brevisRequest,
       message: message,
       tier: tier,
-      fee_to_reimbursed: feeBN.toString(),
+      fee_to_be_reimbursed: feeBN.toString(),
     });
   } catch (error) {
     res.status(500);
