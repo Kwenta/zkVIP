@@ -27,8 +27,8 @@ const {
   asUint521,
 } = sdk;
 
-const prover = new Prover("localhost:43248");
-const largeProver = new Prover("localhost:43249")
+const prover = new Prover("222.74.155.3:43248");
+const largeProver = new Prover("222.74.155.3:43249")
 const brevis = new Brevis("appsdk.brevis.network:11080");
 
 type ProofReq = {
