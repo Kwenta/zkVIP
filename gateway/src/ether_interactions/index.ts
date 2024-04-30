@@ -46,7 +46,7 @@ async function monitorFeeReimbursed() {
     const userAddress = user as string;
     const accountIdBN = accountId as BigNumber;
     const tradeYearMonthBN = tradeYearMonth as BigNumber;
-
+    console.log("Fee Reimbursed Event", user, accountId, tradeYearMonth, fee)
     if (
       userAddress === undefined ||
       userAddress === null ||
