@@ -166,6 +166,14 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
         Number(utvf.src_chain_id),
         Number(utvf.dst_chain_id)
       )
+
+      if (prepareQueryResponse.has_err) {
+        const err = prepareQueryResponse.err;
+        console.error("Failed to prepare query", err, utvf.id)
+        utvf.status = PROOF_STATUS_BREVIS_QUERY_ERROR
+        updateUserTradeVolumeFee(utvf)
+        return 
+      }
       console.log('Ready to submit brevis query hash', prepareQueryResponse.query_hash, (new Date()).toLocaleString());
       utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
       utvf.brevis_query_fee = prepareQueryResponse.fee
