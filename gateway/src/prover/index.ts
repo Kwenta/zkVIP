@@ -29,6 +29,7 @@ const {
 
 const prover = new Prover("222.74.155.3:43248");
 const largeProver = new Prover("222.74.155.3:43249")
+const extraLargeProver = new Prover("222.74.155.3:43250")
 const brevis = new Brevis("appsdk.brevis.network:11080");
 
 type ProofReq = {
@@ -108,7 +109,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 		YearMonth:   asUint248(utvf.trade_year_month.toString()),
   });
 
-  return {proofReq: proofReq, useLarge: results.length>256};
+  return {proofReq: proofReq, length: results.length};
 };
 
 async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee) {
@@ -124,7 +125,9 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
     const r = await buildUserTradeVolumeFeeProofReq(utvf);
     console.log("User Circuit Proof Request Sent: ", utvf.id, (new Date()).toLocaleString())
     var p = prover
-    if (r.useLarge) {
+    if (r.length > 1500) {
+      p = extraLargeProver
+    } else if (r.length > 256) {
       p = largeProver
     }
     const proofRes = await p.proveAsync(r.proofReq);
@@ -193,7 +196,9 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
     console.log("Proof upload sent: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())
     const ids = utvf.receipt_ids.split(",");
     var p = prover
-    if (ids.length > 256) {
+    if (ids.length > 1500) {
+      p = extraLargeProver
+    } else if (ids.length > 256) {
       p = largeProver
     }
     const getProofRes = await p.getProof(utvf.prover_id)
