@@ -154,6 +154,10 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
       return;
     }
 
+    // Save prover id in case prepare query failed
+    utvf.prover_id = proofRes.proof_id
+    await updateUserTradeVolumeFee(utvf)
+
     try {
       console.log("send prepare query request", (new Date()).toLocaleString())
       const prepareQueryResponse = await brevis.prepareQuery(
@@ -166,7 +170,6 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
       utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
       utvf.brevis_query_fee = prepareQueryResponse.fee
       utvf.brevis_query_hash = prepareQueryResponse.query_hash
-      utvf.prover_id = proofRes.proof_id
 
       updateUserTradeVolumeFee(utvf).then(value => {
         uploadUserTradeVolumeFeeProof(value)
