@@ -98,6 +98,7 @@ const config: HardhatUserConfig = {
       avalancheFujiTestnet: process.env.SNOWTRACE_API_KEY as string,
       arbitrumSepolia: process.env.ARBISCAN_API_KEY as string,
       holeskyTest: process.env.ETHERSCAN_API_KEY as string,
+      base: process.env.BASESCAN_API_KEY as string,
     },
     customChains: [
       {
