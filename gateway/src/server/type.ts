@@ -1,8 +1,12 @@
+import moment from "moment";
+
 type UserTradeVolumeFee = {
   id: string;
   src_chain_id: bigint;
   dst_chain_id: bigint;
   trade_year_month: bigint;
+  start_ymd: bigint;
+  end_ymd: bigint;
   account: string;
   volume: string;
   fee: string;
@@ -42,4 +46,31 @@ type Storage = {
   update_time: Date;
 }; 
 
-export { UserTradeVolumeFee, Receipt, Storage };
+function validTimeNumber(input: Number): boolean {
+  return moment(input.toString(), "YYYYMMDD", true).isValid()
+}
+
+function getCurrentDay(input: number): string {
+  if (isNaN(input)) {
+    return ""
+  }
+  const date = moment(input.toString(), "YYYYMMDD", true)
+  if (!date.isValid()) {
+    return ""
+  }
+
+  return date.add(1, "d").format("YYYY-MM-DD")
+}
+function findNextDay(input: number): string {
+  if (isNaN(input)) {
+    return ""
+  }
+  const date = moment(input.toString(), "YYYYMMDD", true)
+  if (!date.isValid()) {
+    return ""
+  }
+
+  return date.add(1, "d").format("YYYY-MM-DD")
+}
+
+export { UserTradeVolumeFee, Receipt, Storage, validTimeNumber, getCurrentDay, findNextDay };

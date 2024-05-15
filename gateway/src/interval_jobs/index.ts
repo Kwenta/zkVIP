@@ -18,6 +18,7 @@ import { postSwapsQuery } from "../graphql/index.ts";
 import { sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { QueryOrderTxsByAccount } from "../query/index.ts";
 import { querySingleReceipt, querySingleStorage } from "../rpc/index.ts";
+import { findNextDay, getCurrentDay } from "../server/type.ts";
 
 export async function getReceiptInfos() {
   try {
@@ -80,22 +81,19 @@ export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
   }
   userSwapAmount.status = PROOF_STATUS_INPUT_REQUEST_SENT
   await updateUserTradeVolumeFee(userSwapAmount)
-  const ym = Number(userSwapAmount.trade_year_month)
 
-  const month = ym % 100
-  const monthString = (month + "").padStart(2, "0")
-  const nextMonth = (month + 1) % 12
-  const nextMonthString = (nextMonth + "").padStart(2, "0")
+  const start = getCurrentDay(Number(userSwapAmount.start_ymd))
+  const end = findNextDay(Number(userSwapAmount.end_ymd))
 
-  const year0 = Math.floor(ym / 100)
-  var year1 = year0
-  if (nextMonth < month) {
-    year1++
+  if (start.length === 0 || end.length === 0) {
+    console.error("invalid start end time format", userSwapAmount.start_ymd, userSwapAmount.end_ymd, userSwapAmount.id)
+    userSwapAmount.status = PROOF_STATUS_INIT
+    updateUserTradeVolumeFee(userSwapAmount)
   }
 
   console.log("Start to send dune query: ", userSwapAmount.id, (new Date()).toLocaleString())
 
-  const duneResult = await QueryOrderTxsByAccount(year0+"-"+monthString+"-01", year1+"-"+nextMonthString+"-01", userSwapAmount.account)
+  const duneResult = await QueryOrderTxsByAccount(start, end, userSwapAmount.account)
 
   console.log("Dune resule returned: ", userSwapAmount.id, (new Date()).toLocaleString())
 

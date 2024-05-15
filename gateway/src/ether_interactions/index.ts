@@ -41,11 +41,11 @@ const userSwapAmountApp = FeeReimbursementApp__factory.connect(
 );
 
 async function monitorFeeReimbursed() {
-  // event FeeReimbursed(address indexed user, uint128 accountId, uint24 tradeYearMonth, uint248 feeRebate)
-  userSwapAmountApp.on("FeeReimbursed", (user, accountId, tradeYearMonth, fee) => {
+  // event FeeReimbursed(address indexed user, uint128 accountId, uint248 feeRebate, uint32 startYearMonthDay, uint32 endYearMonthDay, uint64 startBlockNumber,uint64 endBlockNumber);
+  userSwapAmountApp.on("FeeReimbursed", (user, accountId, fee, startYearMonthDay, endYearMonthDay) => {
     const userAddress = user as string;
     const accountIdBN = accountId as BigNumber;
-    console.log("Fee Reimbursed Event", user, accountId, tradeYearMonth, fee)
+    console.log("Fee Reimbursed Event", user, accountId, fee, startYearMonthDay, endYearMonthDay)
     if (
       userAddress === undefined ||
       userAddress === null ||
@@ -56,13 +56,14 @@ async function monitorFeeReimbursed() {
         "reimbursement triggered with unexpected value:: ",
         user,
         accountId,
-        tradeYearMonth,
-        fee
+        fee,
+        startYearMonthDay, 
+        endYearMonthDay
       );
       return;
     }
-
-    findUserExistingUTVF(accountIdBN.toString(), BigInt(tradeYearMonth.toString()))
+    
+    findUserExistingUTVF(accountIdBN.toString(), BigInt(startYearMonthDay.toString()), BigInt(endYearMonthDay.toString()))
       .then(utvf => {
         if (utvf) {
           utvf.status = PROOF_STATUS_ONCHAIN_VERIFIED
@@ -73,7 +74,9 @@ async function monitorFeeReimbursed() {
           "failed to update user swap amount",
           user,
           accountId,
-          tradeYearMonth,
+          fee,
+          startYearMonthDay, 
+          endYearMonthDay,
           error
         );
       })

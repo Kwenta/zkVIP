@@ -23,8 +23,10 @@ import {
   monitorFeeReimbursed,
   monitorBrevisRequest,
 } from "../ether_interactions/index.ts";
-import { UserTradeVolumeFee } from "./type.ts";
+import { validTimeNumber, UserTradeVolumeFee, findNextDay } from "./type.ts";
 import { BigNumber } from "ethers";
+import { monitorEventLoopDelay } from "perf_hooks";
+import moment from "moment";
 
 const app = express();
 
@@ -48,23 +50,43 @@ monitorBrevisRequest();
 
 app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
   try {
-    const { account, trade_year_month } = req.body;
+    const { account, start_year_month_day, end_year_month_day } = req.body;
 
-    const tym = Number(trade_year_month)
+    const start = Number(start_year_month_day)
+    const end = Number(end_year_month_day)
 
-    const month = tym % 100
-
-    const now = new Date();
-    const utcMonth = now.getUTCMonth() + 1 // 1--->12
-    const fullYear = now.getUTCFullYear()
-  
-    if (isNaN(tym) || tym < 202402 || (tym >= utcMonth + fullYear * 100) || month > 13) {
+    if (isNaN(start) || isNaN(end)) {
       res.status(500);
       res.send({ error: true, message: "invalid claim trade time period" });
       return
     }
-    
-    var utvf = await findUserExistingUTVF(account, BigInt(tym));
+
+    if (start > end) {
+      res.status(500);
+      res.send({ error: true, message: "start is bigger than end" });
+      return
+    }
+
+
+    if (end >= Number((moment(new Date())).format('YYYYMMDD'))) {
+      res.status(500);
+      res.send({ error: true, message: "invalid end trade period" });
+      return
+    }
+
+    if (!validTimeNumber(start)) {
+      res.status(500);
+      res.send({ error: true, message: "invalid start trade period" });
+      return
+    }
+
+    if (!validTimeNumber(end)) {
+      res.status(500);
+      res.send({ error: true, message: "invalid end trade period" });
+      return
+    }
+
+    var utvf = await findUserExistingUTVF(account, BigInt(start), BigInt(end));
     if (utvf != undefined && utvf != null && utvf) {
       res.json({ query_id: utvf.id });
       return;
@@ -77,7 +99,8 @@ app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
       src_chain_id,
       dst_chain_id,
       account,
-      BigInt(tym),
+      BigInt(start),
+      BigInt(end),
     );
 
     console.log("New User Comes In: ", utvf.id, (new Date()).toLocaleString())

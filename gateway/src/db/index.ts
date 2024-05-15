@@ -120,7 +120,8 @@ async function insertUserTradeVolumeFee(
   src_chain_id: bigint,
   dst_chain_id: bigint,
   account: string,
-  trade_year_month: bigint,
+  start_ymd: bigint,
+  end_ymd: bigint,
 ): Promise<any> {
   return prisma.user_trade_volume_fee.create({
     data: {
@@ -128,7 +129,8 @@ async function insertUserTradeVolumeFee(
       src_chain_id: src_chain_id,
       dst_chain_id: dst_chain_id,
       account: account?.toLocaleLowerCase(),
-      trade_year_month: trade_year_month,
+      start_ymd: start_ymd,
+      end_ymd: end_ymd,
       status: PROOF_STATUS_INIT,
       create_time: new Date(),
       update_time: new Date(),
@@ -167,13 +169,17 @@ async function getUserTradeVolumeFee(id: string): Promise<any> {
 
 async function findUserExistingUTVF(
   account: string,
-  trade_year_month: bigint
+  start_ymd: bigint,
+  end_ymd: bigint
 ): Promise<any> {
   return prisma.user_trade_volume_fee.findFirst({
     where: {
       account: account?.toLocaleLowerCase(),
-      trade_year_month: {
-        equals: trade_year_month,
+      start_ymd: {
+        equals: start_ymd,
+      },
+      end_ymd: {
+        equals: end_ymd,
       }
     },
   });
