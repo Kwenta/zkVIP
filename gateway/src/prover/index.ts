@@ -27,9 +27,9 @@ const {
   asUint521,
 } = sdk;
 
-const prover = new Prover("222.74.155.3:43248");
-const largeProver = new Prover("222.74.155.3:43249")
-const extraLargeProver = new Prover("222.74.155.3:43250")
+const prover = new Prover("222.74.153.228:53248");
+const largeProver = new Prover("222.74.153.228:53249")
+const extraLargeProver = new Prover("222.74.153.228:53250")
 const brevis = new Brevis("appsdk.brevis.network:11080");
 
 type ProofReq = {
@@ -106,7 +106,8 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     AccountId: asUint248(accountIdHex),
     StartBlkNum: asUint248(earlistBlk.toString()),
     EndBlkNum: asUint248(latestBlk.toString()),
-		YearMonth:   asUint248(utvf.trade_year_month.toString()),
+    StartYearMonthDay: asUint248(utvf.start_ymd.toString()),
+		EndYearMonthDay:   asUint248(utvf.end_ymd.toString()),
   });
 
   return {proofReq: proofReq, length: results.length};
