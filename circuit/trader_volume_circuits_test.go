@@ -59,16 +59,18 @@ func TestTraderVolumeCircuit(t *testing.T) {
 	)
 
 	appCircuit := &TraderVolumeCircuit{
-		StartBlkNum: sdk.ConstUint248(13618400),
-		EndBlkNum:   sdk.ConstUint248(13622452),
-		YearMonth:   sdk.ConstUint248(202403),
-		AccountId:   sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
+		StartBlkNum:       sdk.ConstUint248(13618400),
+		EndBlkNum:         sdk.ConstUint248(13622452),
+		StartYearMonthDay: sdk.ConstUint248(20240301),
+		EndYearMonthDay:   sdk.ConstUint248(20240301),
+		AccountId:         sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
 	}
 	appCircuitAssignment := &TraderVolumeCircuit{
-		StartBlkNum: sdk.ConstUint248(13618400),
-		EndBlkNum:   sdk.ConstUint248(13622452),
-		YearMonth:   sdk.ConstUint248(202403),
-		AccountId:   sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
+		StartBlkNum:       sdk.ConstUint248(13618400),
+		EndBlkNum:         sdk.ConstUint248(13622452),
+		StartYearMonthDay: sdk.ConstUint248(20240301),
+		EndYearMonthDay:   sdk.ConstUint248(20240301),
+		AccountId:         sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
 	}
 
 	circuitInput, err := app.BuildCircuitInput(appCircuit)
@@ -78,5 +80,5 @@ func TestTraderVolumeCircuit(t *testing.T) {
 
 	test.IsSolved(t, appCircuit, appCircuitAssignment, circuitInput)
 
-	assert.Equal(t, fmt.Sprintf("0x%x", out), "0x0000000000cfcce00000000000cfdcb40316a3800000000000000000000000000003120000000000000000000000000000000000000000000059818987718978997900000000000000000000000000000000000000000000001fb2eda8bc65aa81")
+	assert.Equal(t, fmt.Sprintf("0x%x", out), "0x0134d7ad0134d7ad800000000000000000000000000003120000000000000000000000000000000000000000000059818987718978997900000000000000000000000000000000000000000000001fb2eda8bc65aa810000000000cfcce00000000000cfdcb4")
 }

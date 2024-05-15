@@ -7,10 +7,11 @@ import (
 )
 
 type TraderVolumeCircuit struct {
-	StartBlkNum sdk.Uint248
-	EndBlkNum   sdk.Uint248
-	YearMonth   sdk.Uint248
-	AccountId   sdk.Uint248
+	StartBlkNum       sdk.Uint248
+	EndBlkNum         sdk.Uint248
+	StartYearMonthDay sdk.Uint248
+	EndYearMonthDay   sdk.Uint248
+	AccountId         sdk.Uint248
 }
 
 const (
@@ -23,10 +24,11 @@ var ContractValue = sdk.ConstUint248(ContractAddress)
 
 func DefaultTraderVolumeCircuit() *TraderVolumeCircuit {
 	return &TraderVolumeCircuit{
-		StartBlkNum: sdk.ConstUint248(0),
-		EndBlkNum:   sdk.ConstUint248(1),
-		YearMonth:   sdk.ConstUint248(0),
-		AccountId:   sdk.ConstUint248(0),
+		StartBlkNum:       sdk.ConstUint248(0),
+		EndBlkNum:         sdk.ConstUint248(1),
+		StartYearMonthDay: sdk.ConstUint248(0),
+		EndYearMonthDay:   sdk.ConstUint248(1),
+		AccountId:         sdk.ConstUint248(0),
 	}
 }
 
@@ -70,6 +72,8 @@ func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) erro
 
 	api.AssertInputsAreUnique()
 
+	api.Uint248.AssertIsLessOrEqual(c.StartYearMonthDay, c.EndYearMonthDay)
+
 	receiptVolumes := sdk.Map(receipts, func(r sdk.Receipt) sdk.Uint248 {
 		fillPrice := api.ToUint521(r.Fields[1].Value)
 		absSizeDelta := api.ToUint521(api.Int248.ABS(api.ToInt248(r.Fields[2].Value)))
@@ -85,11 +89,12 @@ func (c *TraderVolumeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) erro
 
 	log.Infof("trader volume %s, fee: %s", volume.String(), fee.String())
 
-	api.OutputUint(64, c.StartBlkNum)
-	api.OutputUint(64, c.EndBlkNum)
-	api.OutputUint(24, c.YearMonth)
+	api.OutputUint(32, c.StartYearMonthDay)
+	api.OutputUint(32, c.EndYearMonthDay)
 	api.OutputUint(128, c.AccountId)
 	api.OutputUint(248, volume)
 	api.OutputUint(248, fee)
+	api.OutputUint(64, c.StartBlkNum)
+	api.OutputUint(64, c.EndBlkNum)
 	return nil
 }
