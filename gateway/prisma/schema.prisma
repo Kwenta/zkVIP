@@ -35,6 +35,8 @@ model user_trade_volume_fee {
   update_time       DateTime? @db.Timestamptz(6)
   prover_id         String?
   request_sent      Boolean?
+  end_ymd           BigInt    @default(0)
+  start_ymd         BigInt    @default(0)
 }
 
 model storage {

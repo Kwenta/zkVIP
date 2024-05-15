@@ -57,11 +57,12 @@ var FEE_REIMBURSEMENT_INFO_STATUS_FEE_REIMBURSED = 5;
 
 // src/db/index.ts
 var prisma = new import_client.PrismaClient();
-async function insertReceipt(tx_hash) {
+async function insertReceipt(tx_hash, account) {
   return prisma.receipt.create({
     data: {
       id: (0, import_uuid.v4)(),
       tx_hash: tx_hash?.toLocaleLowerCase(),
+      account,
       status: STATUS_INIT,
       create_time: /* @__PURE__ */ new Date(),
       update_time: /* @__PURE__ */ new Date()
@@ -189,16 +190,16 @@ async function findUserTradeVolumeFees(status) {
 async function updateBrevisRequestStatus(brevis_query_hash) {
   return prisma.user_trade_volume_fee.updateMany({
     where: {
-      brevis_query_hash: brevis_query_hash?.toLocaleLowerCase(),
-      request_sent: {
-        equals: false
-      }
+      brevis_query_hash: brevis_query_hash?.toLocaleLowerCase()
     },
     data: {
       request_sent: true
     }
   });
 }
+
+// src/interval_jobs/index.ts
+var import_ethers13 = require("ethers");
 
 // src/prover/index.ts
 var sdk = __toESM(require("brevis-sdk-typescript"));
@@ -215,6 +216,7 @@ var {
 } = sdk;
 var prover = new Prover("222.74.155.3:43248");
 var largeProver = new Prover("222.74.155.3:43249");
+var extraLargeProver = new Prover("222.74.155.3:43250");
 var brevis = new Brevis("appsdk.brevis.network:11080");
 var buildUserTradeVolumeFeeProofReq = async (utvf) => {
   const proofReq = new ProofRequest();
@@ -280,7 +282,7 @@ var buildUserTradeVolumeFeeProofReq = async (utvf) => {
     EndBlkNum: asUint248(latestBlk.toString()),
     YearMonth: asUint248(utvf.trade_year_month.toString())
   });
-  return { proofReq, useLarge: results.length > 256 };
+  return { proofReq, length: results.length };
 };
 async function sendUserTradeVolumeFeeProvingRequest(utvfOld) {
   const utvf = await getUserTradeVolumeFee(utvfOld.id);
@@ -294,11 +296,13 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld) {
     const r = await buildUserTradeVolumeFeeProofReq(utvf);
     console.log("User Circuit Proof Request Sent: ", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
     var p = prover;
-    if (r.useLarge) {
+    if (r.length > 1500) {
+      p = extraLargeProver;
+    } else if (r.length > 256) {
       p = largeProver;
     }
     const proofRes = await p.proveAsync(r.proofReq);
-    console.log("proofRes proof_id", proofRes.proof_id, (/* @__PURE__ */ new Date()).toLocaleString());
+    console.log("proofRes proof_id ready", proofRes.proof_id, (/* @__PURE__ */ new Date()).toLocaleString());
     if (proofRes.has_err) {
       const err = proofRes.err;
       switch (err.code) {
@@ -317,6 +321,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld) {
       return;
     }
     try {
+      console.log("send prepare query request", (/* @__PURE__ */ new Date()).toLocaleString());
       const prepareQueryResponse = await brevis.prepareQuery(
         r.proofReq,
         proofRes.circuit_info,
@@ -353,7 +358,9 @@ async function uploadUserTradeVolumeFeeProof(utvfOld) {
     console.log("Proof upload sent: ", utvf.id, utvf.prover_id, (/* @__PURE__ */ new Date()).toLocaleString());
     const ids = utvf.receipt_ids.split(",");
     var p = prover;
-    if (ids.length > 256) {
+    if (ids.length > 1500) {
+      p = extraLargeProver;
+    } else if (ids.length > 256) {
       p = largeProver;
     }
     const getProofRes = await p.getProof(utvf.prover_id);
@@ -391,15 +398,18 @@ var client = new import_client_sdk.DuneClient(process.env.DUNE_API_KEY ?? "");
 var queryId = 3677895;
 async function QueryOrderTxsByAccount(from, end, accountId) {
   try {
-    console.log("Client send dune query: ", (/* @__PURE__ */ new Date()).toLocaleString());
+    console.log("Client send dune query: ", from, end, accountId, (/* @__PURE__ */ new Date()).toLocaleString());
     const results = await client.runQuery({
       queryId,
+      limit: 100,
+      performance: import_client_sdk.ExecutionPerformance.Large,
       query_parameters: [
         import_client_sdk.QueryParameter.text("from", from),
         import_client_sdk.QueryParameter.text("to", end),
         import_client_sdk.QueryParameter.text("account_id", accountId)
       ]
     });
+    console.log("result returned: results", from, end, accountId, (/* @__PURE__ */ new Date()).toLocaleString());
     const txs = Array();
     var fee = import_ethers2.BigNumber.from(0);
     var volume = import_ethers2.BigNumber.from(0);
@@ -418,12 +428,17 @@ async function QueryOrderTxsByAccount(from, end, accountId) {
         console.error("unknown type of dune result: ", tx_hash);
       }
     });
+    console.log("dune result ready");
     return { txs, fee: fee.toString(), volume: volume.toString() };
   } catch (error) {
     console.log("dune error", error);
+    console.error("dune result ready", error);
     return { txs: [], fee: "0", volume: "0" };
   }
 }
+
+// src/rpc/index.ts
+var import_ethers12 = require("ethers");
 
 // src/ether_interactions/index.ts
 var import_ethers11 = require("ethers");
@@ -2207,9 +2222,8 @@ async function monitorFeeReimbursed() {
   userSwapAmountApp.on("FeeReimbursed", (user, accountId, tradeYearMonth, fee) => {
     const userAddress = user;
     const accountIdBN = accountId;
-    const tradeYearMonthBN = tradeYearMonth;
     console.log("Fee Reimbursed Event", user, accountId, tradeYearMonth, fee);
-    if (userAddress === void 0 || userAddress === null || tradeYearMonthBN === void 0 || tradeYearMonthBN === null || accountIdBN === void 0 || accountIdBN === null) {
+    if (userAddress === void 0 || userAddress === null || accountIdBN === void 0 || accountIdBN === null) {
       console.log(
         "reimbursement triggered with unexpected value:: ",
         user,
@@ -2219,7 +2233,7 @@ async function monitorFeeReimbursed() {
       );
       return;
     }
-    findUserExistingUTVF(accountIdBN.toString(), BigInt(tradeYearMonthBN.toNumber())).then((utvf) => {
+    findUserExistingUTVF(accountIdBN.toString(), BigInt(tradeYearMonth.toString())).then((utvf) => {
       if (utvf) {
         utvf.status = PROOF_STATUS_ONCHAIN_VERIFIED;
         return updateUserTradeVolumeFee(utvf);
@@ -2264,7 +2278,7 @@ async function querySingleReceipt(receipt) {
       }
       let logAddress = log.address.toLowerCase();
       let topic0 = log.topics[0].toLowerCase();
-      if (logAddress === "0x0A2AF931eFFd34b81ebcc57E3d3c9B1E1dE1C9Ce".toLowerCase() && topic0.toLowerCase() === "0x460080a757ec90719fe90ab2384c0196cdeed071a9fd7ce1ada43481d96b7db5") {
+      if (logAddress === "0x0A2AF931eFFd34b81ebcc57E3d3c9B1E1dE1C9Ce".toLowerCase() && topic0.toLowerCase() === "0x460080a757ec90719fe90ab2384c0196cdeed071a9fd7ce1ada43481d96b7db5" && import_ethers12.BigNumber.from(log.topics[2]).eq(import_ethers12.BigNumber.from(receipt.account))) {
         logsFound = true;
         data = JSON.stringify({
           block_num: transactionReceipt.blockNumber,
@@ -2412,11 +2426,16 @@ async function queryUserSwapAmountInput(userSwapAmountOld) {
     userSwapAmount.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID;
     updateUserTradeVolumeFee(userSwapAmount);
     return;
+  } else if (import_ethers13.BigNumber.from(duneResult.volume).lte(import_ethers13.BigNumber.from("100000000000000000000000"))) {
+    console.error("invalid volume", duneResult.volume, userSwapAmount.account);
+    userSwapAmount.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID;
+    updateUserTradeVolumeFee(userSwapAmount);
+    return;
   }
   const promises = Array();
   duneResult.txs.forEach((tx) => {
     promises.push(
-      insertReceipt(tx).then((receipt) => {
+      insertReceipt(tx, userSwapAmount.account).then((receipt) => {
         return receipt.id;
       })
     );
@@ -2459,7 +2478,7 @@ async function uploadUserSwapAmountProof() {
 }
 
 // src/server/index.ts
-var import_ethers12 = require("ethers");
+var import_ethers14 = require("ethers");
 var app = (0, import_express.default)();
 app.use(import_express.default.json());
 app.use(import_express.default.urlencoded({ extended: true }));
@@ -2541,7 +2560,14 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       message = "Brevis is preparing swap amount proof";
     } else if (Number(utvf.status) == Number(PROOF_STATUS_INELIGIBLE_ACCOUNT_ID)) {
       status = FEE_REIMBURSEMENT_INFO_STATUS_INELIGIBLE_ACCOUNT_ID;
-      message = "No order settled info found for this account id";
+      message = "Ineligible account id";
+      res.json({
+        status,
+        message,
+        tier: -1,
+        fee_to_reimbursed: 0
+      });
+      return;
     } else {
       status = FEE_REIMBURSEMENT_INFO_STATUS_INIT;
       message = "Wait until query_hash and query_fee is ready";
@@ -2550,25 +2576,28 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     if (volume === "") {
       volume = "0";
     }
-    const volumeBN = import_ethers12.BigNumber.from(volume).div(import_ethers12.BigNumber.from("1000000000000000000"));
+    const volumeBN = import_ethers14.BigNumber.from(volume).div(import_ethers14.BigNumber.from("1000000000000000000"));
     var fee = utvf.fee;
     if (fee === "") {
       fee = "0";
     }
-    var feeBN = import_ethers12.BigNumber.from(fee).div(import_ethers12.BigNumber.from("1000000000000000000"));
+    var feeBN = import_ethers14.BigNumber.from(fee);
     var tier = -1;
     if (volumeBN.toNumber() > 1e8) {
       tier = 3;
-      feeBN = feeBN.mul(import_ethers12.BigNumber.from(9)).div(import_ethers12.BigNumber.from(10));
+      feeBN = feeBN.mul(import_ethers14.BigNumber.from(9)).div(import_ethers14.BigNumber.from(10));
     } else if (volumeBN.toNumber() > 1e7) {
       tier = 2;
-      feeBN = feeBN.mul(import_ethers12.BigNumber.from(75)).div(import_ethers12.BigNumber.from(100));
+      feeBN = feeBN.mul(import_ethers14.BigNumber.from(75)).div(import_ethers14.BigNumber.from(100));
     } else if (volumeBN.toNumber() > 1e6) {
       tier = 1;
-      feeBN = feeBN.mul(import_ethers12.BigNumber.from(5)).div(import_ethers12.BigNumber.from(10));
+      feeBN = feeBN.mul(import_ethers14.BigNumber.from(5)).div(import_ethers14.BigNumber.from(10));
     } else if (volumeBN.toNumber() > 1e5) {
       tier = 0;
-      feeBN = feeBN.mul(import_ethers12.BigNumber.from(2)).div(import_ethers12.BigNumber.from(10));
+      feeBN = feeBN.mul(import_ethers14.BigNumber.from(2)).div(import_ethers14.BigNumber.from(10));
+    } else {
+      feeBN = import_ethers14.BigNumber.from(0);
+      message = "Ineligble user";
     }
     res.json({
       status,
@@ -2577,7 +2606,7 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       brevis_request_contract_address: brevisRequest2,
       message,
       tier,
-      fee_to_reimbursed: feeBN.toString()
+      fee_to_be_reimbursed: feeBN.toString()
     });
   } catch (error) {
     res.status(500);
