@@ -118,6 +118,12 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     const { account, start_year_month_day, end_year_month_day } = req.query;
     const start = Number(start_year_month_day)
     const end = Number(end_year_month_day)
+   
+    if (account?.toString() == null || account?.toString() == undefined) {
+      res.status(500);
+      res.send({ error: true, message: "invalid account id" });
+      return
+    }
 
     if (isNaN(start) || isNaN(end)) {
       res.status(500);
