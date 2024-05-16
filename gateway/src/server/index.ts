@@ -115,15 +115,44 @@ app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
 
 app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
   try {
-    const { query_id } = req.query;
-    if (query_id?.toString() == null || query_id?.toString() == undefined) {
-      res.status(500);
-      res.send({ error: true, message: "query id not found" });
-      return;
-    }
-    const utvf = await getUserTradeVolumeFee(query_id?.toString()) as UserTradeVolumeFee
+    const { account, start_year_month_day, end_year_month_day } = req.body;
 
-    if (utvf == null || utvf == undefined) {
+    const start = Number(start_year_month_day)
+    const end = Number(end_year_month_day)
+
+    if (isNaN(start) || isNaN(end)) {
+      res.status(500);
+      res.send({ error: true, message: "invalid claim trade time period" });
+      return
+    }
+
+    if (start > end) {
+      res.status(500);
+      res.send({ error: true, message: "start is bigger than end" });
+      return
+    }
+
+
+    if (end >= Number((moment(new Date())).format('YYYYMMDD'))) {
+      res.status(500);
+      res.send({ error: true, message: "invalid end trade period" });
+      return
+    }
+
+    if (!validTimeNumber(start)) {
+      res.status(500);
+      res.send({ error: true, message: "invalid start trade period" });
+      return
+    }
+
+    if (!validTimeNumber(end)) {
+      res.status(500);
+      res.send({ error: true, message: "invalid end trade period" });
+      return
+    }
+
+    const utvf = await findUserExistingUTVF(account, BigInt(start), BigInt(end));
+    if (utvf === undefined || utvf === null || !utvf) {
       res.status(500);
       res.send({ error: true, message: "info not found" });
       return;
