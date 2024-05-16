@@ -176,7 +176,7 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       if (volume === "") {
         volume = "0"
       }
-      const volumeBN = BigNumber.from(volume).div(BigNumber.from("1000000000000000000"))
+      volumeBN = BigNumber.from(volume).div(BigNumber.from("1000000000000000000"))
   
       var fee = utvf.fee
       if (fee === "") {
@@ -204,7 +204,7 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       }
     } catch {
       status = FEE_REIMBURSEMENT_INFO_STATUS_INIT;
-      message = "Wait until query_hash and query_fee is ready";
+      message = "preparing account info";
       res.json({
         status: status,
         message: message,
