@@ -115,8 +115,7 @@ app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
 
 app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
   try {
-    const { account, start_year_month_day, end_year_month_day } = req.body;
-
+    const { account, start_year_month_day, end_year_month_day } = req.query;
     const start = Number(start_year_month_day)
     const end = Number(end_year_month_day)
 
