@@ -166,44 +166,50 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     } else {
       status = FEE_REIMBURSEMENT_INFO_STATUS_INIT;
       message = "Wait until query_hash and query_fee is ready";
+    }
+    var feeBN = BigNumber.from("0")
+    var tier = -1
+    try {
+      var volume = utvf.volume
+      if (volume === "") {
+        volume = "0"
+      }
+      const volumeBN = BigNumber.from(volume).div(BigNumber.from("1000000000000000000"))
+  
+      var fee = utvf.fee
+      if (fee === "") {
+        fee = "0"
+      }
+      var feeBN = BigNumber.from(fee)
+  
+      var tier = -1
+  
+      if (volumeBN.toNumber() > 100000000) {
+        tier = 3
+        feeBN = feeBN.mul(BigNumber.from(9)).div(BigNumber.from(10))
+      } else if (volumeBN.toNumber() > 10000000) {
+        tier = 2    
+        feeBN = feeBN.mul(BigNumber.from(75)).div(BigNumber.from(100))
+      } else if (volumeBN.toNumber() > 1000000) {
+        tier = 1
+        feeBN = feeBN.mul(BigNumber.from(5)).div(BigNumber.from(10))
+      } else if (volumeBN.toNumber() > 100000) {
+        tier = 0
+        feeBN = feeBN.mul(BigNumber.from(2)).div(BigNumber.from(10))
+      } else {
+        feeBN = BigNumber.from(0)
+        message = "Ineligble user"
+      }
+    } catch {
+      status = FEE_REIMBURSEMENT_INFO_STATUS_INIT;
+      message = "Wait until query_hash and query_fee is ready";
       res.json({
         status: status,
         message: message,
       });
       return 
     }
-
-    var volume = utvf.volume
-    if (volume === "") {
-      volume = "0"
-    }
-    const volumeBN = BigNumber.from(volume).div(BigNumber.from("1000000000000000000"))
-
-    var fee = utvf.fee
-    if (fee === "") {
-      fee = "0"
-    }
-    var feeBN = BigNumber.from(fee)
-
-    var tier = -1
-
-    if (volumeBN.toNumber() > 100000000) {
-      tier = 3
-      feeBN = feeBN.mul(BigNumber.from(9)).div(BigNumber.from(10))
-    } else if (volumeBN.toNumber() > 10000000) {
-      tier = 2    
-      feeBN = feeBN.mul(BigNumber.from(75)).div(BigNumber.from(100))
-    } else if (volumeBN.toNumber() > 1000000) {
-      tier = 1
-      feeBN = feeBN.mul(BigNumber.from(5)).div(BigNumber.from(10))
-    } else if (volumeBN.toNumber() > 100000) {
-      tier = 0
-      feeBN = feeBN.mul(BigNumber.from(2)).div(BigNumber.from(10))
-    } else {
-      feeBN = BigNumber.from(0)
-      message = "Ineligble user"
-    }
-
+   
     res.json({
       status: status,
       query_hash: utvf.brevis_query_hash,
