@@ -176,8 +176,8 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       if (volume === "") {
         volume = "0"
       }
-      volumeBN = BigNumber.from(volume).div(BigNumber.from("1000000000000000000"))
-      console.log("volumeBN", volumeBN.toString())
+      volumeBN = BigNumber.from(volume)
+      const volumeWithoutDecimalBN = volumeBN.div(BigNumber.from("1000000000000000000"))
       var fee = utvf.fee
       if (fee === "") {
         fee = "0"
@@ -185,17 +185,17 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       feeBN = BigNumber.from(fee)
       totalFeeBN = BigNumber.from(fee)
       tier = -1
-  
-      if (volumeBN.toNumber() > 100000000) {
+
+      if (volumeWithoutDecimalBN.toNumber() > 100000000) {
         tier = 3
         feeBN = feeBN.mul(BigNumber.from(9)).div(BigNumber.from(10))
-      } else if (volumeBN.toNumber() > 10000000) {
+      } else if (volumeWithoutDecimalBN.toNumber() > 10000000) {
         tier = 2    
         feeBN = feeBN.mul(BigNumber.from(75)).div(BigNumber.from(100))
-      } else if (volumeBN.toNumber() > 1000000) {
+      } else if (volumeWithoutDecimalBN.toNumber() > 1000000) {
         tier = 1
         feeBN = feeBN.mul(BigNumber.from(5)).div(BigNumber.from(10))
-      } else if (volumeBN.toNumber() > 100000) {
+      } else if (volumeWithoutDecimalBN.toNumber() > 100000) {
         tier = 0
         feeBN = feeBN.mul(BigNumber.from(2)).div(BigNumber.from(10))
       } else {
@@ -212,9 +212,6 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       return 
     }
    
-    console.log("volumeBN", volumeBN.toNumber())
-    console.log("volumeBN", volumeBN.toString())
-
     res.json({
       status: status,
       query_hash: utvf.brevis_query_hash,
