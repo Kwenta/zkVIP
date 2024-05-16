@@ -177,7 +177,7 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
         volume = "0"
       }
       volumeBN = BigNumber.from(volume).div(BigNumber.from("1000000000000000000"))
-  
+      console.log("volumeBN", volumeBN.toString())
       var fee = utvf.fee
       if (fee === "") {
         fee = "0"
@@ -212,6 +212,9 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       return 
     }
    
+    console.log("volumeBN", volumeBN.toNumber())
+    console.log("volumeBN", volumeBN.toString())
+
     res.json({
       status: status,
       query_hash: utvf.brevis_query_hash,
