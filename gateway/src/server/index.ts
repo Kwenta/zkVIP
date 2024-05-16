@@ -168,6 +168,8 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       message = "Wait until query_hash and query_fee is ready";
     }
     var feeBN = BigNumber.from("0")
+    var volumeBN = BigNumber.from("0")
+    var totalFeeBN = BigNumber.from("0")
     var tier = -1
     try {
       var volume = utvf.volume
@@ -180,9 +182,9 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       if (fee === "") {
         fee = "0"
       }
-      var feeBN = BigNumber.from(fee)
-  
-      var tier = -1
+      feeBN = BigNumber.from(fee)
+      totalFeeBN = BigNumber.from(fee)
+      tier = -1
   
       if (volumeBN.toNumber() > 100000000) {
         tier = 3
@@ -218,6 +220,8 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       message: message,
       tier: tier,
       fee_to_be_reimbursed: feeBN.toString(),
+      volume: volumeBN.toString(),
+      total_fee: totalFeeBN.toString(),
     });
   } catch (error) {
     res.status(500);
