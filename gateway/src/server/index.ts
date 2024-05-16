@@ -166,6 +166,11 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
     } else {
       status = FEE_REIMBURSEMENT_INFO_STATUS_INIT;
       message = "Wait until query_hash and query_fee is ready";
+      res.json({
+        status: status,
+        message: message,
+      });
+      return 
     }
 
     var volume = utvf.volume
