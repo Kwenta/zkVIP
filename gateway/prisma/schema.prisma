@@ -50,3 +50,14 @@ model storage {
   create_time DateTime? @db.Timestamptz(6)
   update_time DateTime? @db.Timestamptz(6)
 }
+
+model user_trade_dune_result {
+  id           String   @id @default("")
+  account      String   @default("")
+  volume       String   @default("")
+  fee          String   @default("")
+  receipts     String   @default("")
+  create_time  DateTime @default(now()) @db.Timestamptz(6)
+  start_period BigInt   @default(0)
+  end_period   BigInt   @default(0)
+}
