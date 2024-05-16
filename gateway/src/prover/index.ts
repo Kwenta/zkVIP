@@ -28,7 +28,7 @@ const {
 } = sdk;
 
 const prover = new Prover("222.74.153.228:53248");
-const largeProver = new Prover("222.74.153.228:53249")
+const largeProver = new Prover("222.74.153.228:53250")
 const extraLargeProver = new Prover("222.74.153.228:53250")
 const brevis = new Brevis("appsdk.brevis.network:11080");
 
