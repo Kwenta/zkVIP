@@ -28,7 +28,7 @@ const {
 } = sdk;
 
 const prover = new Prover("222.74.153.228:53248");
-const largeProver = new Prover("222.74.153.228:53250")
+const largeProver = new Prover("222.74.153.228:53249")
 const extraLargeProver = new Prover("222.74.153.228:53250")
 const brevis = new Brevis("appsdk.brevis.network:11080");
 
@@ -126,7 +126,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
     const r = await buildUserTradeVolumeFeeProofReq(utvf);
     console.log("User Circuit Proof Request Sent: ", utvf.id, (new Date()).toLocaleString())
     var p = prover
-    if (r.length > 1500) {
+    if (r.length > 512) {
       p = extraLargeProver
     } else if (r.length > 256) {
       p = largeProver
@@ -208,7 +208,7 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
     console.log("Proof upload sent: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())
     const ids = utvf.receipt_ids.split(",");
     var p = prover
-    if (ids.length > 1500) {
+    if (ids.length > 512) {
       p = extraLargeProver
     } else if (ids.length > 256) {
       p = largeProver
