@@ -50,6 +50,6 @@
     "merkletreejs": "0.3.10",
     "solidity-bytes-utils": "^0.8.0",
     "solidity-rlp": "^2.0.7",
-    "brevis-contracts": "1.0.1"
+    "brevis-contracts": "1.0.2"
   }
 }

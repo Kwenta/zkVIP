@@ -12,7 +12,7 @@ interface IAccountModule {
     function getAccountOwner(uint128 accountId) external view returns (address);
 }
 
-struct ClaimedPeriod {
+struct ClaimPeriod {
     uint64 startBlockNumber;
     uint64 endBlockNumber;     
 }
@@ -26,8 +26,9 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     uint24 public rewardTokenDecimals;
     IAccountModule public accountModule;
     mapping(bytes32 => uint16) public vkHashesToCircuitSize; // batch tier vk hashes => tier batch size
-    mapping(uint128 => ClaimedPeriod) public accountIdClaimedPeriod;
-    event FeeReimbursed(address indexed user, uint128 accountId, uint248 feeRebate, uint64 startBlockNumber,uint64 endBlockNumber);
+    mapping(uint128 => ClaimPeriod) public accountIdClaimPeriod;
+    mapping(uint128 => uint248) public accountIdAccumulatedFee;
+    event FeeRebateAccumulated(uint128 accountId, uint248 feeRebate, uint64 startBlockNumber,uint64 endBlockNumber);
     event VkHashesUpdated(bytes32[] vkHashes, uint16[] sizes);
 
     constructor(address _brevisProof) BrevisApp(IBrevisProof(_brevisProof)) {}
@@ -44,18 +45,11 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         require(circuitSize > 0, "vkHash not valid");
 
         (uint128 accountId, uint248 feeRebate, uint64 startBlockNumber, uint64 endBlockNumber) = decodeOutput(_circuitOutput);
-        ClaimedPeriod memory claimedPeriod = _newClaimPeriod(startBlockNumber, endBlockNumber, accountId);
-        address user;
-        if (feeRebate > 0) {
-            user = accountModule.getAccountOwner(accountId);
-            if (user != address(0)) {
-                uint256 feeInRewardToken = feeRebate * (10 ** rewardTokenDecimals) / 1e18;
-                IERC20(rewardToken).safeTransfer(user, feeInRewardToken);
-            }
-        }
-
-        accountIdClaimedPeriod[accountId] = claimedPeriod;
-        emit FeeReimbursed(user, accountId, feeRebate, startBlockNumber, endBlockNumber);
+        ClaimPeriod memory claimPeriod = _newClaimPeriod(startBlockNumber, endBlockNumber, accountId);
+        accountIdClaimPeriod[accountId] = claimPeriod;
+        uint248 accumulatedFee = accountIdAccumulatedFee[accountId];
+        accountIdAccumulatedFee[accountId] = accumulatedFee + feeRebate;
+        emit FeeRebateAccumulated(accountId, feeRebate, startBlockNumber, endBlockNumber);
     }
 
     function decodeOutput(bytes calldata o) internal pure returns (uint128 accountId, uint248 feeRebate, uint64 startBlockNumber,uint64 endBlockNumber) {
@@ -65,25 +59,23 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         endBlockNumber = uint64(bytes8(o[55:63]));
     }
 
-
-    function _newClaimPeriod(uint64 startBlockNumber, uint64 endBlockNumber, uint128 accountId) internal view returns (ClaimedPeriod memory) {
-        ClaimedPeriod memory claimedPeriod = accountIdClaimedPeriod[accountId];
+    function _newClaimPeriod(uint64 startBlockNumber, uint64 endBlockNumber, uint128 accountId) internal view returns (ClaimPeriod memory) {
+        ClaimPeriod memory claimPeriod = accountIdClaimPeriod[accountId];
         // No claim record at all
-        if (claimedPeriod.startBlockNumber == 0 && claimedPeriod.endBlockNumber == 0) {
-            claimedPeriod.startBlockNumber = startBlockNumber;
-            claimedPeriod.endBlockNumber = endBlockNumber;
-            return claimedPeriod;
+        if (claimPeriod.startBlockNumber == 0 && claimPeriod.endBlockNumber == 0) {
+            claimPeriod.startBlockNumber = startBlockNumber;
+            claimPeriod.endBlockNumber = endBlockNumber;
+            return claimPeriod;
         }
         // startB --> endB ---> claimed.startB ---> claimed.endB
-        if (endBlockNumber < claimedPeriod.startBlockNumber) {
-            claimedPeriod.startBlockNumber = startBlockNumber;
-            return claimedPeriod;
+        if (endBlockNumber < claimPeriod.startBlockNumber) {
+            claimPeriod.startBlockNumber = startBlockNumber;
+            return claimPeriod;
         }
 
         // claimed.startB ---> claimed.endB ---> startB --> endB
-        if (startBlockNumber > claimedPeriod.endBlockNumber) {
-            claimedPeriod.endBlockNumber = endBlockNumber;
-            return claimedPeriod;        
+        if (startBlockNumber > claimPeriod.endBlockNumber) {
+            claimPeriod.endBlockNumber = endBlockNumber;
         }
     
         revert InvalidNewClaimPeriod();
@@ -106,4 +98,11 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     function setAccountModule(IAccountModule _accountModule) external onlyOwner {
         accountModule = _accountModule;
     }
+
+    // TODO: add claim
+    function claim(uint128 accountId) public {
+       
+    }
+
+    // TODO: add blacklist
 }

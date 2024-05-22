@@ -1441,9 +1441,9 @@
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.2.0.tgz#756641adb587851b5ccb3e095daf27ae581c8406"
   integrity sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==
 
-"@uniswap/v4-core@uniswap/v4-core":
+"@uniswap/v4-core@github:uniswap/v4-core":
   version "0.0.0"
-  resolved "https://codeload.github.com/uniswap/v4-core/tar.gz/b045af29b1e0a0a9baabbb7233dc130e5ea80fe2"
+  resolved "https://codeload.github.com/uniswap/v4-core/tar.gz/86532f8de7be5c0a1daf52ee2fd00ea60a8e4577"
 
 "@yarnpkg/lockfile@^1.1.0":
   version "1.1.0"
@@ -2579,10 +2579,10 @@ braces@^3.0.2, braces@~3.0.2:
   dependencies:
     fill-range "^7.0.1"
 
-brevis-contracts@1.0.1:
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/brevis-contracts/-/brevis-contracts-1.0.1.tgz#49226020759f76beb94541a546e9584b46fcbaed"
-  integrity sha512-cRL5epFEek6WtQzClwhPFyxg09Kp98XPaEEp2jcrAyDyhySwUymHVU7LS/Yg6Xq0QfPVZ9xMuWYx8UySuebT2w==
+brevis-contracts@1.0.2:
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/brevis-contracts/-/brevis-contracts-1.0.2.tgz#61d753d8e352d0ba37472df433f8e1b529dd1bb7"
+  integrity sha512-83Z4oMJXm6EF3B4M3cJOqvopkWNEqNXPvM85vftNisPZDQUQGws3EIZliNXWO4VsY9i815dcA+LwnrdodsiCsQ==
   dependencies:
     "@uniswap/v4-core" uniswap/v4-core
     merkletreejs "0.3.10"
