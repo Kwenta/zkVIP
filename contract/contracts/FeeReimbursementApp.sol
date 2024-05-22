@@ -17,6 +17,8 @@ struct ClaimedPeriod {
     uint64 endBlockNumber;     
 }
 
+error InvalidNewClaimPeriod();
+
 contract FeeReimbursementApp is BrevisApp, Ownable {
     using SafeERC20 for IERC20;
 
@@ -25,7 +27,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     IAccountModule public accountModule;
     mapping(bytes32 => uint16) public vkHashesToCircuitSize; // batch tier vk hashes => tier batch size
     mapping(uint128 => ClaimedPeriod) public accountIdClaimedPeriod;
-    event FeeReimbursed(address indexed user, uint128 accountId, uint248 feeRebate, uint32 startYearMonthDay, uint32 endYearMonthDay, uint64 startBlockNumber,uint64 endBlockNumber);
+    event FeeReimbursed(address indexed user, uint128 accountId, uint248 feeRebate, uint64 startBlockNumber,uint64 endBlockNumber);
     event VkHashesUpdated(bytes32[] vkHashes, uint16[] sizes);
 
     constructor(address _brevisProof) BrevisApp(IBrevisProof(_brevisProof)) {}
@@ -41,20 +43,8 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         uint16 circuitSize = vkHashesToCircuitSize[_vkHash];
         require(circuitSize > 0, "vkHash not valid");
 
-        (uint32 startYMD, uint32 endYMD, uint128 accountId, uint248 volume, uint248 fee, uint64 startBlockNumber, uint64 endBlockNumber) = decodeOutput(_circuitOutput);
-        require(_validClaimPeriod(startBlockNumber, accountId), "invalid claim period");
-
-        uint248 feeRebate;
-        if (volume > 100000000 * 1e18) {
-            feeRebate = fee * 90 / 100;
-        } else if (volume > 10000000 * 1e18) {
-            feeRebate = fee * 75 / 100;
-        } else if (volume > 1000000 * 1e18) {
-            feeRebate = fee * 50 / 100;
-        } else if (volume > 100000 * 1e18) {
-            feeRebate = fee * 20 / 100;
-        }
-
+        (uint128 accountId, uint248 feeRebate, uint64 startBlockNumber, uint64 endBlockNumber) = decodeOutput(_circuitOutput);
+        ClaimedPeriod memory claimedPeriod = _newClaimPeriod(startBlockNumber, endBlockNumber, accountId);
         address user;
         if (feeRebate > 0) {
             user = accountModule.getAccountOwner(accountId);
@@ -64,37 +54,39 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
             }
         }
 
-        ClaimedPeriod memory claimedPeriod = accountIdClaimedPeriod[accountId];
-        if (claimedPeriod.startBlockNumber == 0) {
-            claimedPeriod.startBlockNumber = startBlockNumber;
-        }
-        claimedPeriod.endBlockNumber = endBlockNumber;
         accountIdClaimedPeriod[accountId] = claimedPeriod;
-
-        emit FeeReimbursed(user, accountId, feeRebate, startYMD, endYMD, startBlockNumber, endBlockNumber);
+        emit FeeReimbursed(user, accountId, feeRebate, startBlockNumber, endBlockNumber);
     }
 
-    function decodeOutput(bytes calldata o) internal pure returns (uint32 startYMD, uint32 endYMD, uint128 accountId, uint248 volume, uint248 fee, uint64 startBlockNumber,uint64 endBlockNumber) {
-        startYMD = uint32(bytes4(o[0:4])); // start date: 20240405
-        endYMD = uint32(bytes4(o[4:8])); // end data: 20240503
-        accountId = uint128(bytes16(o[8:24]));
-        volume = uint248(bytes31(o[24:55]));
-        fee = uint248(bytes31(o[55:86]));
-        startBlockNumber = uint64(bytes8(o[86:94]));
-        endBlockNumber = uint64(bytes8(o[94:102]));
+    function decodeOutput(bytes calldata o) internal pure returns (uint128 accountId, uint248 feeRebate, uint64 startBlockNumber,uint64 endBlockNumber) {
+        accountId = uint128(bytes16(o[0:16]));
+        feeRebate = uint248(bytes31(o[16:47]));
+        startBlockNumber = uint64(bytes8(o[47:55]));
+        endBlockNumber = uint64(bytes8(o[55:63]));
     }
 
 
-    function _validClaimPeriod(uint64 startBlockNumber, uint128 accountId) internal view returns (bool) {
+    function _newClaimPeriod(uint64 startBlockNumber, uint64 endBlockNumber, uint128 accountId) internal view returns (ClaimedPeriod memory) {
         ClaimedPeriod memory claimedPeriod = accountIdClaimedPeriod[accountId];
+        // No claim record at all
         if (claimedPeriod.startBlockNumber == 0 && claimedPeriod.endBlockNumber == 0) {
-            return true;
+            claimedPeriod.startBlockNumber = startBlockNumber;
+            claimedPeriod.endBlockNumber = endBlockNumber;
+            return claimedPeriod;
         }
-        if (startBlockNumber <= claimedPeriod.endBlockNumber) {
-            return false;
+        // startB --> endB ---> claimed.startB ---> claimed.endB
+        if (endBlockNumber < claimedPeriod.startBlockNumber) {
+            claimedPeriod.startBlockNumber = startBlockNumber;
+            return claimedPeriod;
         }
 
-        return true;
+        // claimed.startB ---> claimed.endB ---> startB --> endB
+        if (startBlockNumber > claimedPeriod.endBlockNumber) {
+            claimedPeriod.endBlockNumber = endBlockNumber;
+            return claimedPeriod;        
+        }
+    
+        revert InvalidNewClaimPeriod();
     }
 
     function setVkHashes(bytes32[] calldata _vkHashes, uint16[] calldata _sizes) public onlyOwner {

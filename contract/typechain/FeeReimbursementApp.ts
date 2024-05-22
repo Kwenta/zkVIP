@@ -149,6 +149,7 @@ export declare namespace Brevis {
 export interface FeeReimbursementAppInterface extends utils.Interface {
   contractName: "FeeReimbursementApp";
   functions: {
+    "accountIdClaimedPeriod(uint128)": FunctionFragment;
     "accountModule()": FunctionFragment;
     "brevisCallback(bytes32,bytes)": FunctionFragment;
     "brevisProof()": FunctionFragment;
@@ -158,12 +159,16 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     "rewardTokenDecimals()": FunctionFragment;
     "setAccountModule(address)": FunctionFragment;
     "setRewardToken(address,uint24)": FunctionFragment;
-    "setVkHash(bytes32)": FunctionFragment;
+    "setVkHashes(bytes32[],uint16[])": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "validateRequest(bytes32,uint64,(bytes32,(uint64,uint64,tuple[5])[],(bytes32,address,bytes32,bytes32,uint64)[],(bytes32,bytes32,uint64,uint64,bytes)[]))": FunctionFragment;
-    "vkHash()": FunctionFragment;
+    "vkHashesToCircuitSize(bytes32)": FunctionFragment;
   };
 
+  encodeFunctionData(
+    functionFragment: "accountIdClaimedPeriod",
+    values: [BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "accountModule",
     values?: undefined
@@ -198,8 +203,8 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     values: [string, BigNumberish]
   ): string;
   encodeFunctionData(
-    functionFragment: "setVkHash",
-    values: [BytesLike]
+    functionFragment: "setVkHashes",
+    values: [BytesLike[], BigNumberish[]]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
@@ -209,8 +214,15 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     functionFragment: "validateRequest",
     values: [BytesLike, BigNumberish, Brevis.ExtractInfosStruct]
   ): string;
-  encodeFunctionData(functionFragment: "vkHash", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "vkHashesToCircuitSize",
+    values: [BytesLike]
+  ): string;
 
+  decodeFunctionResult(
+    functionFragment: "accountIdClaimedPeriod",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "accountModule",
     data: BytesLike
@@ -244,7 +256,10 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     functionFragment: "setRewardToken",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "setVkHash", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setVkHashes",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
     data: BytesLike
@@ -253,24 +268,30 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     functionFragment: "validateRequest",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "vkHash", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "vkHashesToCircuitSize",
+    data: BytesLike
+  ): Result;
 
   events: {
-    "FeeReimbursed(address,uint128,uint24,uint248)": EventFragment;
+    "FeeReimbursed(address,uint128,uint248,uint64,uint64)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
+    "VkHashesUpdated(bytes32[],uint16[])": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "FeeReimbursed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "VkHashesUpdated"): EventFragment;
 }
 
 export type FeeReimbursedEvent = TypedEvent<
-  [string, BigNumber, number, BigNumber],
+  [string, BigNumber, BigNumber, BigNumber, BigNumber],
   {
     user: string;
     accountId: BigNumber;
-    tradeYearMonth: number;
     feeRebate: BigNumber;
+    startBlockNumber: BigNumber;
+    endBlockNumber: BigNumber;
   }
 >;
 
@@ -283,6 +304,13 @@ export type OwnershipTransferredEvent = TypedEvent<
 
 export type OwnershipTransferredEventFilter =
   TypedEventFilter<OwnershipTransferredEvent>;
+
+export type VkHashesUpdatedEvent = TypedEvent<
+  [string[], number[]],
+  { vkHashes: string[]; sizes: number[] }
+>;
+
+export type VkHashesUpdatedEventFilter = TypedEventFilter<VkHashesUpdatedEvent>;
 
 export interface FeeReimbursementApp extends BaseContract {
   contractName: "FeeReimbursementApp";
@@ -312,6 +340,16 @@ export interface FeeReimbursementApp extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    accountIdClaimedPeriod(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber] & {
+        startBlockNumber: BigNumber;
+        endBlockNumber: BigNumber;
+      }
+    >;
+
     accountModule(overrides?: CallOverrides): Promise<[string]>;
 
     brevisCallback(
@@ -343,8 +381,9 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
-    setVkHash(
-      _vkHash: BytesLike,
+    setVkHashes(
+      _vkHashes: BytesLike[],
+      _sizes: BigNumberish[],
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -360,8 +399,21 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
-    vkHash(overrides?: CallOverrides): Promise<[string]>;
+    vkHashesToCircuitSize(
+      arg0: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<[number]>;
   };
+
+  accountIdClaimedPeriod(
+    arg0: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<
+    [BigNumber, BigNumber] & {
+      startBlockNumber: BigNumber;
+      endBlockNumber: BigNumber;
+    }
+  >;
 
   accountModule(overrides?: CallOverrides): Promise<string>;
 
@@ -394,8 +446,9 @@ export interface FeeReimbursementApp extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
-  setVkHash(
-    _vkHash: BytesLike,
+  setVkHashes(
+    _vkHashes: BytesLike[],
+    _sizes: BigNumberish[],
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -411,9 +464,22 @@ export interface FeeReimbursementApp extends BaseContract {
     overrides?: CallOverrides
   ): Promise<boolean>;
 
-  vkHash(overrides?: CallOverrides): Promise<string>;
+  vkHashesToCircuitSize(
+    arg0: BytesLike,
+    overrides?: CallOverrides
+  ): Promise<number>;
 
   callStatic: {
+    accountIdClaimedPeriod(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<
+      [BigNumber, BigNumber] & {
+        startBlockNumber: BigNumber;
+        endBlockNumber: BigNumber;
+      }
+    >;
+
     accountModule(overrides?: CallOverrides): Promise<string>;
 
     brevisCallback(
@@ -443,7 +509,11 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
-    setVkHash(_vkHash: BytesLike, overrides?: CallOverrides): Promise<void>;
+    setVkHashes(
+      _vkHashes: BytesLike[],
+      _sizes: BigNumberish[],
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     transferOwnership(
       newOwner: string,
@@ -457,21 +527,26 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: CallOverrides
     ): Promise<boolean>;
 
-    vkHash(overrides?: CallOverrides): Promise<string>;
+    vkHashesToCircuitSize(
+      arg0: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<number>;
   };
 
   filters: {
-    "FeeReimbursed(address,uint128,uint24,uint248)"(
+    "FeeReimbursed(address,uint128,uint248,uint64,uint64)"(
       user?: string | null,
       accountId?: null,
-      tradeYearMonth?: null,
-      feeRebate?: null
+      feeRebate?: null,
+      startBlockNumber?: null,
+      endBlockNumber?: null
     ): FeeReimbursedEventFilter;
     FeeReimbursed(
       user?: string | null,
       accountId?: null,
-      tradeYearMonth?: null,
-      feeRebate?: null
+      feeRebate?: null,
+      startBlockNumber?: null,
+      endBlockNumber?: null
     ): FeeReimbursedEventFilter;
 
     "OwnershipTransferred(address,address)"(
@@ -482,9 +557,20 @@ export interface FeeReimbursementApp extends BaseContract {
       previousOwner?: string | null,
       newOwner?: string | null
     ): OwnershipTransferredEventFilter;
+
+    "VkHashesUpdated(bytes32[],uint16[])"(
+      vkHashes?: null,
+      sizes?: null
+    ): VkHashesUpdatedEventFilter;
+    VkHashesUpdated(vkHashes?: null, sizes?: null): VkHashesUpdatedEventFilter;
   };
 
   estimateGas: {
+    accountIdClaimedPeriod(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     accountModule(overrides?: CallOverrides): Promise<BigNumber>;
 
     brevisCallback(
@@ -516,8 +602,9 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
-    setVkHash(
-      _vkHash: BytesLike,
+    setVkHashes(
+      _vkHashes: BytesLike[],
+      _sizes: BigNumberish[],
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -533,10 +620,18 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    vkHash(overrides?: CallOverrides): Promise<BigNumber>;
+    vkHashesToCircuitSize(
+      arg0: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
   };
 
   populateTransaction: {
+    accountIdClaimedPeriod(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     accountModule(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     brevisCallback(
@@ -570,8 +665,9 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
-    setVkHash(
-      _vkHash: BytesLike,
+    setVkHashes(
+      _vkHashes: BytesLike[],
+      _sizes: BigNumberish[],
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
@@ -587,6 +683,9 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    vkHash(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+    vkHashesToCircuitSize(
+      arg0: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
   };
 }

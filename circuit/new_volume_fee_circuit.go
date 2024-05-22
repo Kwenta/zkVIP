@@ -11,6 +11,19 @@ type VolumeFeeCircuit struct {
 	AccountId      sdk.Uint248
 }
 
+var _ sdk.AppCircuit = &VolumeFeeCircuit{}
+
+func (c *VolumeFeeCircuit) Allocate() (maxReceipts, maxStorage, maxTransactions int) {
+	return 256, 0, 0
+}
+
+func DefaultVolumeFeeCircuit() *VolumeFeeCircuit {
+	return &VolumeFeeCircuit{
+		ClaimBlockNums: []sdk.Uint248{sdk.ConstUint248(0)},
+		AccountId:      sdk.ConstUint248(0),
+	}
+}
+
 func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 	uint248 := api.Uint248
 	r := sdk.NewDataStream(api, in.Receipts)
@@ -18,6 +31,13 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 	if len(c.ClaimBlockNums) == 0 {
 		return fmt.Errorf("invalid claim block numbers")
 	}
+	blockInAsc := sdk.ConstUint248(1)
+	for i, blockNumber := range c.ClaimBlockNums {
+		if i > 0 {
+			blockInAsc = uint248.And(blockInAsc, uint248.IsLessThan(c.ClaimBlockNums[i-1], blockNumber))
+		}
+	}
+	api.Uint248.AssertIsEqual(blockInAsc, sdk.ConstUint248(1))
 
 	// 43200 blocks per day
 	firstBlockNum := uint248.Sub(c.ClaimBlockNums[0], sdk.ConstUint248(43200*30))
@@ -48,6 +68,8 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 		return assertionPassed
 	})
 
+	api.AssertInputsAreUnique()
+
 	volumeMap := func(r sdk.Receipt) sdk.Uint248 {
 		fillPrice := api.ToUint248(r.Fields[1].Value)
 		absSizeDelta := api.ToUint248(api.Int248.ABS(api.ToInt248(r.Fields[2].Value)))
@@ -77,7 +99,9 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 				return uint248.IsEqual(r.BlockNum, blockNumber)
 			})
 			currentVolumeMap := sdk.Map(currentReceipt, volumeMap)
-			previousTotalVolume = uint248.Add(previousTotalVolume, sdk.Sum(currentVolumeMap))
+			currentBlockVolume := sdk.Sum(currentVolumeMap)
+			uint248.AssertIsEqual(sdk.ConstUint248(1), uint248.IsLessThan(sdk.ConstUint248(0), currentBlockVolume))
+			previousTotalVolume = uint248.Add(previousTotalVolume, currentBlockVolume)
 			currentFeeMap := sdk.Map(currentReceipt, feeMap)
 			fee := sdk.Sum(currentFeeMap)
 			feeRebate = uint248.Add(feeRebate, selectFeeBasedOnTier(api, fee, previousTotalVolume))
@@ -107,7 +131,9 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 				return uint248.IsEqual(r.BlockNum, blockNumber)
 			})
 			currentVolumeMap := sdk.Map(currentReceipt, volumeMap)
-			previousTotalVolume = uint248.Add(previousTotalVolume, sdk.Sum(currentVolumeMap))
+			currentBlockVolume := sdk.Sum(currentVolumeMap)
+			uint248.AssertIsEqual(sdk.ConstUint248(1), uint248.IsLessThan(sdk.ConstUint248(0), currentBlockVolume))
+			previousTotalVolume = uint248.Add(previousTotalVolume, currentBlockVolume)
 			currentFeeMap := sdk.Map(currentReceipt, feeMap)
 			fee := sdk.Sum(currentFeeMap)
 			feeRebate = uint248.Add(feeRebate, selectFeeBasedOnTier(api, fee, previousTotalVolume))
