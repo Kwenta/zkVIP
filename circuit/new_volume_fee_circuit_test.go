@@ -58,46 +58,46 @@ func TestNewVolumeFeeCircuit(t *testing.T) {
 		},
 	)
 
-	// app.AddReceipt(
-	// 	sdk.ReceiptData{
-	// 		BlockNum: big.NewInt(13622452),
-	// 		TxHash:   common.Hex2Hash("0x34b6d7be702aeb2eebbae9f48487ac29cd605dc174225cdb52dd35c11bbfdfb0"),
-	// 		Fields: [sdk.NumMaxLogFields]sdk.LogFieldData{
-	// 			{
-	// 				Contract:   common.Hex2Addr(ContractAddress),
-	// 				LogIndex:   10,
-	// 				EventID:    common.Hex2Hash(OrderSettledEventId),
-	// 				IsTopic:    true,
-	// 				FieldIndex: 2,
-	// 				Value:      common.Hex2Hash("0x0000000000000000000000000000000080000000000000000000000000000312"),
-	// 			},
-	// 			{
-	// 				Contract:   common.Hex2Addr(ContractAddress),
-	// 				LogIndex:   10,
-	// 				EventID:    common.Hex2Hash(OrderSettledEventId),
-	// 				IsTopic:    false,
-	// 				FieldIndex: 0,
-	// 				Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000a984d9ce18f8b9bdd2"),
-	// 			},
-	// 			{
-	// 				Contract:   common.Hex2Addr(ContractAddress),
-	// 				LogIndex:   10,
-	// 				EventID:    common.Hex2Hash(OrderSettledEventId),
-	// 				IsTopic:    false,
-	// 				FieldIndex: 3,
-	// 				Value:      common.Hex2Hash("0xfffffffffffffffffffffffffffffffffffffffffffffffff8ac2acc26980000"),
-	// 			},
-	// 			{
-	// 				Contract:   common.Hex2Addr(ContractAddress),
-	// 				LogIndex:   10,
-	// 				EventID:    common.Hex2Hash(OrderSettledEventId),
-	// 				IsTopic:    false,
-	// 				FieldIndex: 5,
-	// 				Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000001fb2eda8bc65aa81"),
-	// 			},
-	// 		},
-	// 	},
-	// )
+	app.AddReceipt(
+		sdk.ReceiptData{
+			BlockNum: big.NewInt(13622452),
+			TxHash:   common.Hex2Hash("0x34b6d7be702aeb2eebbae9f48487ac29cd605dc174225cdb52dd35c11bbfdfb0"),
+			Fields: [sdk.NumMaxLogFields]sdk.LogFieldData{
+				{
+					Contract:   common.Hex2Addr(ContractAddress),
+					LogIndex:   10,
+					EventID:    common.Hex2Hash(OrderSettledEventId),
+					IsTopic:    true,
+					FieldIndex: 2,
+					Value:      common.Hex2Hash("0x0000000000000000000000000000000080000000000000000000000000000312"),
+				},
+				{
+					Contract:   common.Hex2Addr(ContractAddress),
+					LogIndex:   10,
+					EventID:    common.Hex2Hash(OrderSettledEventId),
+					IsTopic:    false,
+					FieldIndex: 0,
+					Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000a984d9ce18f8b9bdd2"),
+				},
+				{
+					Contract:   common.Hex2Addr(ContractAddress),
+					LogIndex:   10,
+					EventID:    common.Hex2Hash(OrderSettledEventId),
+					IsTopic:    false,
+					FieldIndex: 3,
+					Value:      common.Hex2Hash("0xfffffffffffffffffffffffffffffffffffffffffffffffff8ac2acc26980000"),
+				},
+				{
+					Contract:   common.Hex2Addr(ContractAddress),
+					LogIndex:   10,
+					EventID:    common.Hex2Hash(OrderSettledEventId),
+					IsTopic:    false,
+					FieldIndex: 5,
+					Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000001fb2eda8bc65aa81"),
+				},
+			},
+		},
+	)
 
 	appCircuit := &VolumeFeeCircuit{
 		ClaimBlockNums: []sdk.Uint248{sdk.ConstUint248(13622452)},
