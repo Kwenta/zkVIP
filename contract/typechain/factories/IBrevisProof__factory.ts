@@ -49,11 +49,6 @@ const _abi = [
             type: "bytes32",
           },
           {
-            internalType: "uint256",
-            name: "length",
-            type: "uint256",
-          },
-          {
             internalType: "bytes32",
             name: "vkHash",
             type: "bytes32",
@@ -98,6 +93,134 @@ const _abi = [
         type: "bool",
       },
     ],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint64",
+        name: "_chainId",
+        type: "uint64",
+      },
+      {
+        internalType: "bytes32[]",
+        name: "_requestIds",
+        type: "bytes32[]",
+      },
+      {
+        internalType: "bytes",
+        name: "_proofWithPubInputs",
+        type: "bytes",
+      },
+    ],
+    name: "mustSubmitAggProof",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint64",
+        name: "_chainId",
+        type: "uint64",
+      },
+      {
+        components: [
+          {
+            internalType: "bytes32",
+            name: "commitHash",
+            type: "bytes32",
+          },
+          {
+            internalType: "bytes32",
+            name: "vkHash",
+            type: "bytes32",
+          },
+          {
+            internalType: "bytes32",
+            name: "appCommitHash",
+            type: "bytes32",
+          },
+          {
+            internalType: "bytes32",
+            name: "appVkHash",
+            type: "bytes32",
+          },
+          {
+            internalType: "bytes32",
+            name: "smtRoot",
+            type: "bytes32",
+          },
+        ],
+        internalType: "struct Brevis.ProofData",
+        name: "_proofData",
+        type: "tuple",
+      },
+      {
+        internalType: "bytes32",
+        name: "_merkleRoot",
+        type: "bytes32",
+      },
+      {
+        internalType: "bytes32[]",
+        name: "_merkleProof",
+        type: "bytes32[]",
+      },
+      {
+        internalType: "uint8",
+        name: "_nodeIndex",
+        type: "uint8",
+      },
+    ],
+    name: "mustValidateRequest",
+    outputs: [],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint64",
+        name: "_chainId",
+        type: "uint64",
+      },
+      {
+        components: [
+          {
+            internalType: "bytes32",
+            name: "commitHash",
+            type: "bytes32",
+          },
+          {
+            internalType: "bytes32",
+            name: "vkHash",
+            type: "bytes32",
+          },
+          {
+            internalType: "bytes32",
+            name: "appCommitHash",
+            type: "bytes32",
+          },
+          {
+            internalType: "bytes32",
+            name: "appVkHash",
+            type: "bytes32",
+          },
+          {
+            internalType: "bytes32",
+            name: "smtRoot",
+            type: "bytes32",
+          },
+        ],
+        internalType: "struct Brevis.ProofData[]",
+        name: "_proofDataArray",
+        type: "tuple[]",
+      },
+    ],
+    name: "mustValidateRequests",
+    outputs: [],
     stateMutability: "view",
     type: "function",
   },

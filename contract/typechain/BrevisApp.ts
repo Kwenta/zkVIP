@@ -18,6 +18,28 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
 export declare namespace Brevis {
+  export type ProofDataStruct = {
+    commitHash: BytesLike;
+    vkHash: BytesLike;
+    appCommitHash: BytesLike;
+    appVkHash: BytesLike;
+    smtRoot: BytesLike;
+  };
+
+  export type ProofDataStructOutput = [
+    string,
+    string,
+    string,
+    string,
+    string
+  ] & {
+    commitHash: string;
+    vkHash: string;
+    appCommitHash: string;
+    appVkHash: string;
+    smtRoot: string;
+  };
+
   export type LogExtraInfoStruct = {
     valueFromTopic: BigNumberish;
     valueIndex: BigNumberish;
@@ -149,11 +171,17 @@ export declare namespace Brevis {
 export interface BrevisAppInterface extends utils.Interface {
   contractName: "BrevisApp";
   functions: {
+    "brevisBatchCallback(uint64,(bytes32,bytes32,bytes32,bytes32,bytes32)[],bytes[])": FunctionFragment;
     "brevisCallback(bytes32,bytes)": FunctionFragment;
     "brevisProof()": FunctionFragment;
+    "singleRun(uint64,(bytes32,bytes32,bytes32,bytes32,bytes32),bytes32,bytes32[],uint8,bytes)": FunctionFragment;
     "validateRequest(bytes32,uint64,(bytes32,(uint64,uint64,tuple[5])[],(bytes32,address,bytes32,bytes32,uint64)[],(bytes32,bytes32,uint64,uint64,bytes)[]))": FunctionFragment;
   };
 
+  encodeFunctionData(
+    functionFragment: "brevisBatchCallback",
+    values: [BigNumberish, Brevis.ProofDataStruct[], BytesLike[]]
+  ): string;
   encodeFunctionData(
     functionFragment: "brevisCallback",
     values: [BytesLike, BytesLike]
@@ -163,10 +191,25 @@ export interface BrevisAppInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "singleRun",
+    values: [
+      BigNumberish,
+      Brevis.ProofDataStruct,
+      BytesLike,
+      BytesLike[],
+      BigNumberish,
+      BytesLike
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "validateRequest",
     values: [BytesLike, BigNumberish, Brevis.ExtractInfosStruct]
   ): string;
 
+  decodeFunctionResult(
+    functionFragment: "brevisBatchCallback",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "brevisCallback",
     data: BytesLike
@@ -175,6 +218,7 @@ export interface BrevisAppInterface extends utils.Interface {
     functionFragment: "brevisProof",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "singleRun", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "validateRequest",
     data: BytesLike
@@ -211,6 +255,13 @@ export interface BrevisApp extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
+    brevisBatchCallback(
+      _chainId: BigNumberish,
+      _proofDataArray: Brevis.ProofDataStruct[],
+      _appCircuitOutputs: BytesLike[],
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     brevisCallback(
       _requestId: BytesLike,
       _appCircuitOutput: BytesLike,
@@ -218,6 +269,16 @@ export interface BrevisApp extends BaseContract {
     ): Promise<ContractTransaction>;
 
     brevisProof(overrides?: CallOverrides): Promise<[string]>;
+
+    singleRun(
+      _chainId: BigNumberish,
+      _proofData: Brevis.ProofDataStruct,
+      _merkleRoot: BytesLike,
+      _merkleProof: BytesLike[],
+      _nodeIndex: BigNumberish,
+      _appCircuitOutput: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
 
     validateRequest(
       _requestId: BytesLike,
@@ -227,6 +288,13 @@ export interface BrevisApp extends BaseContract {
     ): Promise<[boolean]>;
   };
 
+  brevisBatchCallback(
+    _chainId: BigNumberish,
+    _proofDataArray: Brevis.ProofDataStruct[],
+    _appCircuitOutputs: BytesLike[],
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   brevisCallback(
     _requestId: BytesLike,
     _appCircuitOutput: BytesLike,
@@ -234,6 +302,16 @@ export interface BrevisApp extends BaseContract {
   ): Promise<ContractTransaction>;
 
   brevisProof(overrides?: CallOverrides): Promise<string>;
+
+  singleRun(
+    _chainId: BigNumberish,
+    _proofData: Brevis.ProofDataStruct,
+    _merkleRoot: BytesLike,
+    _merkleProof: BytesLike[],
+    _nodeIndex: BigNumberish,
+    _appCircuitOutput: BytesLike,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
 
   validateRequest(
     _requestId: BytesLike,
@@ -243,6 +321,13 @@ export interface BrevisApp extends BaseContract {
   ): Promise<boolean>;
 
   callStatic: {
+    brevisBatchCallback(
+      _chainId: BigNumberish,
+      _proofDataArray: Brevis.ProofDataStruct[],
+      _appCircuitOutputs: BytesLike[],
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     brevisCallback(
       _requestId: BytesLike,
       _appCircuitOutput: BytesLike,
@@ -250,6 +335,16 @@ export interface BrevisApp extends BaseContract {
     ): Promise<void>;
 
     brevisProof(overrides?: CallOverrides): Promise<string>;
+
+    singleRun(
+      _chainId: BigNumberish,
+      _proofData: Brevis.ProofDataStruct,
+      _merkleRoot: BytesLike,
+      _merkleProof: BytesLike[],
+      _nodeIndex: BigNumberish,
+      _appCircuitOutput: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     validateRequest(
       _requestId: BytesLike,
@@ -262,6 +357,13 @@ export interface BrevisApp extends BaseContract {
   filters: {};
 
   estimateGas: {
+    brevisBatchCallback(
+      _chainId: BigNumberish,
+      _proofDataArray: Brevis.ProofDataStruct[],
+      _appCircuitOutputs: BytesLike[],
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     brevisCallback(
       _requestId: BytesLike,
       _appCircuitOutput: BytesLike,
@@ -269,6 +371,16 @@ export interface BrevisApp extends BaseContract {
     ): Promise<BigNumber>;
 
     brevisProof(overrides?: CallOverrides): Promise<BigNumber>;
+
+    singleRun(
+      _chainId: BigNumberish,
+      _proofData: Brevis.ProofDataStruct,
+      _merkleRoot: BytesLike,
+      _merkleProof: BytesLike[],
+      _nodeIndex: BigNumberish,
+      _appCircuitOutput: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     validateRequest(
       _requestId: BytesLike,
@@ -279,6 +391,13 @@ export interface BrevisApp extends BaseContract {
   };
 
   populateTransaction: {
+    brevisBatchCallback(
+      _chainId: BigNumberish,
+      _proofDataArray: Brevis.ProofDataStruct[],
+      _appCircuitOutputs: BytesLike[],
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     brevisCallback(
       _requestId: BytesLike,
       _appCircuitOutput: BytesLike,
@@ -286,6 +405,16 @@ export interface BrevisApp extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     brevisProof(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    singleRun(
+      _chainId: BigNumberish,
+      _proofData: Brevis.ProofDataStruct,
+      _merkleRoot: BytesLike,
+      _merkleProof: BytesLike[],
+      _nodeIndex: BigNumberish,
+      _appCircuitOutput: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     validateRequest(
       _requestId: BytesLike,

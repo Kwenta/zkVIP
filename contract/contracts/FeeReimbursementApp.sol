@@ -25,12 +25,14 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     address public rewardToken;
     uint24 public rewardTokenDecimals;
     IAccountModule public accountModule;
+    address public claimer;
     mapping(bytes32 => uint16) public vkHashesToCircuitSize; // batch tier vk hashes => tier batch size
     mapping(uint128 => ClaimPeriod) public accountIdClaimPeriod;
     mapping(uint128 => uint248) public accountIdAccumulatedFee;
     event FeeRebateAccumulated(uint128 accountId, uint248 feeRebate, uint64 startBlockNumber,uint64 endBlockNumber);
     event VkHashesUpdated(bytes32[] vkHashes, uint16[] sizes);
-
+    event FeeReimbursed(address indexed user, uint128 accountId, uint248 feeRebate);
+    
     constructor(address _brevisProof) BrevisApp(IBrevisProof(_brevisProof)) {}
 
     // BrevisQuery contract will call our callback once Brevis backend submits the proof.
@@ -99,10 +101,23 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         accountModule = _accountModule;
     }
 
-    // TODO: add claim
-    function claim(uint128 accountId) public {
-       
+    function setClaimer(address _claimer) external onlyOwner {
+        claimer = _claimer;
     }
 
-    // TODO: add blacklist
+    function claim(uint128 accountId) public {
+        require(msg.sender == claimer, "invalid claimer address");
+        uint248 feeRebate = accountIdAccumulatedFee[accountId];
+        address user;
+        if (feeRebate > 0) {
+            user = accountModule.getAccountOwner(accountId);
+            if (user != address(0)) {
+                uint256 feeInRewardToken = feeRebate * (10 ** rewardTokenDecimals) / 1e18;
+                IERC20(rewardToken).safeTransfer(user, feeInRewardToken);
+            }
+        }
+
+        accountIdAccumulatedFee[accountId] = 0;
+        emit FeeReimbursed(user, accountId, feeRebate);
+    }
 }

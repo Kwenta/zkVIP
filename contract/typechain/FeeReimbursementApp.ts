@@ -18,6 +18,28 @@ import { Listener, Provider } from "@ethersproject/providers";
 import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 
 export declare namespace Brevis {
+  export type ProofDataStruct = {
+    commitHash: BytesLike;
+    vkHash: BytesLike;
+    appCommitHash: BytesLike;
+    appVkHash: BytesLike;
+    smtRoot: BytesLike;
+  };
+
+  export type ProofDataStructOutput = [
+    string,
+    string,
+    string,
+    string,
+    string
+  ] & {
+    commitHash: string;
+    vkHash: string;
+    appCommitHash: string;
+    appVkHash: string;
+    smtRoot: string;
+  };
+
   export type LogExtraInfoStruct = {
     valueFromTopic: BigNumberish;
     valueIndex: BigNumberish;
@@ -149,29 +171,43 @@ export declare namespace Brevis {
 export interface FeeReimbursementAppInterface extends utils.Interface {
   contractName: "FeeReimbursementApp";
   functions: {
-    "accountIdClaimedPeriod(uint128)": FunctionFragment;
+    "accountIdAccumulatedFee(uint128)": FunctionFragment;
+    "accountIdClaimPeriod(uint128)": FunctionFragment;
     "accountModule()": FunctionFragment;
+    "brevisBatchCallback(uint64,(bytes32,bytes32,bytes32,bytes32,bytes32)[],bytes[])": FunctionFragment;
     "brevisCallback(bytes32,bytes)": FunctionFragment;
     "brevisProof()": FunctionFragment;
+    "claim(uint128)": FunctionFragment;
+    "claimer()": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "rewardToken()": FunctionFragment;
     "rewardTokenDecimals()": FunctionFragment;
     "setAccountModule(address)": FunctionFragment;
+    "setClaimer(address)": FunctionFragment;
     "setRewardToken(address,uint24)": FunctionFragment;
     "setVkHashes(bytes32[],uint16[])": FunctionFragment;
+    "singleRun(uint64,(bytes32,bytes32,bytes32,bytes32,bytes32),bytes32,bytes32[],uint8,bytes)": FunctionFragment;
     "transferOwnership(address)": FunctionFragment;
     "validateRequest(bytes32,uint64,(bytes32,(uint64,uint64,tuple[5])[],(bytes32,address,bytes32,bytes32,uint64)[],(bytes32,bytes32,uint64,uint64,bytes)[]))": FunctionFragment;
     "vkHashesToCircuitSize(bytes32)": FunctionFragment;
   };
 
   encodeFunctionData(
-    functionFragment: "accountIdClaimedPeriod",
+    functionFragment: "accountIdAccumulatedFee",
+    values: [BigNumberish]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "accountIdClaimPeriod",
     values: [BigNumberish]
   ): string;
   encodeFunctionData(
     functionFragment: "accountModule",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "brevisBatchCallback",
+    values: [BigNumberish, Brevis.ProofDataStruct[], BytesLike[]]
   ): string;
   encodeFunctionData(
     functionFragment: "brevisCallback",
@@ -181,6 +217,8 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     functionFragment: "brevisProof",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "claim", values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: "claimer", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -198,6 +236,7 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     functionFragment: "setAccountModule",
     values: [string]
   ): string;
+  encodeFunctionData(functionFragment: "setClaimer", values: [string]): string;
   encodeFunctionData(
     functionFragment: "setRewardToken",
     values: [string, BigNumberish]
@@ -205,6 +244,17 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "setVkHashes",
     values: [BytesLike[], BigNumberish[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "singleRun",
+    values: [
+      BigNumberish,
+      Brevis.ProofDataStruct,
+      BytesLike,
+      BytesLike[],
+      BigNumberish,
+      BytesLike
+    ]
   ): string;
   encodeFunctionData(
     functionFragment: "transferOwnership",
@@ -220,11 +270,19 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "accountIdClaimedPeriod",
+    functionFragment: "accountIdAccumulatedFee",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "accountIdClaimPeriod",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
     functionFragment: "accountModule",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "brevisBatchCallback",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -235,6 +293,8 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     functionFragment: "brevisProof",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "claim", data: BytesLike): Result;
+  decodeFunctionResult(functionFragment: "claimer", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
@@ -252,6 +312,7 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     functionFragment: "setAccountModule",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "setClaimer", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setRewardToken",
     data: BytesLike
@@ -260,6 +321,7 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     functionFragment: "setVkHashes",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "singleRun", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "transferOwnership",
     data: BytesLike
@@ -274,25 +336,34 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   ): Result;
 
   events: {
-    "FeeReimbursed(address,uint128,uint248,uint64,uint64)": EventFragment;
+    "FeeRebateAccumulated(uint128,uint248,uint64,uint64)": EventFragment;
+    "FeeReimbursed(address,uint128,uint248)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "VkHashesUpdated(bytes32[],uint16[])": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "FeeRebateAccumulated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "FeeReimbursed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "VkHashesUpdated"): EventFragment;
 }
 
-export type FeeReimbursedEvent = TypedEvent<
-  [string, BigNumber, BigNumber, BigNumber, BigNumber],
+export type FeeRebateAccumulatedEvent = TypedEvent<
+  [BigNumber, BigNumber, BigNumber, BigNumber],
   {
-    user: string;
     accountId: BigNumber;
     feeRebate: BigNumber;
     startBlockNumber: BigNumber;
     endBlockNumber: BigNumber;
   }
+>;
+
+export type FeeRebateAccumulatedEventFilter =
+  TypedEventFilter<FeeRebateAccumulatedEvent>;
+
+export type FeeReimbursedEvent = TypedEvent<
+  [string, BigNumber, BigNumber],
+  { user: string; accountId: BigNumber; feeRebate: BigNumber }
 >;
 
 export type FeeReimbursedEventFilter = TypedEventFilter<FeeReimbursedEvent>;
@@ -340,7 +411,12 @@ export interface FeeReimbursementApp extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    accountIdClaimedPeriod(
+    accountIdAccumulatedFee(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[BigNumber]>;
+
+    accountIdClaimPeriod(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<
@@ -352,6 +428,13 @@ export interface FeeReimbursementApp extends BaseContract {
 
     accountModule(overrides?: CallOverrides): Promise<[string]>;
 
+    brevisBatchCallback(
+      _chainId: BigNumberish,
+      _proofDataArray: Brevis.ProofDataStruct[],
+      _appCircuitOutputs: BytesLike[],
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     brevisCallback(
       _requestId: BytesLike,
       _appCircuitOutput: BytesLike,
@@ -359,6 +442,13 @@ export interface FeeReimbursementApp extends BaseContract {
     ): Promise<ContractTransaction>;
 
     brevisProof(overrides?: CallOverrides): Promise<[string]>;
+
+    claim(
+      accountId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    claimer(overrides?: CallOverrides): Promise<[string]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
 
@@ -375,6 +465,11 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
+    setClaimer(
+      _claimer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     setRewardToken(
       _rewardToken: string,
       _decimals: BigNumberish,
@@ -384,6 +479,16 @@ export interface FeeReimbursementApp extends BaseContract {
     setVkHashes(
       _vkHashes: BytesLike[],
       _sizes: BigNumberish[],
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    singleRun(
+      _chainId: BigNumberish,
+      _proofData: Brevis.ProofDataStruct,
+      _merkleRoot: BytesLike,
+      _merkleProof: BytesLike[],
+      _nodeIndex: BigNumberish,
+      _appCircuitOutput: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -405,7 +510,12 @@ export interface FeeReimbursementApp extends BaseContract {
     ): Promise<[number]>;
   };
 
-  accountIdClaimedPeriod(
+  accountIdAccumulatedFee(
+    arg0: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<BigNumber>;
+
+  accountIdClaimPeriod(
     arg0: BigNumberish,
     overrides?: CallOverrides
   ): Promise<
@@ -417,6 +527,13 @@ export interface FeeReimbursementApp extends BaseContract {
 
   accountModule(overrides?: CallOverrides): Promise<string>;
 
+  brevisBatchCallback(
+    _chainId: BigNumberish,
+    _proofDataArray: Brevis.ProofDataStruct[],
+    _appCircuitOutputs: BytesLike[],
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   brevisCallback(
     _requestId: BytesLike,
     _appCircuitOutput: BytesLike,
@@ -424,6 +541,13 @@ export interface FeeReimbursementApp extends BaseContract {
   ): Promise<ContractTransaction>;
 
   brevisProof(overrides?: CallOverrides): Promise<string>;
+
+  claim(
+    accountId: BigNumberish,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  claimer(overrides?: CallOverrides): Promise<string>;
 
   owner(overrides?: CallOverrides): Promise<string>;
 
@@ -440,6 +564,11 @@ export interface FeeReimbursementApp extends BaseContract {
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
+  setClaimer(
+    _claimer: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   setRewardToken(
     _rewardToken: string,
     _decimals: BigNumberish,
@@ -449,6 +578,16 @@ export interface FeeReimbursementApp extends BaseContract {
   setVkHashes(
     _vkHashes: BytesLike[],
     _sizes: BigNumberish[],
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  singleRun(
+    _chainId: BigNumberish,
+    _proofData: Brevis.ProofDataStruct,
+    _merkleRoot: BytesLike,
+    _merkleProof: BytesLike[],
+    _nodeIndex: BigNumberish,
+    _appCircuitOutput: BytesLike,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -470,7 +609,12 @@ export interface FeeReimbursementApp extends BaseContract {
   ): Promise<number>;
 
   callStatic: {
-    accountIdClaimedPeriod(
+    accountIdAccumulatedFee(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    accountIdClaimPeriod(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<
@@ -482,6 +626,13 @@ export interface FeeReimbursementApp extends BaseContract {
 
     accountModule(overrides?: CallOverrides): Promise<string>;
 
+    brevisBatchCallback(
+      _chainId: BigNumberish,
+      _proofDataArray: Brevis.ProofDataStruct[],
+      _appCircuitOutputs: BytesLike[],
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     brevisCallback(
       _requestId: BytesLike,
       _appCircuitOutput: BytesLike,
@@ -489,6 +640,10 @@ export interface FeeReimbursementApp extends BaseContract {
     ): Promise<void>;
 
     brevisProof(overrides?: CallOverrides): Promise<string>;
+
+    claim(accountId: BigNumberish, overrides?: CallOverrides): Promise<void>;
+
+    claimer(overrides?: CallOverrides): Promise<string>;
 
     owner(overrides?: CallOverrides): Promise<string>;
 
@@ -503,6 +658,8 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: CallOverrides
     ): Promise<void>;
 
+    setClaimer(_claimer: string, overrides?: CallOverrides): Promise<void>;
+
     setRewardToken(
       _rewardToken: string,
       _decimals: BigNumberish,
@@ -512,6 +669,16 @@ export interface FeeReimbursementApp extends BaseContract {
     setVkHashes(
       _vkHashes: BytesLike[],
       _sizes: BigNumberish[],
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    singleRun(
+      _chainId: BigNumberish,
+      _proofData: Brevis.ProofDataStruct,
+      _merkleRoot: BytesLike,
+      _merkleProof: BytesLike[],
+      _nodeIndex: BigNumberish,
+      _appCircuitOutput: BytesLike,
       overrides?: CallOverrides
     ): Promise<void>;
 
@@ -534,19 +701,28 @@ export interface FeeReimbursementApp extends BaseContract {
   };
 
   filters: {
-    "FeeReimbursed(address,uint128,uint248,uint64,uint64)"(
-      user?: string | null,
+    "FeeRebateAccumulated(uint128,uint248,uint64,uint64)"(
       accountId?: null,
       feeRebate?: null,
       startBlockNumber?: null,
       endBlockNumber?: null
+    ): FeeRebateAccumulatedEventFilter;
+    FeeRebateAccumulated(
+      accountId?: null,
+      feeRebate?: null,
+      startBlockNumber?: null,
+      endBlockNumber?: null
+    ): FeeRebateAccumulatedEventFilter;
+
+    "FeeReimbursed(address,uint128,uint248)"(
+      user?: string | null,
+      accountId?: null,
+      feeRebate?: null
     ): FeeReimbursedEventFilter;
     FeeReimbursed(
       user?: string | null,
       accountId?: null,
-      feeRebate?: null,
-      startBlockNumber?: null,
-      endBlockNumber?: null
+      feeRebate?: null
     ): FeeReimbursedEventFilter;
 
     "OwnershipTransferred(address,address)"(
@@ -566,12 +742,24 @@ export interface FeeReimbursementApp extends BaseContract {
   };
 
   estimateGas: {
-    accountIdClaimedPeriod(
+    accountIdAccumulatedFee(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    accountIdClaimPeriod(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
     accountModule(overrides?: CallOverrides): Promise<BigNumber>;
+
+    brevisBatchCallback(
+      _chainId: BigNumberish,
+      _proofDataArray: Brevis.ProofDataStruct[],
+      _appCircuitOutputs: BytesLike[],
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     brevisCallback(
       _requestId: BytesLike,
@@ -580,6 +768,13 @@ export interface FeeReimbursementApp extends BaseContract {
     ): Promise<BigNumber>;
 
     brevisProof(overrides?: CallOverrides): Promise<BigNumber>;
+
+    claim(
+      accountId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    claimer(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -596,6 +791,11 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
+    setClaimer(
+      _claimer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
     setRewardToken(
       _rewardToken: string,
       _decimals: BigNumberish,
@@ -605,6 +805,16 @@ export interface FeeReimbursementApp extends BaseContract {
     setVkHashes(
       _vkHashes: BytesLike[],
       _sizes: BigNumberish[],
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    singleRun(
+      _chainId: BigNumberish,
+      _proofData: Brevis.ProofDataStruct,
+      _merkleRoot: BytesLike,
+      _merkleProof: BytesLike[],
+      _nodeIndex: BigNumberish,
+      _appCircuitOutput: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -627,12 +837,24 @@ export interface FeeReimbursementApp extends BaseContract {
   };
 
   populateTransaction: {
-    accountIdClaimedPeriod(
+    accountIdAccumulatedFee(
+      arg0: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    accountIdClaimPeriod(
       arg0: BigNumberish,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
     accountModule(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    brevisBatchCallback(
+      _chainId: BigNumberish,
+      _proofDataArray: Brevis.ProofDataStruct[],
+      _appCircuitOutputs: BytesLike[],
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
 
     brevisCallback(
       _requestId: BytesLike,
@@ -641,6 +863,13 @@ export interface FeeReimbursementApp extends BaseContract {
     ): Promise<PopulatedTransaction>;
 
     brevisProof(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
+    claim(
+      accountId: BigNumberish,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    claimer(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -659,6 +888,11 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
+    setClaimer(
+      _claimer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
     setRewardToken(
       _rewardToken: string,
       _decimals: BigNumberish,
@@ -668,6 +902,16 @@ export interface FeeReimbursementApp extends BaseContract {
     setVkHashes(
       _vkHashes: BytesLike[],
       _sizes: BigNumberish[],
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    singleRun(
+      _chainId: BigNumberish,
+      _proofData: Brevis.ProofDataStruct,
+      _merkleRoot: BytesLike,
+      _merkleProof: BytesLike[],
+      _nodeIndex: BigNumberish,
+      _appCircuitOutput: BytesLike,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 

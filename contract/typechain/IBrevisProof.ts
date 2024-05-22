@@ -20,7 +20,6 @@ import { TypedEventFilter, TypedEvent, TypedListener, OnEvent } from "./common";
 export declare namespace Brevis {
   export type ProofDataStruct = {
     commitHash: BytesLike;
-    length: BigNumberish;
     vkHash: BytesLike;
     appCommitHash: BytesLike;
     appVkHash: BytesLike;
@@ -29,14 +28,12 @@ export declare namespace Brevis {
 
   export type ProofDataStructOutput = [
     string,
-    BigNumber,
     string,
     string,
     string,
     string
   ] & {
     commitHash: string;
-    length: BigNumber;
     vkHash: string;
     appCommitHash: string;
     appVkHash: string;
@@ -177,6 +174,9 @@ export interface IBrevisProofInterface extends utils.Interface {
     "getProofAppData(bytes32)": FunctionFragment;
     "getProofData(bytes32)": FunctionFragment;
     "hasProof(bytes32)": FunctionFragment;
+    "mustSubmitAggProof(uint64,bytes32[],bytes)": FunctionFragment;
+    "mustValidateRequest(uint64,(bytes32,bytes32,bytes32,bytes32,bytes32),bytes32,bytes32[],uint8)": FunctionFragment;
+    "mustValidateRequests(uint64,(bytes32,bytes32,bytes32,bytes32,bytes32)[])": FunctionFragment;
     "submitProof(uint64,bytes,bool)": FunctionFragment;
     "validateRequest(bytes32,uint64,(bytes32,(uint64,uint64,tuple[5])[],(bytes32,address,bytes32,bytes32,uint64)[],(bytes32,bytes32,uint64,uint64,bytes)[]))": FunctionFragment;
   };
@@ -190,6 +190,24 @@ export interface IBrevisProofInterface extends utils.Interface {
     values: [BytesLike]
   ): string;
   encodeFunctionData(functionFragment: "hasProof", values: [BytesLike]): string;
+  encodeFunctionData(
+    functionFragment: "mustSubmitAggProof",
+    values: [BigNumberish, BytesLike[], BytesLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "mustValidateRequest",
+    values: [
+      BigNumberish,
+      Brevis.ProofDataStruct,
+      BytesLike,
+      BytesLike[],
+      BigNumberish
+    ]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "mustValidateRequests",
+    values: [BigNumberish, Brevis.ProofDataStruct[]]
+  ): string;
   encodeFunctionData(
     functionFragment: "submitProof",
     values: [BigNumberish, BytesLike, boolean]
@@ -208,6 +226,18 @@ export interface IBrevisProofInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "hasProof", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "mustSubmitAggProof",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "mustValidateRequest",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "mustValidateRequests",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "submitProof",
     data: BytesLike
@@ -263,6 +293,28 @@ export interface IBrevisProof extends BaseContract {
       overrides?: CallOverrides
     ): Promise<[boolean]>;
 
+    mustSubmitAggProof(
+      _chainId: BigNumberish,
+      _requestIds: BytesLike[],
+      _proofWithPubInputs: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    mustValidateRequest(
+      _chainId: BigNumberish,
+      _proofData: Brevis.ProofDataStruct,
+      _merkleRoot: BytesLike,
+      _merkleProof: BytesLike[],
+      _nodeIndex: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<[void]>;
+
+    mustValidateRequests(
+      _chainId: BigNumberish,
+      _proofDataArray: Brevis.ProofDataStruct[],
+      overrides?: CallOverrides
+    ): Promise<[void]>;
+
     submitProof(
       _chainId: BigNumberish,
       _proofWithPubInputs: BytesLike,
@@ -289,6 +341,28 @@ export interface IBrevisProof extends BaseContract {
   ): Promise<Brevis.ProofDataStructOutput>;
 
   hasProof(_requestId: BytesLike, overrides?: CallOverrides): Promise<boolean>;
+
+  mustSubmitAggProof(
+    _chainId: BigNumberish,
+    _requestIds: BytesLike[],
+    _proofWithPubInputs: BytesLike,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  mustValidateRequest(
+    _chainId: BigNumberish,
+    _proofData: Brevis.ProofDataStruct,
+    _merkleRoot: BytesLike,
+    _merkleProof: BytesLike[],
+    _nodeIndex: BigNumberish,
+    overrides?: CallOverrides
+  ): Promise<void>;
+
+  mustValidateRequests(
+    _chainId: BigNumberish,
+    _proofDataArray: Brevis.ProofDataStruct[],
+    overrides?: CallOverrides
+  ): Promise<void>;
 
   submitProof(
     _chainId: BigNumberish,
@@ -319,6 +393,28 @@ export interface IBrevisProof extends BaseContract {
       _requestId: BytesLike,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    mustSubmitAggProof(
+      _chainId: BigNumberish,
+      _requestIds: BytesLike[],
+      _proofWithPubInputs: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    mustValidateRequest(
+      _chainId: BigNumberish,
+      _proofData: Brevis.ProofDataStruct,
+      _merkleRoot: BytesLike,
+      _merkleProof: BytesLike[],
+      _nodeIndex: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    mustValidateRequests(
+      _chainId: BigNumberish,
+      _proofDataArray: Brevis.ProofDataStruct[],
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     submitProof(
       _chainId: BigNumberish,
@@ -353,6 +449,28 @@ export interface IBrevisProof extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
+    mustSubmitAggProof(
+      _chainId: BigNumberish,
+      _requestIds: BytesLike[],
+      _proofWithPubInputs: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    mustValidateRequest(
+      _chainId: BigNumberish,
+      _proofData: Brevis.ProofDataStruct,
+      _merkleRoot: BytesLike,
+      _merkleProof: BytesLike[],
+      _nodeIndex: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    mustValidateRequests(
+      _chainId: BigNumberish,
+      _proofDataArray: Brevis.ProofDataStruct[],
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
     submitProof(
       _chainId: BigNumberish,
       _proofWithPubInputs: BytesLike,
@@ -381,6 +499,28 @@ export interface IBrevisProof extends BaseContract {
 
     hasProof(
       _requestId: BytesLike,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    mustSubmitAggProof(
+      _chainId: BigNumberish,
+      _requestIds: BytesLike[],
+      _proofWithPubInputs: BytesLike,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    mustValidateRequest(
+      _chainId: BigNumberish,
+      _proofData: Brevis.ProofDataStruct,
+      _merkleRoot: BytesLike,
+      _merkleProof: BytesLike[],
+      _nodeIndex: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    mustValidateRequests(
+      _chainId: BigNumberish,
+      _proofDataArray: Brevis.ProofDataStruct[],
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
