@@ -1,16 +1,15 @@
 package circuit
 
 import (
-	"fmt"
-
 	"github.com/brevis-network/brevis-sdk/sdk"
 )
 
-const MaxClaimableBlocksPerCircuit = 4
+const MaxClaimableBlocksPerCircuit = 2
 
 type VolumeFeeCircuit struct {
-	ClaimBlockNums [MaxClaimableBlocksPerCircuit]sdk.Uint248
-	AccountId      sdk.Uint248
+	ClaimBlockNumHints [MaxClaimableBlocksPerCircuit - 1]int
+	ClaimBlockNums     [MaxClaimableBlocksPerCircuit]sdk.Uint248
+	AccountId          sdk.Uint248
 }
 
 var _ sdk.AppCircuit = &VolumeFeeCircuit{}
@@ -30,9 +29,6 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 	uint248 := api.Uint248
 	r := sdk.NewDataStream(api, in.Receipts)
 
-	if len(c.ClaimBlockNums) == 0 {
-		return fmt.Errorf("invalid claim block numbers")
-	}
 	blockInAsc := sdk.ConstUint248(1)
 	lastBlockNum := sdk.ConstUint248(0)
 	for i, blockNumber := range c.ClaimBlockNums {
@@ -68,10 +64,19 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 			uint248.IsZero(r.Fields[3].IsTopic),
 			uint248.IsEqual(r.Fields[3].Index, sdk.ConstUint248(5)),
 			uint248.IsZero(uint248.IsLessThan(r.BlockNum, firstBlockNum)), // r.BlockNum >= firstBlockNum
-			// uint248.IsZero(uint248.IsGreaterThan(r.BlockNum, lastBlockNum)), // r.BlockNum <= lastBlockNum
 		)
 		return assertionPassed
 	})
+
+	sdk.AssertSorted(r, func(a, b sdk.Receipt) sdk.Uint248 {
+		return uint248.Or(uint248.IsLessThan(a.BlockNum, b.BlockNum), uint248.IsEqual(a.BlockNum, b.BlockNum))
+	})
+
+	for i, hint := range c.ClaimBlockNumHints {
+		claimBlockNum := c.ClaimBlockNums[i+1]
+		receipt := sdk.GetUnderlying(r, hint)
+		uint248.AssertIsEqual(sdk.ConstUint248(1), uint248.Select(uint248.IsEqual(sdk.ConstUint248(0), claimBlockNum), sdk.ConstUint248(1), uint248.IsLessThan(receipt.BlockNum, claimBlockNum)))
+	}
 
 	api.AssertInputsAreUnique()
 
@@ -89,6 +94,8 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 	feeRebate := sdk.ConstUint248(0)
 	previousTotalVolume := sdk.ConstUint248(0)
 	previousStartBlockNumber := sdk.ConstUint248(0)
+
+	// toBe
 
 	for i, blockNumber := range c.ClaimBlockNums {
 		if i == 0 {
