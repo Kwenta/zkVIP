@@ -2,10 +2,9 @@ package circuit
 
 import (
 	"github.com/brevis-network/brevis-sdk/sdk"
-	"github.com/celer-network/goutils/log"
 )
 
-const MaxClaimableBlocksPerCircuit = 2
+const MaxClaimableBlocksPerCircuit = 100
 
 type VolumeFeeCircuit struct {
 	ealiestReceiptIndexHints    [MaxClaimableBlocksPerCircuit - 1]int // Indicate index of earlist receipt which should be counted for not-first claimable trade
@@ -81,10 +80,14 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 		claimBlockNum := c.ClaimBlockNums[i+1]
 		targetStartBlkNum := uint248.Sub(claimBlockNum, sdk.ConstUint248(43200*30))
 		// Previous receipt block number must be less than ClaimBlockNum[i+1] - 43200 * 30
-		if hint > 0 {
-			previousReceipt := sdk.GetUnderlying(r, hint)
-			uint248.AssertIsEqual(sdk.ConstUint248(1), uint248.IsLessThan(previousReceipt.BlockNum, targetStartBlkNum))
+
+		previousIndex := hint - 1
+		if previousIndex < 0 {
+			previousIndex = 0
 		}
+		previousReceipt := sdk.GetUnderlying(r, previousIndex)
+		uint248.AssertIsEqual(sdk.ConstUint248(1), uint248.IsLessThan(previousReceipt.BlockNum, targetStartBlkNum))
+
 		receipt := sdk.GetUnderlying(r, hint)
 		// Current receipt block number must not be less than ClaimBlockNum[i+1] - 43200 * 30
 		uint248.AssertIsEqual(sdk.ConstUint248(1), uint248.Select(uint248.IsEqual(sdk.ConstUint248(0), claimBlockNum), sdk.ConstUint248(1),
@@ -107,7 +110,7 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 	var volumeBetweens [MaxClaimableBlocksPerCircuit - 1]sdk.Uint248
 
 	for i, hint := range c.ealiestReceiptIndexHints {
-		endIndex := hint - 1
+		endIndex := hint
 		if endIndex < 0 {
 			endIndex = 0
 		}
@@ -121,11 +124,11 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 		volumeBetweens[i] = sdk.Sum(sdk.Map(receipts, volumeMap))
 	}
 
-	overlappingReceipts := sdk.RangeUnderlying(r, c.ealiestReceiptIndexHints[len(c.ealiestReceiptIndexHints)-1]+1, c.claimBlockReceiptFirstIndex[0])
+	overlappingReceipts := sdk.RangeUnderlying(r, c.ealiestReceiptIndexHints[len(c.ealiestReceiptIndexHints)-1], c.claimBlockReceiptFirstIndex[0])
 	lastBlockNumOneMonthAgo := uint248.Sub(lastBlockNum, sdk.ConstUint248(43200*30))
 	sdk.AssertEach(overlappingReceipts, func(r sdk.Receipt) sdk.Uint248 {
 		return uint248.And(
-			uint248.IsLessThan(c.ClaimBlockNums[0], r.BlockNum),                        // r.BlockNum < c.ClaimBlockNums[0]
+			uint248.IsLessThan(r.BlockNum, c.ClaimBlockNums[0]),                        // r.BlockNum < c.ClaimBlockNums[0]
 			uint248.IsZero(uint248.IsGreaterThan(lastBlockNumOneMonthAgo, r.BlockNum)), // lastBlockNumOneMonthAgo <= r.BlockNumber
 		)
 	})
@@ -142,17 +145,11 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 		currentReceipts := sdk.RangeUnderlying(r, c.claimBlockReceiptFirstIndex[i], c.claimBlockReceiptLastIndex[i]+1)
 
 		sdk.AssertEach(currentReceipts, func(r sdk.Receipt) sdk.Uint248 {
-			// log.Infof("blockNumber: %+v, r.BlockNum: %+v", blockNumber, r.BlockNum)
-			// log.Infof("uint248.IsEqual(blockNumber, r.BlockNum): %+v", uint248.IsEqual(blockNumber, r.BlockNum))
-			log.Infof("r.BlockNum: %+v", r.BlockNum)
-
 			return uint248.Select(uint248.IsEqual(blockNumber, sdk.ConstUint248(0)), sdk.ConstUint248(1), uint248.IsEqual(blockNumber, r.BlockNum))
 		})
 
 		if c.claimBlockReceiptFirstIndex[i] > 0 {
 			previousReceipt := sdk.GetUnderlying(r, c.claimBlockReceiptFirstIndex[i]-1)
-			log.Infof("previousReceipt.BlockNum: %+v, blockNumber: %+v", previousReceipt.BlockNum, blockNumber)
-
 			uint248.AssertIsEqual(
 				sdk.ConstUint248(1),
 				uint248.Select(
