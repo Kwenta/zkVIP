@@ -139,13 +139,13 @@ func TestNewVolumeFeeCircuit(t *testing.T) {
 			},
 		},
 	)
-
+	// 13622452
 	appCircuit := &VolumeFeeCircuit{
-		ClaimBlockNums: []sdk.Uint248{sdk.ConstUint248(13622452), sdk.ConstUint248(13622453)},
+		ClaimBlockNums: [MaxClaimableBlocksPerCircuit]sdk.Uint248{sdk.ConstUint248(13622452)},
 		AccountId:      sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
 	}
 	appCircuitAssignment := &VolumeFeeCircuit{
-		ClaimBlockNums: []sdk.Uint248{sdk.ConstUint248(13622452), sdk.ConstUint248(13622453)},
+		ClaimBlockNums: [MaxClaimableBlocksPerCircuit]sdk.Uint248{sdk.ConstUint248(13622452)},
 		AccountId:      sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
 	}
 

@@ -6,8 +6,10 @@ import (
 	"github.com/brevis-network/brevis-sdk/sdk"
 )
 
+const MaxClaimableBlocksPerCircuit = 10
+
 type VolumeFeeCircuit struct {
-	ClaimBlockNums []sdk.Uint248
+	ClaimBlockNums [MaxClaimableBlocksPerCircuit]sdk.Uint248
 	AccountId      sdk.Uint248
 }
 
@@ -19,7 +21,7 @@ func (c *VolumeFeeCircuit) Allocate() (maxReceipts, maxStorage, maxTransactions 
 
 func DefaultVolumeFeeCircuit() *VolumeFeeCircuit {
 	return &VolumeFeeCircuit{
-		ClaimBlockNums: []sdk.Uint248{sdk.ConstUint248(0)},
+		ClaimBlockNums: [MaxClaimableBlocksPerCircuit]sdk.Uint248{sdk.ConstUint248(0)},
 		AccountId:      sdk.ConstUint248(0),
 	}
 }
@@ -32,17 +34,20 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 		return fmt.Errorf("invalid claim block numbers")
 	}
 	blockInAsc := sdk.ConstUint248(1)
+	lastBlockNum := sdk.ConstUint248(0)
 	for i, blockNumber := range c.ClaimBlockNums {
 		if i > 0 {
-			blockInAsc = uint248.And(blockInAsc, uint248.IsLessThan(c.ClaimBlockNums[i-1], blockNumber))
+			isLessThan := uint248.Select(uint248.IsLessThan(sdk.ConstUint248(0), blockNumber), uint248.IsLessThan(c.ClaimBlockNums[i-1], blockNumber), sdk.ConstUint248(1))
+			blockInAsc = uint248.And(blockInAsc, isLessThan)
+			lastBlockNum = uint248.Select(uint248.IsLessThan(sdk.ConstUint248(0), blockNumber), blockNumber, lastBlockNum)
+		} else {
+			lastBlockNum = c.ClaimBlockNums[0]
 		}
 	}
 	api.Uint248.AssertIsEqual(blockInAsc, sdk.ConstUint248(1))
 
 	// 43200 blocks per day
-	firstBlockNum := uint248.Sub(c.ClaimBlockNums[0], sdk.ConstUint248(43200*30))
-	lastBlockNum := c.ClaimBlockNums[len(c.ClaimBlockNums)-1]
-
+	firstBlockNum := uint248.Select(uint248.IsLessThan(c.ClaimBlockNums[0], sdk.ConstUint248(43200*30)), sdk.ConstUint248(0), uint248.Sub(c.ClaimBlockNums[0], sdk.ConstUint248(43200*30)))
 	sdk.AssertEach(r, func(r sdk.Receipt) sdk.Uint248 {
 		assertionPassed := uint248.And(
 			uint248.IsEqual(r.Fields[0].EventID, EventIdOrderSettled),
@@ -62,8 +67,8 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 			uint248.IsEqual(r.Fields[3].Contract, ContractValue),
 			uint248.IsZero(r.Fields[3].IsTopic),
 			uint248.IsEqual(r.Fields[3].Index, sdk.ConstUint248(5)),
-			uint248.IsZero(uint248.IsLessThan(r.BlockNum, firstBlockNum)),   // r.BlockNum >= firstBlockNum
-			uint248.IsZero(uint248.IsGreaterThan(r.BlockNum, lastBlockNum)), // r.BlockNum <= lastBlockNum
+			uint248.IsZero(uint248.IsLessThan(r.BlockNum, firstBlockNum)), // r.BlockNum >= firstBlockNum
+			// uint248.IsZero(uint248.IsGreaterThan(r.BlockNum, lastBlockNum)), // r.BlockNum <= lastBlockNum
 		)
 		return assertionPassed
 	})
@@ -117,27 +122,19 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 			toBeRemovedReceiptsVolumeMap := sdk.Map(toBeRemovedReceipts, volumeMap)
 			previousTotalVolume = uint248.Sub(previousTotalVolume, sdk.Sum(toBeRemovedReceiptsVolumeMap))
 
-			// Claim should be non-discrete. There should be no more claimable trades between two claimable trades
-			// toBeAddedReceipts := sdk.Filter(r, func(r sdk.Receipt) sdk.Uint248 {
-			// 	return uint248.And(
-			// 		uint248.IsLessThan(r.BlockNum, blockNumber),                                                                // r.BlockNum < currentStartBlockNumber
-			// 		uint248.IsZero(uint248.IsGreaterThan(uint248.Add(c.ClaimBlockNums[i-1], sdk.ConstUint248(1)), r.BlockNum)), //  r.BlockNum >= c.ClaimBlockNums[i-1] + 1
-			// 	)
-			// })
-			// previousTotalVolumeMap := sdk.Map(toBeAddedReceipts, volumeMap)
-			// previousTotalVolume = uint248.Add(previousTotalVolume, sdk.Sum(previousTotalVolumeMap))
-
 			currentReceipt := sdk.Filter(r, func(r sdk.Receipt) sdk.Uint248 {
 				return uint248.IsEqual(r.BlockNum, blockNumber)
 			})
 			currentVolumeMap := sdk.Map(currentReceipt, volumeMap)
 			currentBlockVolume := sdk.Sum(currentVolumeMap)
-			uint248.AssertIsEqual(sdk.ConstUint248(1), uint248.IsLessThan(sdk.ConstUint248(0), currentBlockVolume))
+			validCurrentVolume := uint248.Select(uint248.IsEqual(sdk.ConstUint248(0), blockNumber), sdk.ConstUint248(1), uint248.IsLessThan(sdk.ConstUint248(0), currentBlockVolume))
+
+			uint248.AssertIsEqual(sdk.ConstUint248(1), validCurrentVolume)
 			previousTotalVolume = uint248.Add(previousTotalVolume, currentBlockVolume)
 			currentFeeMap := sdk.Map(currentReceipt, feeMap)
 			fee := sdk.Sum(currentFeeMap)
 			feeRebate = uint248.Add(feeRebate, selectFeeBasedOnTier(api, fee, previousTotalVolume))
-			previousStartBlockNumber = firstBlockNum
+			previousStartBlockNumber = currentStartBlockNumber
 		}
 	}
 
