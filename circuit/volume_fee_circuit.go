@@ -6,7 +6,7 @@ import (
 	"github.com/brevis-network/brevis-sdk/sdk"
 )
 
-const MaxClaimableBlocksPerCircuit = 10
+const MaxClaimableBlocksPerCircuit = 4
 
 type VolumeFeeCircuit struct {
 	ClaimBlockNums [MaxClaimableBlocksPerCircuit]sdk.Uint248
@@ -127,6 +127,7 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 			})
 			currentVolumeMap := sdk.Map(currentReceipt, volumeMap)
 			currentBlockVolume := sdk.Sum(currentVolumeMap)
+			/// If blockNumber is 0, then currentBlockVolume and fee must be 0
 			validCurrentVolume := uint248.Select(uint248.IsEqual(sdk.ConstUint248(0), blockNumber), sdk.ConstUint248(1), uint248.IsLessThan(sdk.ConstUint248(0), currentBlockVolume))
 
 			uint248.AssertIsEqual(sdk.ConstUint248(1), validCurrentVolume)
