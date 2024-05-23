@@ -29,10 +29,6 @@ func main() {
 
 	switch *serviceName {
 	case "fee-reimbursement":
-		startService(circuit.DefaultTraderVolumeCircuit(), *numMaxDataPoints, *maxReceipts)
-	case "fee-reimbursement-large-prover":
-		startService(circuit.DefaultTraderVolumeCircuit(), *numMaxDataPoints, *maxReceipts)
-	case "a":
 		startService(circuit.DefaultVolumeFeeCircuit(), *numMaxDataPoints, *maxReceipts)
 	default:
 		panic("invalid -service flag")
