@@ -101,7 +101,7 @@ func TestNewVolumeFeeCircuit(t *testing.T) {
 
 	app.AddReceipt(
 		sdk.ReceiptData{
-			BlockNum: big.NewInt(13622450),
+			BlockNum: big.NewInt(13622453),
 			TxHash:   common.Hex2Hash("0x34b6d7be702aeb2eebbae9f48487ac29cd605dc174225cdb52dd35c11bbfdfb0"),
 			Fields: [sdk.NumMaxLogFields]sdk.LogFieldData{
 				{
@@ -141,13 +141,14 @@ func TestNewVolumeFeeCircuit(t *testing.T) {
 	)
 	// 13622452
 	appCircuit := &VolumeFeeCircuit{
-		ClaimBlockNumHints: [MaxClaimableBlocksPerCircuit - 1]int{1},
+		ClaimBlockNumHints: [MaxClaimableBlocksPerCircuit - 1]int{0},
 		ClaimBlockNums:     [MaxClaimableBlocksPerCircuit]sdk.Uint248{sdk.ConstUint248(13622452), sdk.ConstUint248(0)},
 		AccountId:          sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
 	}
 	appCircuitAssignment := &VolumeFeeCircuit{
-		ClaimBlockNums: [MaxClaimableBlocksPerCircuit]sdk.Uint248{sdk.ConstUint248(13622452), sdk.ConstUint248(0)},
-		AccountId:      sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
+		ClaimBlockNumHints: [MaxClaimableBlocksPerCircuit - 1]int{0},
+		ClaimBlockNums:     [MaxClaimableBlocksPerCircuit]sdk.Uint248{sdk.ConstUint248(13622452), sdk.ConstUint248(0)},
+		AccountId:          sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
 	}
 
 	circuitInput, err := app.BuildCircuitInput(appCircuit)
