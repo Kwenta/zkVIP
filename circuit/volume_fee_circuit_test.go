@@ -149,13 +149,13 @@ func TestVolumeFeeCircuit(t *testing.T) {
 	claimBlockNums[0] = sdk.ConstUint248(13622452)
 
 	appCircuit := &VolumeFeeCircuit{
-		startBlkIndex: 2,
+		startBlkIndex: 1,
 		StartBlkNum:   sdk.ConstUint248(13622452),
 		EndBlkNum:     sdk.ConstUint248(13622453),
 		AccountId:     sdk.ConstUint248(new(big.Int).SetBytes(accountId)),
 	}
 	appCircuitAssignment := &VolumeFeeCircuit{
-		startBlkIndex: 2,
+		startBlkIndex: 1,
 		StartBlkNum:   sdk.ConstUint248(13622452),
 		EndBlkNum:     sdk.ConstUint248(13622453),
 		AccountId:     sdk.ConstUint248(new(big.Int).SetBytes(accountId)),
@@ -167,6 +167,8 @@ func TestVolumeFeeCircuit(t *testing.T) {
 	out := circuitInput.GetAbiPackedOutput()
 
 	test.IsSolved(t, appCircuit, appCircuitAssignment, circuitInput)
+
+	test.ProverSucceeded(t, appCircuit, appCircuitAssignment, circuitInput)
 
 	assert.Equal(t, fmt.Sprintf("0x%x", out), "0x800000000000000000000000000003120000000000010c849c96549c69cc6b0000000000cfdcb41fb2eda8bd358736000000000000000000000000000000000000000000010c849c96549c69cc6b0000000000cfdcb40000000000cfdcb5")
 }
