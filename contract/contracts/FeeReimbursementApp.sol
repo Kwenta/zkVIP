@@ -8,10 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "brevis-contracts/contracts/sdk/apps/framework/BrevisApp.sol";
 import "brevis-contracts/contracts/sdk/interface/IBrevisProof.sol";
 
-interface IAccountModule {
-    function getAccountOwner(uint128 accountId) external view returns (address);
-}
-
 interface IFeeRebateTierModule {
     function getFeeRebatePercentage(uint248 volume30D) external view returns (uint64);
 }
@@ -28,7 +24,6 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
 
     address public rewardToken;
     uint24 public rewardTokenDecimals;
-    IAccountModule public accountModule;
     IFeeRebateTierModule public feeRebateTierModule;
     address public claimer;
     mapping(bytes32 => uint16) public vkHashesToCircuitSize; // batch tier vk hashes => tier batch size
@@ -112,10 +107,6 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         rewardTokenDecimals = _decimals;
     }
 
-    function setAccountModule(IAccountModule _accountModule) external onlyOwner {
-        accountModule = _accountModule;
-    }
-
     function setFeeRebateTierModule(IFeeRebateTierModule _feeRebateTierModule) external onlyOwner {
         feeRebateTierModule = _feeRebateTierModule;
     }
@@ -124,10 +115,10 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         claimer = _claimer;
     }
 
+    // After reimburse user's fee, call claim to reset accumulatedFee
     function claim(uint128 accountId) public {
         require(msg.sender == claimer, "invalid claimer address");
         uint248 feeRebate = accountIdAccumulatedFee[accountId];
-      
         accountIdAccumulatedFee[accountId] = 0;
         emit FeeReimbursed(accountId, feeRebate);
     }
