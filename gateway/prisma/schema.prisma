@@ -55,5 +55,5 @@ model storage {
 }
 
 model daily_track {
-  year_month_day Decimal @id(map: "untitled_table_315_pkey") @default(0) @db.Decimal
+  year_month_day BigInt @id @default(0)
 }
