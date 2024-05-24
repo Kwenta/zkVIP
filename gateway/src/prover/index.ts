@@ -60,7 +60,8 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 
   const results = await Promise.all(promises);
 
-  let index = 0;
+  var unclaimableReceiptIndexes = Array<number>();
+  var claimableReceiptIndexes = Array<number>();
 
   for (let i = 0; i < results.length; i++) {
     const receipt = results[i];
@@ -69,6 +70,44 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     }
     if (receipt.status !== STATUS_READY) {
       throw new Error("receipts not ready"); 
+    }
+    const data = JSON.parse(receipt.data);
+    const blkNumber= Number(data.block_num)
+    if (isNaN(blkNumber)) {
+      console.error("invalid receipt block number", data)
+    }
+
+    if (blkNumber >= startBlkNum && blkNumber <= endBlkNum) {
+      claimableReceiptIndexes.push(i)
+    } else if (blkNumber < startBlkNum && blkNumber >= startBlkNum - 43200 * 30) {
+      unclaimableReceiptIndexes.push(i)
+    } else {
+      console.error("out of range  receipt block number", data)
+    }
+  }
+
+  var proverIndex = -1
+  var initialClaimableReceiptIndex = 0
+  if (unclaimableReceiptIndexes.length <= 236 && claimableReceiptIndexes.length <= 20) {
+    proverIndex = 0
+    initialClaimableReceiptIndex = 236
+  } else if (unclaimableReceiptIndexes.length <= 462 && claimableReceiptIndexes.length <= 50) {
+    proverIndex = 1
+    initialClaimableReceiptIndex = 462
+  } else if (unclaimableReceiptIndexes.length <= 4700 && claimableReceiptIndexes.length <=300) {
+    proverIndex = 2
+    initialClaimableReceiptIndex = 4700
+  } else if (claimableReceiptIndexes.length == 0) {
+    console.error("no claimable receipts")
+  } else {
+    console.error("receipts out of range", results.length)
+  }
+
+  var receiptIndex = 0
+  unclaimableReceiptIndexes.forEach(index => {
+    const receipt = results[index];
+    if (receipt === undefined) {
+      return;
     }
     const data = JSON.parse(receipt.data);
     const blkNumber= Number(data.block_num)
@@ -87,9 +126,35 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
           new sdk.Field(data.fields[3]), 
         ],
       }),
-      index++
+      receiptIndex++
     );
-  }
+  })
+
+  claimableReceiptIndexes.forEach(index => {
+    const receipt = results[index];
+    if (receipt === undefined) {
+      return;
+    }
+    const data = JSON.parse(receipt.data);
+    const blkNumber= Number(data.block_num)
+    if (isNaN(blkNumber)) {
+      console.error("invalid receipt block number", data)
+    }
+
+    proofReq.addReceipt(
+      new ReceiptData({
+        block_num: Number(data.block_num),
+        tx_hash: receipt.tx_hash,
+        fields: [
+          new sdk.Field(data.fields[0]),
+          new sdk.Field(data.fields[1]),
+          new sdk.Field(data.fields[2]),
+          new sdk.Field(data.fields[3]), 
+        ],
+      }),
+      initialClaimableReceiptIndex++
+    );
+  })
 
   const accountIdHex = BigNumber.from(utvf.account).toHexString()
   
@@ -99,7 +164,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     EndBlkNum: asUint248(utvf.end_blk_num.toString()),
   });
 
-  return {proofReq: proofReq, proverIndex: 0};
+  return {proofReq: proofReq, proverIndex: proverIndex};
 };
 
 async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee) {
@@ -114,6 +179,10 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
     console.log("Start to Build Proof Request: ", utvf.id, (new Date()).toLocaleString())
     const r = await buildUserTradeVolumeFeeProofReq(utvf);
     console.log("User Circuit Proof Request Sent: ", utvf.id, (new Date()).toLocaleString())
+    if (r.proverIndex < 0) {
+      console.log("Cannot proceed cause prover index is invalid", utvf.id, (new Date()).toLocaleString())
+      return 
+    }
     const proofRes = await provers[r.proverIndex].proveAsync(r.proofReq);
     console.log("proofRes proof_id ready",proofRes.proof_id, (new Date()).toLocaleString())
     // error handling
@@ -190,6 +259,10 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
   try {
     console.log("Proof upload sent: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())  
     const r = await buildUserTradeVolumeFeeProofReq(utvf);
+    if (r.proverIndex < 0) {
+      console.log("Cannot proceed upload proof cause prover index is invalid", utvf.id, (new Date()).toLocaleString())
+      return 
+    }
     const getProofRes = await provers[r.proverIndex].getProof(utvf.prover_id)
     if (getProofRes.has_err) {
       console.error(getProofRes.err.msg);
