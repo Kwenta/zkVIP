@@ -140,13 +140,27 @@ func TestNewVolumeFeeCircuit(t *testing.T) {
 		},
 	)
 
+	var claimBlockNums [MaxClaimableBlocksPerCircuit]sdk.Uint248
+
+	for i := range claimBlockNums {
+		claimBlockNums[i] = sdk.ConstUint248(0)
+	}
+
+	claimBlockNums[0] = sdk.ConstUint248(13622452)
+
 	appCircuit := &VolumeFeeCircuit{
-		ClaimBlockNums: []sdk.Uint248{sdk.ConstUint248(13622452), sdk.ConstUint248(13622453)},
-		AccountId:      sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
+		// ealiestReceiptIndexHints:    [MaxClaimableBlocksPerCircuit - 1]int{0},
+		claimBlockReceiptFirstIndex: [MaxClaimableBlocksPerCircuit]int{1},
+		claimBlockReceiptLastIndex:  [MaxClaimableBlocksPerCircuit]int{1},
+		ClaimBlockNums:              claimBlockNums,
+		AccountId:                   sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
 	}
 	appCircuitAssignment := &VolumeFeeCircuit{
-		ClaimBlockNums: []sdk.Uint248{sdk.ConstUint248(13622452), sdk.ConstUint248(13622453)},
-		AccountId:      sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
+		// ealiestReceiptIndexHints:    [MaxClaimableBlocksPerCircuit - 1]int{0},
+		claimBlockReceiptFirstIndex: [MaxClaimableBlocksPerCircuit]int{1},
+		claimBlockReceiptLastIndex:  [MaxClaimableBlocksPerCircuit]int{1},
+		ClaimBlockNums:              claimBlockNums,
+		AccountId:                   sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
 	}
 
 	circuitInput, err := app.BuildCircuitInput(appCircuit)
