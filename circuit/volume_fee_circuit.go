@@ -3,6 +3,7 @@ package circuit
 import (
 	"github.com/brevis-network/brevis-sdk/sdk"
 	"github.com/celer-network/goutils/log"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 type VolumeFeeCircuit struct {
@@ -11,8 +12,15 @@ type VolumeFeeCircuit struct {
 	AccountId   sdk.Uint248
 }
 
-const MaxReceipts = 256
-const MaxClaimableBlocksPerCircuit = 20
+const (
+	OrderSettledEventId          = "0x460080a757ec90719fe90ab2384c0196cdeed071a9fd7ce1ada43481d96b7db5"
+	ContractAddress              = "0x0A2AF931eFFd34b81ebcc57E3d3c9B1E1dE1C9Ce"
+	MaxReceipts                  = 256
+	MaxClaimableBlocksPerCircuit = 20
+)
+
+var EventIdOrderSettled = sdk.ParseEventID(hexutil.MustDecode(OrderSettledEventId)) //Order settled event
+var ContractValue = sdk.ConstUint248(ContractAddress)
 
 func DefaultVolumeFeeCircuit() *VolumeFeeCircuit {
 	return &VolumeFeeCircuit{
