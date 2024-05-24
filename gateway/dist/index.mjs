@@ -197,7 +197,7 @@ var {
   asUint521
 } = sdk;
 var prover = new Prover("222.74.153.228:53248");
-var largeProver = new Prover("222.74.153.228:53250");
+var largeProver = new Prover("222.74.153.228:53249");
 var extraLargeProver = new Prover("222.74.153.228:53250");
 var brevis = new Brevis("appsdk.brevis.network:11080");
 var buildUserTradeVolumeFeeProofReq = async (utvf) => {
@@ -279,7 +279,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld) {
     const r = await buildUserTradeVolumeFeeProofReq(utvf);
     console.log("User Circuit Proof Request Sent: ", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
     var p = prover;
-    if (r.length > 1500) {
+    if (r.length > 512) {
       p = extraLargeProver;
     } else if (r.length > 256) {
       p = largeProver;
@@ -349,7 +349,7 @@ async function uploadUserTradeVolumeFeeProof(utvfOld) {
     console.log("Proof upload sent: ", utvf.id, utvf.prover_id, (/* @__PURE__ */ new Date()).toLocaleString());
     const ids = utvf.receipt_ids.split(",");
     var p = prover;
-    if (ids.length > 1500) {
+    if (ids.length > 512) {
       p = extraLargeProver;
     } else if (ids.length > 256) {
       p = largeProver;
@@ -2639,14 +2639,41 @@ app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
 });
 app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
   try {
-    const { query_id } = req.query;
-    if (query_id?.toString() == null || query_id?.toString() == void 0) {
+    const { account, start_year_month_day, end_year_month_day } = req.query;
+    const start = Number(start_year_month_day);
+    const end = Number(end_year_month_day);
+    if (account?.toString() == null || account?.toString() == void 0) {
       res.status(500);
-      res.send({ error: true, message: "query id not found" });
+      res.send({ error: true, message: "invalid account id" });
       return;
     }
-    const utvf = await getUserTradeVolumeFee(query_id?.toString());
-    if (utvf == null || utvf == void 0) {
+    if (isNaN(start) || isNaN(end)) {
+      res.status(500);
+      res.send({ error: true, message: "invalid claim trade time period" });
+      return;
+    }
+    if (start > end) {
+      res.status(500);
+      res.send({ error: true, message: "start is bigger than end" });
+      return;
+    }
+    if (end >= Number(moment2(/* @__PURE__ */ new Date()).format("YYYYMMDD"))) {
+      res.status(500);
+      res.send({ error: true, message: "invalid end trade period" });
+      return;
+    }
+    if (!validTimeNumber(start)) {
+      res.status(500);
+      res.send({ error: true, message: "invalid start trade period" });
+      return;
+    }
+    if (!validTimeNumber(end)) {
+      res.status(500);
+      res.send({ error: true, message: "invalid end trade period" });
+      return;
+    }
+    const utvf = await findUserExistingUTVF(account, BigInt(start), BigInt(end));
+    if (utvf === void 0 || utvf === null || !utvf) {
       res.status(500);
       res.send({ error: true, message: "info not found" });
       return;
@@ -2681,29 +2708,33 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       message = "Wait until query_hash and query_fee is ready";
     }
     var feeBN = BigNumber6.from("0");
+    var volumeBN = BigNumber6.from("0");
+    var totalFeeBN = BigNumber6.from("0");
     var tier = -1;
     try {
       var volume = utvf.volume;
       if (volume === "") {
         volume = "0";
       }
-      const volumeBN = BigNumber6.from(volume).div(BigNumber6.from("1000000000000000000"));
+      volumeBN = BigNumber6.from(volume);
+      const volumeWithoutDecimalBN = volumeBN.div(BigNumber6.from("1000000000000000000"));
       var fee = utvf.fee;
       if (fee === "") {
         fee = "0";
       }
-      var feeBN = BigNumber6.from(fee);
-      var tier = -1;
-      if (volumeBN.toNumber() > 1e8) {
+      feeBN = BigNumber6.from(fee);
+      totalFeeBN = BigNumber6.from(fee);
+      tier = -1;
+      if (volumeWithoutDecimalBN.toNumber() > 1e8) {
         tier = 3;
         feeBN = feeBN.mul(BigNumber6.from(9)).div(BigNumber6.from(10));
-      } else if (volumeBN.toNumber() > 1e7) {
+      } else if (volumeWithoutDecimalBN.toNumber() > 1e7) {
         tier = 2;
         feeBN = feeBN.mul(BigNumber6.from(75)).div(BigNumber6.from(100));
-      } else if (volumeBN.toNumber() > 1e6) {
+      } else if (volumeWithoutDecimalBN.toNumber() > 1e6) {
         tier = 1;
         feeBN = feeBN.mul(BigNumber6.from(5)).div(BigNumber6.from(10));
-      } else if (volumeBN.toNumber() > 1e5) {
+      } else if (volumeWithoutDecimalBN.toNumber() > 1e5) {
         tier = 0;
         feeBN = feeBN.mul(BigNumber6.from(2)).div(BigNumber6.from(10));
       } else {
@@ -2712,7 +2743,7 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       }
     } catch {
       status = FEE_REIMBURSEMENT_INFO_STATUS_INIT;
-      message = "Wait until query_hash and query_fee is ready";
+      message = "preparing account info";
       res.json({
         status,
         message
@@ -2726,7 +2757,9 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       brevis_request_contract_address: brevisRequest2,
       message,
       tier,
-      fee_to_be_reimbursed: feeBN.toString()
+      fee_to_be_reimbursed: feeBN.toString(),
+      volume: volumeBN.toString(),
+      total_fee: totalFeeBN.toString()
     });
   } catch (error) {
     res.status(500);
