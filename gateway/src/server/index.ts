@@ -20,12 +20,11 @@ import {
   queryUserSwapAmountInput,
 } from "../interval_jobs/index.ts";
 import {
-  monitorFeeReimbursed,
+  monitorFeeAccumulated,
   monitorBrevisRequest,
 } from "../ether_interactions/index.ts";
 import { validTimeNumber, UserTradeVolumeFee, findNextDay } from "./type.ts";
 import { BigNumber } from "ethers";
-import { monitorEventLoopDelay } from "perf_hooks";
 import moment from "moment";
 
 const app = express();
@@ -45,7 +44,7 @@ setInterval(getStorageInfos, 10000);
 prepareUserTradeVolumeFees().then();
 setInterval(prepareUserTradeVolumeFees, 2000);
 
-monitorFeeReimbursed();
+monitorFeeAccumulated();
 monitorBrevisRequest();
 
 app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
@@ -156,7 +155,7 @@ app.get("/kwenta/getTradeFeeReimbursementInfo", async (req, res) => {
       return
     }
 
-    const utvf = await findUserExistingUTVF(account, BigInt(start), BigInt(end));
+    const utvf = await findUserExistingUTVF(account?.toString(), BigInt(start), BigInt(end));
     if (utvf === undefined || utvf === null || !utvf) {
       res.status(500);
       res.send({ error: true, message: "info not found" });

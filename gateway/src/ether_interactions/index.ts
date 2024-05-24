@@ -40,30 +40,31 @@ const userSwapAmountApp = FeeReimbursementApp__factory.connect(
   wallet
 );
 
-async function monitorFeeReimbursed() {
+async function monitorFeeAccumulated() {
   // event FeeReimbursed(address indexed user, uint128 accountId, uint248 feeRebate, uint32 startYearMonthDay, uint32 endYearMonthDay, uint64 startBlockNumber,uint64 endBlockNumber);
-  userSwapAmountApp.on("FeeReimbursed", (user, accountId, fee, startYearMonthDay, endYearMonthDay) => {
-    const userAddress = user as string;
+  // event FeeRebateAccumulated(uint128 accountId, uint248 feeRebate, uint248 volume30D, uint248 feeRebateWithRate,  uint64 startBlockNumber,uint64 endBlockNumber)
+ 
+  userSwapAmountApp.on("FeeRebateAccumulated", (accountId, feeRebate, volume30D, feeRebateWithRate, startBlockNumber, endBlockNumber) => {
     const accountIdBN = accountId as BigNumber;
-    console.log("Fee Reimbursed Event", user, accountId, fee, startYearMonthDay, endYearMonthDay)
+    const feeRebateBN = feeRebate as BigNumber;
+    const volume30DBN = volume30D as BigNumber;
+    const feeRebateWithRateBN = feeRebateWithRate as BigNumber;
+    const startBlockNumberBN = startBlockNumber as BigNumber;
+    const endBlockNumberBN = endBlockNumber as BigNumber;
+
+    console.log("Fee Accumulated Event", accountId, feeRebate, volume30D, feeRebateWithRate, startBlockNumber, endBlockNumber)
     if (
-      userAddress === undefined ||
-      userAddress === null ||
-      accountIdBN === undefined ||
-      accountIdBN === null
+      accountIdBN === undefined || accountIdBN === null ||
+      feeRebateBN === undefined || feeRebateBN === null ||
+      volume30DBN === undefined || volume30DBN === null ||
+      feeRebateWithRateBN === undefined || feeRebateWithRateBN === null ||
+      startBlockNumberBN === undefined || startBlockNumberBN === null ||
+      endBlockNumberBN === undefined || endBlockNumberBN === null
     ) {
-      console.log(
-        "reimbursement triggered with unexpected value:: ",
-        user,
-        accountId,
-        fee,
-        startYearMonthDay, 
-        endYearMonthDay
-      );
       return;
     }
     
-    findUserExistingUTVF(accountIdBN.toString(), BigInt(startYearMonthDay.toString()), BigInt(endYearMonthDay.toString()))
+    findUserExistingUTVF(accountIdBN.toString(), BigInt(startBlockNumberBN.toString()), BigInt(endBlockNumberBN.toString()))
       .then(utvf => {
         if (utvf) {
           utvf.status = PROOF_STATUS_ONCHAIN_VERIFIED
@@ -72,11 +73,9 @@ async function monitorFeeReimbursed() {
       }).catch(error => {
         console.error(
           "failed to update user swap amount",
-          user,
           accountId,
-          fee,
-          startYearMonthDay, 
-          endYearMonthDay,
+          startBlockNumber,
+          endBlockNumber, 
           error
         );
       })
@@ -103,6 +102,6 @@ export {
   wallet,
   brevisRequest,
   userSwapAmountApp,
-  monitorFeeReimbursed,
+  monitorFeeAccumulated,
   monitorBrevisRequest,
 };
