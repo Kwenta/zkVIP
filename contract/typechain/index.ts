@@ -8,6 +8,7 @@ export type { IBrevisProof } from "./IBrevisProof";
 export type { Tx } from "./Tx";
 export type { FeeReimbursementApp } from "./FeeReimbursementApp";
 export type { IAccountModule } from "./IAccountModule";
+export type { IFeeRebateTierModule } from "./IFeeRebateTierModule";
 
 export { Ownable__factory } from "./factories/Ownable__factory";
 export { IERC20__factory } from "./factories/IERC20__factory";
@@ -16,3 +17,4 @@ export { IBrevisProof__factory } from "./factories/IBrevisProof__factory";
 export { Tx__factory } from "./factories/Tx__factory";
 export { FeeReimbursementApp__factory } from "./factories/FeeReimbursementApp__factory";
 export { IAccountModule__factory } from "./factories/IAccountModule__factory";
+export { IFeeRebateTierModule__factory } from "./factories/IFeeRebateTierModule__factory";

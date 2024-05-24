@@ -40,6 +40,10 @@ declare module "hardhat/types/runtime" {
       name: "IAccountModule",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IAccountModule__factory>;
+    getContractFactory(
+      name: "IFeeRebateTierModule",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IFeeRebateTierModule__factory>;
 
     getContractAt(
       name: "Ownable",
@@ -76,6 +80,11 @@ declare module "hardhat/types/runtime" {
       address: string,
       signer?: ethers.Signer
     ): Promise<Contracts.IAccountModule>;
+    getContractAt(
+      name: "IFeeRebateTierModule",
+      address: string,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IFeeRebateTierModule>;
 
     // default types
     getContractFactory(

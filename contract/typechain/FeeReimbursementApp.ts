@@ -179,12 +179,14 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     "brevisProof()": FunctionFragment;
     "claim(uint128)": FunctionFragment;
     "claimer()": FunctionFragment;
+    "feeRebateTierModule()": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
     "rewardToken()": FunctionFragment;
     "rewardTokenDecimals()": FunctionFragment;
     "setAccountModule(address)": FunctionFragment;
     "setClaimer(address)": FunctionFragment;
+    "setFeeRebateTierModule(address)": FunctionFragment;
     "setRewardToken(address,uint24)": FunctionFragment;
     "setVkHashes(bytes32[],uint16[])": FunctionFragment;
     "singleRun(uint64,(bytes32,bytes32,bytes32,bytes32,bytes32),bytes32,bytes32[],uint8,bytes)": FunctionFragment;
@@ -219,6 +221,10 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   ): string;
   encodeFunctionData(functionFragment: "claim", values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: "claimer", values?: undefined): string;
+  encodeFunctionData(
+    functionFragment: "feeRebateTierModule",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -237,6 +243,10 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(functionFragment: "setClaimer", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "setFeeRebateTierModule",
+    values: [string]
+  ): string;
   encodeFunctionData(
     functionFragment: "setRewardToken",
     values: [string, BigNumberish]
@@ -295,6 +305,10 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(functionFragment: "claim", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "claimer", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "feeRebateTierModule",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
@@ -313,6 +327,10 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setClaimer", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setFeeRebateTierModule",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "setRewardToken",
     data: BytesLike
@@ -336,8 +354,8 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   ): Result;
 
   events: {
-    "FeeRebateAccumulated(uint128,uint248,uint64,uint64)": EventFragment;
-    "FeeReimbursed(address,uint128,uint248)": EventFragment;
+    "FeeRebateAccumulated(uint128,uint248,uint248,uint248,uint64,uint64)": EventFragment;
+    "FeeReimbursed(uint128,uint248)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "VkHashesUpdated(bytes32[],uint16[])": EventFragment;
   };
@@ -349,10 +367,12 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
 }
 
 export type FeeRebateAccumulatedEvent = TypedEvent<
-  [BigNumber, BigNumber, BigNumber, BigNumber],
+  [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
   {
     accountId: BigNumber;
     feeRebate: BigNumber;
+    volume30D: BigNumber;
+    feeRebateWithRate: BigNumber;
     startBlockNumber: BigNumber;
     endBlockNumber: BigNumber;
   }
@@ -362,8 +382,8 @@ export type FeeRebateAccumulatedEventFilter =
   TypedEventFilter<FeeRebateAccumulatedEvent>;
 
 export type FeeReimbursedEvent = TypedEvent<
-  [string, BigNumber, BigNumber],
-  { user: string; accountId: BigNumber; feeRebate: BigNumber }
+  [BigNumber, BigNumber],
+  { accountId: BigNumber; feeRebate: BigNumber }
 >;
 
 export type FeeReimbursedEventFilter = TypedEventFilter<FeeReimbursedEvent>;
@@ -450,6 +470,8 @@ export interface FeeReimbursementApp extends BaseContract {
 
     claimer(overrides?: CallOverrides): Promise<[string]>;
 
+    feeRebateTierModule(overrides?: CallOverrides): Promise<[string]>;
+
     owner(overrides?: CallOverrides): Promise<[string]>;
 
     renounceOwnership(
@@ -467,6 +489,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
     setClaimer(
       _claimer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setFeeRebateTierModule(
+      _feeRebateTierModule: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -549,6 +576,8 @@ export interface FeeReimbursementApp extends BaseContract {
 
   claimer(overrides?: CallOverrides): Promise<string>;
 
+  feeRebateTierModule(overrides?: CallOverrides): Promise<string>;
+
   owner(overrides?: CallOverrides): Promise<string>;
 
   renounceOwnership(
@@ -566,6 +595,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
   setClaimer(
     _claimer: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setFeeRebateTierModule(
+    _feeRebateTierModule: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -645,6 +679,8 @@ export interface FeeReimbursementApp extends BaseContract {
 
     claimer(overrides?: CallOverrides): Promise<string>;
 
+    feeRebateTierModule(overrides?: CallOverrides): Promise<string>;
+
     owner(overrides?: CallOverrides): Promise<string>;
 
     renounceOwnership(overrides?: CallOverrides): Promise<void>;
@@ -659,6 +695,11 @@ export interface FeeReimbursementApp extends BaseContract {
     ): Promise<void>;
 
     setClaimer(_claimer: string, overrides?: CallOverrides): Promise<void>;
+
+    setFeeRebateTierModule(
+      _feeRebateTierModule: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     setRewardToken(
       _rewardToken: string,
@@ -701,29 +742,28 @@ export interface FeeReimbursementApp extends BaseContract {
   };
 
   filters: {
-    "FeeRebateAccumulated(uint128,uint248,uint64,uint64)"(
+    "FeeRebateAccumulated(uint128,uint248,uint248,uint248,uint64,uint64)"(
       accountId?: null,
       feeRebate?: null,
+      volume30D?: null,
+      feeRebateWithRate?: null,
       startBlockNumber?: null,
       endBlockNumber?: null
     ): FeeRebateAccumulatedEventFilter;
     FeeRebateAccumulated(
       accountId?: null,
       feeRebate?: null,
+      volume30D?: null,
+      feeRebateWithRate?: null,
       startBlockNumber?: null,
       endBlockNumber?: null
     ): FeeRebateAccumulatedEventFilter;
 
-    "FeeReimbursed(address,uint128,uint248)"(
-      user?: string | null,
+    "FeeReimbursed(uint128,uint248)"(
       accountId?: null,
       feeRebate?: null
     ): FeeReimbursedEventFilter;
-    FeeReimbursed(
-      user?: string | null,
-      accountId?: null,
-      feeRebate?: null
-    ): FeeReimbursedEventFilter;
+    FeeReimbursed(accountId?: null, feeRebate?: null): FeeReimbursedEventFilter;
 
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
@@ -776,6 +816,8 @@ export interface FeeReimbursementApp extends BaseContract {
 
     claimer(overrides?: CallOverrides): Promise<BigNumber>;
 
+    feeRebateTierModule(overrides?: CallOverrides): Promise<BigNumber>;
+
     owner(overrides?: CallOverrides): Promise<BigNumber>;
 
     renounceOwnership(
@@ -793,6 +835,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
     setClaimer(
       _claimer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setFeeRebateTierModule(
+      _feeRebateTierModule: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -871,6 +918,10 @@ export interface FeeReimbursementApp extends BaseContract {
 
     claimer(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    feeRebateTierModule(
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
     owner(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     renounceOwnership(
@@ -890,6 +941,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
     setClaimer(
       _claimer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setFeeRebateTierModule(
+      _feeRebateTierModule: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
