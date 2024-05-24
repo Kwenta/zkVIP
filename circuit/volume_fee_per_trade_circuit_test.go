@@ -11,11 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestVolumeFeeCircuit(t *testing.T) {
+func TestNewVolumeFeeCircuit(t *testing.T) {
 	app, err := sdk.NewBrevisApp()
 	assert.NoError(t, err)
 
-	accountId := common.Hex2Bytes("0x0000000000000000000000000000000080000000000000000000000000000312")
+	userAddress := common.Hex2Bytes("0x0000000000000000000000000000000080000000000000000000000000000312")
 
 	app.AddReceipt(
 		sdk.ReceiptData{
@@ -134,7 +134,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 					EventID:    common.Hex2Hash(OrderSettledEventId),
 					IsTopic:    false,
 					FieldIndex: 5,
-					Value:      common.Hex2Hash("0x8000000000000000000000000000031200000000000000000000000000000000000000000000003f65db5178cb5502000000000000000000000000000000000000000000010c849c96549c69cc6b0000000000cfdcb40000000000cfdcb5"),
+					Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000001fb2eda8bc65aa81"),
 				},
 			},
 		},
@@ -148,15 +148,19 @@ func TestVolumeFeeCircuit(t *testing.T) {
 
 	claimBlockNums[0] = sdk.ConstUint248(13622452)
 
-	appCircuit := &VolumeFeeCircuit{
-		StartBlkNum: sdk.ConstUint248(13622452),
-		EndBlkNum:   sdk.ConstUint248(13622453),
-		AccountId:   sdk.ConstUint248(new(big.Int).SetBytes(accountId)),
+	appCircuit := &VolumeFeePerTradeCircuit{
+		// ealiestReceiptIndexHints:    [MaxClaimableBlocksPerCircuit - 1]int{0},
+		claimBlockReceiptFirstIndex: [MaxClaimableBlocksPerCircuit]int{1},
+		claimBlockReceiptLastIndex:  [MaxClaimableBlocksPerCircuit]int{1},
+		ClaimBlockNums:              claimBlockNums,
+		AccountId:                   sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
 	}
-	appCircuitAssignment := &VolumeFeeCircuit{
-		StartBlkNum: sdk.ConstUint248(13622452),
-		EndBlkNum:   sdk.ConstUint248(13622453),
-		AccountId:   sdk.ConstUint248(new(big.Int).SetBytes(accountId)),
+	appCircuitAssignment := &VolumeFeePerTradeCircuit{
+		// ealiestReceiptIndexHints:    [MaxClaimableBlocksPerCircuit - 1]int{0},
+		claimBlockReceiptFirstIndex: [MaxClaimableBlocksPerCircuit]int{1},
+		claimBlockReceiptLastIndex:  [MaxClaimableBlocksPerCircuit]int{1},
+		ClaimBlockNums:              claimBlockNums,
+		AccountId:                   sdk.ConstUint248(new(big.Int).SetBytes(userAddress)),
 	}
 
 	circuitInput, err := app.BuildCircuitInput(appCircuit)
@@ -166,5 +170,5 @@ func TestVolumeFeeCircuit(t *testing.T) {
 
 	test.IsSolved(t, appCircuit, appCircuitAssignment, circuitInput)
 
-	assert.Equal(t, fmt.Sprintf("0x%x", out), "0x800000000000000000000000000003120000000000010c849c96549c69cc6b0000000000cfdcb41fb2eda8bd358736000000000000000000000000000000000000000000010c849c96549c69cc6b0000000000cfdcb40000000000cfdcb5")
+	assert.Equal(t, fmt.Sprintf("0x%x", out), "0x0134d7ad0134d7ad800000000000000000000000000003120000000000000000000000000000000000000000000059818987718978997900000000000000000000000000000000000000000000001fb2eda8bc65aa810000000000cfcce00000000000cfdcb4")
 }

@@ -12,6 +12,10 @@ interface IAccountModule {
     function getAccountOwner(uint128 accountId) external view returns (address);
 }
 
+interface IFeeRebateTierModule {
+    function getFeeRebatePercentage(uint248 volume30D) external view returns (uint64);
+}
+
 struct ClaimPeriod {
     uint64 startBlockNumber;
     uint64 endBlockNumber;     
@@ -25,13 +29,14 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     address public rewardToken;
     uint24 public rewardTokenDecimals;
     IAccountModule public accountModule;
+    IFeeRebateTierModule public feeRebateTierModule;
     address public claimer;
     mapping(bytes32 => uint16) public vkHashesToCircuitSize; // batch tier vk hashes => tier batch size
     mapping(uint128 => ClaimPeriod) public accountIdClaimPeriod;
     mapping(uint128 => uint248) public accountIdAccumulatedFee;
-    event FeeRebateAccumulated(uint128 accountId, uint248 feeRebate, uint64 startBlockNumber,uint64 endBlockNumber);
+    event FeeRebateAccumulated(uint128 accountId, uint248 feeRebate, uint248 volume30D, uint248 feeRebateWithRate,  uint64 startBlockNumber,uint64 endBlockNumber);
     event VkHashesUpdated(bytes32[] vkHashes, uint16[] sizes);
-    event FeeReimbursed(address indexed user, uint128 accountId, uint248 feeRebate);
+    event FeeReimbursed(uint128 accountId, uint248 feeRebate);
     
     constructor(address _brevisProof) BrevisApp(IBrevisProof(_brevisProof)) {}
 
@@ -46,19 +51,29 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         uint16 circuitSize = vkHashesToCircuitSize[_vkHash];
         require(circuitSize > 0, "vkHash not valid");
 
-        (uint128 accountId, uint248 feeRebate, uint64 startBlockNumber, uint64 endBlockNumber) = decodeOutput(_circuitOutput);
+        (uint128 accountId, uint248 feeRebate, uint248 volume30D, uint64 startBlockNumber, uint64 endBlockNumber) = decodeOutput(_circuitOutput);
+        uint64 percentage;
+        uint248 feeRebateWithRate = feeRebate;
+        if (feeRebate > 0) {
+            percentage = feeRebateTierModule.getFeeRebatePercentage(volume30D);  // accountModule.getAccountOwner(accountId);
+            if (percentage != 0) {
+                feeRebateWithRate = feeRebate * percentage; 
+            }
+        }
+       
         ClaimPeriod memory claimPeriod = _newClaimPeriod(startBlockNumber, endBlockNumber, accountId);
         accountIdClaimPeriod[accountId] = claimPeriod;
         uint248 accumulatedFee = accountIdAccumulatedFee[accountId];
-        accountIdAccumulatedFee[accountId] = accumulatedFee + feeRebate;
-        emit FeeRebateAccumulated(accountId, feeRebate, startBlockNumber, endBlockNumber);
+        accountIdAccumulatedFee[accountId] = accumulatedFee + feeRebateWithRate;        
+        emit FeeRebateAccumulated(accountId, feeRebate, volume30D, feeRebateWithRate, startBlockNumber, endBlockNumber);
     }
 
-    function decodeOutput(bytes calldata o) internal pure returns (uint128 accountId, uint248 feeRebate, uint64 startBlockNumber,uint64 endBlockNumber) {
+    function decodeOutput(bytes calldata o) internal pure returns (uint128 accountId, uint248 feeRebate, uint248 volume30D, uint64 startBlockNumber,uint64 endBlockNumber) {
         accountId = uint128(bytes16(o[0:16]));
         feeRebate = uint248(bytes31(o[16:47]));
-        startBlockNumber = uint64(bytes8(o[47:55]));
-        endBlockNumber = uint64(bytes8(o[55:63]));
+        volume30D = uint248(bytes31(o[47:78]));
+        startBlockNumber = uint64(bytes8(o[78:86]));
+        endBlockNumber = uint64(bytes8(o[86:94]));
     }
 
     function _newClaimPeriod(uint64 startBlockNumber, uint64 endBlockNumber, uint128 accountId) internal view returns (ClaimPeriod memory) {
@@ -101,6 +116,10 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         accountModule = _accountModule;
     }
 
+    function setFeeRebateTierModule(IFeeRebateTierModule _feeRebateTierModule) external onlyOwner {
+        feeRebateTierModule = _feeRebateTierModule;
+    }
+
     function setClaimer(address _claimer) external onlyOwner {
         claimer = _claimer;
     }
@@ -108,16 +127,8 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     function claim(uint128 accountId) public {
         require(msg.sender == claimer, "invalid claimer address");
         uint248 feeRebate = accountIdAccumulatedFee[accountId];
-        address user;
-        if (feeRebate > 0) {
-            user = accountModule.getAccountOwner(accountId);
-            if (user != address(0)) {
-                uint256 feeInRewardToken = feeRebate * (10 ** rewardTokenDecimals) / 1e18;
-                IERC20(rewardToken).safeTransfer(user, feeInRewardToken);
-            }
-        }
-
+      
         accountIdAccumulatedFee[accountId] = 0;
-        emit FeeReimbursed(user, accountId, feeRebate);
+        emit FeeReimbursed(accountId, feeRebate);
     }
 }
