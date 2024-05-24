@@ -68,6 +68,7 @@ async function monitorFeeAccumulated() {
       .then(utvf => {
         if (utvf) {
           utvf.status = PROOF_STATUS_ONCHAIN_VERIFIED
+          utvf.fee_rebate = feeRebateWithRateBN
           return updateUserTradeVolumeFee(utvf)
         }
       }).catch(error => {

@@ -169,17 +169,17 @@ async function getUserTradeVolumeFee(id: string): Promise<any> {
 
 async function findUserExistingUTVF(
   account: string,
-  start_ymd: bigint,
-  end_ymd: bigint
+  start_blk_num: bigint,
+  end_blk_num: bigint
 ): Promise<any> {
   return prisma.user_trade_volume_fee.findFirst({
     where: {
       account: account?.toLocaleLowerCase(),
-      start_ymd: {
-        equals: start_ymd,
+      start_blk_num: {
+        equals: start_blk_num,
       },
-      end_ymd: {
-        equals: end_ymd,
+      end_blk_num: {
+        equals: end_blk_num,
       }
     },
   });

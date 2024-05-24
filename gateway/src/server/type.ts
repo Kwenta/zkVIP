@@ -20,6 +20,9 @@ type UserTradeVolumeFee = {
   update_time: Date;
   prover_id: string;
   request_sent: boolean;
+  fee_rebate: string;
+  start_blk_num: bigint;
+  end_blk_num: bigint;
 };
 
 type Receipt = {

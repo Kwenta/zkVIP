@@ -27,21 +27,20 @@ const {
   asUint521,
 } = sdk;
 
-const prover = new Prover("222.74.153.228:53248");
-const largeProver = new Prover("222.74.153.228:53249")
-const extraLargeProver = new Prover("222.74.153.228:53250")
-const brevis = new Brevis("appsdk.brevis.network:11080");
+const provers = [
+  new Prover("222.74.153.228:53248"),
+  new Prover("222.74.153.228:53249"),
+  new Prover("222.74.153.228:53250")
+]
 
-type ProofReq = {
-  proofReq: sdk.ProofRequest
-  useLarge: boolean
-}
+const brevis = new Brevis("appsdk.brevis.network:11080");
 
 const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   const proofReq = new ProofRequest();
   const ids = utvf.receipt_ids.split(",");
   let promises = Array<Promise<Receipt | undefined>>();
-
+  const startBlkNum = Number(utvf.start_blk_num)
+  const endBlkNum = Number(utvf.end_blk_num)
   for (let i = 0; i < ids.length; i++) {
     promises.push(
       getReceipt(ids[i]).then((value) => {
@@ -62,8 +61,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   const results = await Promise.all(promises);
 
   let index = 0;
-  var earlistBlk = 0
-  var latestBlk = 1
 
   for (let i = 0; i < results.length; i++) {
     const receipt = results[i];
@@ -79,12 +76,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       console.error("invalid receipt block number", data)
     }
 
-    if (earlistBlk > blkNumber) {
-      earlistBlk = blkNumber
-    } 
-    if (latestBlk < blkNumber) {
-      latestBlk = blkNumber
-    }
     proofReq.addReceipt(
       new ReceiptData({
         block_num: Number(data.block_num),
@@ -104,13 +95,11 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   
   proofReq.setCustomInput({
     AccountId: asUint248(accountIdHex),
-    StartBlkNum: asUint248(earlistBlk.toString()),
-    EndBlkNum: asUint248(latestBlk.toString()),
-    StartYearMonthDay: asUint248(utvf.start_ymd.toString()),
-		EndYearMonthDay:   asUint248(utvf.end_ymd.toString()),
+    StartBlkNum: asUint248(utvf.start_blk_num.toString()),
+    EndBlkNum: asUint248(utvf.end_blk_num.toString()),
   });
 
-  return {proofReq: proofReq, length: results.length};
+  return {proofReq: proofReq, proverIndex: 0};
 };
 
 async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee) {
@@ -125,13 +114,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
     console.log("Start to Build Proof Request: ", utvf.id, (new Date()).toLocaleString())
     const r = await buildUserTradeVolumeFeeProofReq(utvf);
     console.log("User Circuit Proof Request Sent: ", utvf.id, (new Date()).toLocaleString())
-    var p = prover
-    if (r.length > 512) {
-      p = extraLargeProver
-    } else if (r.length > 256) {
-      p = largeProver
-    }
-    const proofRes = await p.proveAsync(r.proofReq);
+    const proofRes = await provers[r.proverIndex].proveAsync(r.proofReq);
     console.log("proofRes proof_id ready",proofRes.proof_id, (new Date()).toLocaleString())
     // error handling
     if (proofRes.has_err) {
@@ -205,15 +188,9 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
   await updateUserTradeVolumeFee(utvf)
 
   try {
-    console.log("Proof upload sent: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())
-    const ids = utvf.receipt_ids.split(",");
-    var p = prover
-    if (ids.length > 512) {
-      p = extraLargeProver
-    } else if (ids.length > 256) {
-      p = largeProver
-    }
-    const getProofRes = await p.getProof(utvf.prover_id)
+    console.log("Proof upload sent: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())  
+    const r = await buildUserTradeVolumeFeeProofReq(utvf);
+    const getProofRes = await provers[r.proverIndex].getProof(utvf.prover_id)
     if (getProofRes.has_err) {
       console.error(getProofRes.err.msg);
       utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
