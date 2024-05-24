@@ -40,3 +40,7 @@ export const postSwapsQuery = async (
       return { txs: [], error: error };
     });
 };
+
+export const getAvailableAccountIds = async() => {
+  
+}

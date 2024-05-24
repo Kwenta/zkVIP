@@ -10,15 +10,35 @@ import {
   findNotReadyReceipts, 
   findNotReadyStorages, 
   findUserTradeVolumeFees,
+  getDailyTrack,
   getUserTradeVolumeFee,
+  insertDailyTrack,
   insertReceipt,
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
-import { postSwapsQuery } from "../graphql/index.ts";
+import { getAvailableAccountIds, postSwapsQuery } from "../graphql/index.ts";
 import { sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { QueryOrderTxsByAccount } from "../query/index.ts";
 import { querySingleReceipt, querySingleStorage } from "../rpc/index.ts";
 import { findNextDay, getCurrentDay } from "../server/type.ts";
+import moment from "moment";
+
+export async function prepareNewDayTradeClaims() {
+  try {
+    const today = Number((moment(new Date())).format('YYYYMMDD'))
+    var todayInTrack = await getDailyTrack(BigInt(today));
+    if (todayInTrack != undefined && todayInTrack != null && todayInTrack) {
+      return;
+    }
+
+    // TODO: Get yesterday's all available accountId
+    await getAvailableAccountIds()
+    // TODO: Uncomment insertDailyTrack for today
+    // await insertDailyTrack(BigInt(today))
+  } catch (error) {
+    console.error("failed to prepare new day trade claims", error)
+  }
+}
 
 export async function getReceiptInfos() {
   try {

@@ -2,11 +2,8 @@ import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import {
   PROOF_STATUS_INIT,
-  PROOF_STATUS_INPUT_READY,
   STATUS_INIT,
-  STATUS_READY,
 } from "../constants/index.ts";
-import { equal } from "assert";
 
 const prisma = new PrismaClient();
 
@@ -209,6 +206,23 @@ async function updateBrevisRequestStatus(
   });
 }
 
+async function insertDailyTrack(
+  year_month_day: bigint,
+): Promise<any> {
+  return prisma.daily_track.create({
+    data: {
+      year_month_day: year_month_day,
+    },
+  });
+}
+
+async function getDailyTrack(year_month_day: bigint): Promise<any> {
+  return prisma.daily_track.findUnique({
+    where: {
+      year_month_day: year_month_day,
+    },
+  });
+}
 
 export {
   insertReceipt,
@@ -225,4 +239,6 @@ export {
   updateStorage,
   getStorage,
   findNotReadyStorages,
+  insertDailyTrack,
+  getDailyTrack,
 };
