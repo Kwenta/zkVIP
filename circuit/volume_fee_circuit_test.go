@@ -149,14 +149,16 @@ func TestVolumeFeeCircuit(t *testing.T) {
 	claimBlockNums[0] = sdk.ConstUint248(13622452)
 
 	appCircuit := &VolumeFeeCircuit{
-		StartBlkNum: sdk.ConstUint248(13622452),
-		EndBlkNum:   sdk.ConstUint248(13622453),
-		AccountId:   sdk.ConstUint248(new(big.Int).SetBytes(accountId)),
+		startBlkIndex: 2,
+		StartBlkNum:   sdk.ConstUint248(13622452),
+		EndBlkNum:     sdk.ConstUint248(13622453),
+		AccountId:     sdk.ConstUint248(new(big.Int).SetBytes(accountId)),
 	}
 	appCircuitAssignment := &VolumeFeeCircuit{
-		StartBlkNum: sdk.ConstUint248(13622452),
-		EndBlkNum:   sdk.ConstUint248(13622453),
-		AccountId:   sdk.ConstUint248(new(big.Int).SetBytes(accountId)),
+		startBlkIndex: 2,
+		StartBlkNum:   sdk.ConstUint248(13622452),
+		EndBlkNum:     sdk.ConstUint248(13622453),
+		AccountId:     sdk.ConstUint248(new(big.Int).SetBytes(accountId)),
 	}
 
 	circuitInput, err := app.BuildCircuitInput(appCircuit)

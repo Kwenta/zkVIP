@@ -6,23 +6,27 @@ import (
 )
 
 type VolumeFeeCircuit struct {
-	StartBlkNum sdk.Uint248
-	EndBlkNum   sdk.Uint248
-	AccountId   sdk.Uint248
+	startBlkIndex int
+	StartBlkNum   sdk.Uint248
+	EndBlkNum     sdk.Uint248
+	AccountId     sdk.Uint248
 }
+
+const MaxReceipts = 256
 
 func DefaultVolumeFeeCircuit() *VolumeFeeCircuit {
 	return &VolumeFeeCircuit{
-		StartBlkNum: sdk.ConstUint248(0),
-		EndBlkNum:   sdk.ConstUint248(1),
-		AccountId:   sdk.ConstUint248(0),
+		startBlkIndex: MaxReceipts - 1,
+		StartBlkNum:   sdk.ConstUint248(0),
+		EndBlkNum:     sdk.ConstUint248(0),
+		AccountId:     sdk.ConstUint248(0),
 	}
 }
 
 var _ sdk.AppCircuit = &VolumeFeeCircuit{}
 
 func (c *VolumeFeeCircuit) Allocate() (maxReceipts, maxStorage, maxTransactions int) {
-	return 256, 0, 0
+	return MaxReceipts, 0, 0
 }
 
 func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
@@ -59,6 +63,9 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 	})
 
 	api.AssertInputsAreUnique()
+	sdk.AssertSorted(receipts, func(a, b sdk.Receipt) sdk.Uint248 {
+		return uint248.Or(uint248.IsLessThan(a.BlockNum, b.BlockNum), uint248.IsEqual(a.BlockNum, b.BlockNum))
+	})
 
 	receiptVolumes := sdk.Map(receipts, func(r sdk.Receipt) sdk.Uint248 {
 		fillPrice := api.ToUint521(r.Fields[1].Value)
@@ -68,12 +75,18 @@ func (c *VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) error {
 	})
 	volume := sdk.Sum(receiptVolumes)
 
-	claimableBlocks := sdk.Filter(receipts, func(r sdk.Receipt) sdk.Uint248 {
-		return uint248.And(
-			uint248.IsZero(uint248.IsGreaterThan(r.BlockNum, c.EndBlkNum)),   // r.BlockNum <= c.ClaimBlockNums[0]
-			uint248.IsZero(uint248.IsGreaterThan(c.StartBlkNum, r.BlockNum)), // startBlk30DAgo <= r.BlockNumber
-		)
-	})
+	firstClaimableReceipt := sdk.GetUnderlying(receipts, c.startBlkIndex)
+	uint248.AssertIsEqual(c.StartBlkNum, firstClaimableReceipt.BlockNum)
+
+	previousIndex := c.startBlkIndex - 1
+	if previousIndex < 0 {
+		previousIndex = 0
+	}
+	previousReceipt := sdk.GetUnderlying(receipts, previousIndex)
+	uint248.AssertIsLessOrEqual(previousReceipt.BlockNum, c.StartBlkNum)
+
+	claimableBlocks := sdk.RangeUnderlying(receipts, c.startBlkIndex, len(in.Receipts.Toggles)-1)
+
 	receiptFees := sdk.Map(claimableBlocks, func(r sdk.Receipt) sdk.Uint248 {
 		return api.ToUint248(r.Fields[3].Value)
 	})
