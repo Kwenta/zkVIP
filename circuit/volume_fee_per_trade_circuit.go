@@ -4,8 +4,6 @@ import (
 	"github.com/brevis-network/brevis-sdk/sdk"
 )
 
-const MaxClaimableBlocksPerCircuit = 100
-
 type VolumeFeePerTradeCircuit struct {
 	ealiestReceiptIndexHints    [MaxClaimableBlocksPerCircuit - 1]int // Indicate index of earlist receipt which should be counted for not-first claimable trade
 	claimBlockReceiptFirstIndex [MaxClaimableBlocksPerCircuit]int

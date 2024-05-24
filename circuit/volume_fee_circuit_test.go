@@ -97,6 +97,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				},
 			},
 		},
+		MaxReceipts-MaxClaimableBlocksPerCircuit,
 	)
 
 	app.AddReceipt(
@@ -138,6 +139,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				},
 			},
 		},
+		MaxReceipts-MaxClaimableBlocksPerCircuit+1,
 	)
 
 	var claimBlockNums [MaxClaimableBlocksPerCircuit]sdk.Uint248
@@ -148,27 +150,20 @@ func TestVolumeFeeCircuit(t *testing.T) {
 
 	claimBlockNums[0] = sdk.ConstUint248(13622452)
 
-	appCircuit := &VolumeFeeCircuit{
-		startBlkIndex: 1,
-		StartBlkNum:   sdk.ConstUint248(13622452),
-		EndBlkNum:     sdk.ConstUint248(13622453),
-		AccountId:     sdk.ConstUint248(new(big.Int).SetBytes(accountId)),
-	}
 	appCircuitAssignment := &VolumeFeeCircuit{
-		startBlkIndex: 1,
-		StartBlkNum:   sdk.ConstUint248(13622452),
-		EndBlkNum:     sdk.ConstUint248(13622453),
-		AccountId:     sdk.ConstUint248(new(big.Int).SetBytes(accountId)),
+		StartBlkNum: sdk.ConstUint248(13622452),
+		EndBlkNum:   sdk.ConstUint248(13622453),
+		AccountId:   sdk.ConstUint248(new(big.Int).SetBytes(accountId)),
 	}
 
-	circuitInput, err := app.BuildCircuitInput(appCircuit)
+	circuitInput, err := app.BuildCircuitInput(appCircuitAssignment)
 	assert.NoError(t, err)
 
 	out := circuitInput.GetAbiPackedOutput()
 
-	test.IsSolved(t, appCircuit, appCircuitAssignment, circuitInput)
+	test.IsSolved(t, DefaultVolumeFeeCircuit(), appCircuitAssignment, circuitInput)
 
-	test.ProverSucceeded(t, appCircuit, appCircuitAssignment, circuitInput)
+	test.ProverSucceeded(t, DefaultVolumeFeeCircuit(), appCircuitAssignment, circuitInput)
 
 	assert.Equal(t, fmt.Sprintf("0x%x", out), "0x800000000000000000000000000003120000000000010c849c96549c69cc6b0000000000cfdcb41fb2eda8bd358736000000000000000000000000000000000000000000010c849c96549c69cc6b0000000000cfdcb40000000000cfdcb5")
 }
