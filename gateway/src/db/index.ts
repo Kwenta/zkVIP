@@ -133,6 +133,7 @@ async function insertUserTradeVolumeFee(
       status: PROOF_STATUS_INIT,
       create_time: new Date(),
       update_time: new Date(),
+      request_sent: false,
     },
   });
 }
