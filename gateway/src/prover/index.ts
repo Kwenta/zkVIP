@@ -103,7 +103,9 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     const blkNumber1= Number(data1.block_num)
 
     if (blkNumber0 > blkNumber1) {
-      console.log("unsorted: ", blkNumber0, blkNumber1)
+      console.log("xxxxxxxxxxx unsorted: ", blkNumber0, blkNumber1)
+    } else {
+      console.log("sorted: ", blkNumber0, blkNumber1)
     }
   }
 
@@ -153,7 +155,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       console.error("invalid receipt block number", data)
     }
 
-    console.log(data.block_num)
     proofReq.addReceipt(
       new ReceiptData({
         block_num: Number(data.block_num),
@@ -179,8 +180,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     if (isNaN(blkNumber)) {
       console.error("invalid receipt block number", data)
     }
-
-    console.log(data.block_num)
 
     proofReq.addReceipt(
       new ReceiptData({
