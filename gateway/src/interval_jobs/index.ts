@@ -9,6 +9,7 @@ import {
 import {
   findNotReadyReceipts, 
   findNotReadyStorages, 
+  findTxToBeSent, 
   findUserTradeVolumeFees,
   getDailyTrack,
   getUserTradeVolumeFee,
@@ -22,6 +23,7 @@ import { QueryOrderTxsByAccount } from "../query/index.ts";
 import { querySingleReceipt, querySingleStorage } from "../rpc/index.ts";
 import { findNextDay, getCurrentDay } from "../server/type.ts";
 import moment from "moment";
+import { submitBrevisRequestTx } from "../ether_interactions/index.ts";
 
 export async function prepareNewDayTradeClaims() {
   try {
@@ -178,5 +180,18 @@ async function uploadUserSwapAmountProof() {
     await Promise.all(promises);
   } catch (error) {
     console.error("failed to upload user swap amount proof");
+  }
+}
+
+export async function submitUserSwapAmountTx() {
+  try {
+    const utvfs = await findTxToBeSent();
+    let promises = Array<Promise<void>>();
+    for (let i = 0; i < utvfs.length; i++) {
+      promises.push(submitBrevisRequestTx(utvfs[i]));
+    }
+    await Promise.all(promises);
+  } catch (error) {
+    console.error("failed to submit total fee transactions", error);
   }
 }

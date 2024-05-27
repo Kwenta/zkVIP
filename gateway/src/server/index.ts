@@ -19,6 +19,7 @@ import {
   prepareNewDayTradeClaims,
   prepareUserTradeVolumeFees,
   queryUserSwapAmountInput,
+  submitUserSwapAmountTx,
 } from "../interval_jobs/index.ts";
 import {
   monitorFeeAccumulated,
@@ -50,6 +51,9 @@ monitorBrevisRequest();
 
 prepareNewDayTradeClaims();
 setInterval(prepareUserTradeVolumeFees, 30000);
+
+submitUserSwapAmountTx();
+setInterval(submitUserSwapAmountTx, 3000);
 
 
 app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {

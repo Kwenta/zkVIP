@@ -97,6 +97,36 @@ async function monitorBrevisRequest() {
   });
 }
 
+async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
+  console.log(
+    brevisRequest.address,
+    utvf.brevis_query_hash,
+    utvf.id,
+    process.env.FEE_REIMBURSEMENT,
+  );
+
+  const tx = await brevisRequest.sendRequest(
+    utvf.brevis_query_hash,
+    wallet.address ?? "",
+    process.env.FEE_REIMBURSEMENT ?? "",
+    {
+      value: 0,
+    }
+  );
+  utvf.request_sent = true
+  updateUserTradeVolumeFee(utvf)
+
+  const receipt = await tx.wait();
+  if (receipt.status == 1) {
+    utvf.request_sent = true
+    updateUserTradeVolumeFee(utvf)
+  } else {
+    utvf.request_sent = false
+    updateUserTradeVolumeFee(utvf)
+  }
+}
+
+
 export {
   dstChainProvider,
   sourceChainProvider,
@@ -105,4 +135,5 @@ export {
   userSwapAmountApp,
   monitorFeeAccumulated,
   monitorBrevisRequest,
+  submitBrevisRequestTx,
 };

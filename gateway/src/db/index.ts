@@ -1,7 +1,9 @@
 import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import {
+  PROOF_STATUS_BREVIS_QUERY_ERROR,
   PROOF_STATUS_INIT,
+  PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
   STATUS_INIT,
 } from "../constants/index.ts";
 
@@ -193,6 +195,21 @@ async function findUserTradeVolumeFees(status: bigint): Promise<any> {
   });
 }
 
+async function findTxToBeSent(): Promise<any> {
+  return prisma.user_trade_volume_fee.findMany({
+    take: 3,
+    where: {
+      status: {
+        gte: PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
+        lt: PROOF_STATUS_BREVIS_QUERY_ERROR,
+      },
+      request_sent: {
+        equals: false,
+      }
+    },
+  });
+}
+
 async function updateBrevisRequestStatus(
   brevis_query_hash: string
 ): Promise<any> {
@@ -241,4 +258,5 @@ export {
   findNotReadyStorages,
   insertDailyTrack,
   getDailyTrack,
+  findTxToBeSent,
 };
