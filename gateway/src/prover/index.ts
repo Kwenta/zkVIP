@@ -105,6 +105,9 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     if (blkNumber0 > blkNumber1) {
       console.log("xxxxxxxxxxx unsorted: ", blkNumber0, blkNumber1)
     } else {
+      if (blkNumber0 === 13414507) {
+        console.log("13414507 index ", i)
+      }
       console.log("sorted: ", blkNumber0, blkNumber1)
     }
   }
@@ -159,6 +162,12 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     const blkNumber= Number(data.block_num)
     if (isNaN(blkNumber)) {
       console.error("invalid receipt block number", data)
+    }
+
+    if (blkNumber === 13414507) {
+      console.log("Add 13414507", receiptIndex, index)
+    } else if (blkNumber === 13414538) {
+      console.log("Add 13414538", receiptIndex, index)
     }
 
     proofReq.addReceipt(
