@@ -63,8 +63,34 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   var unclaimableReceiptIndexes = Array<number>();
   var claimableReceiptIndexes = Array<number>();
 
+  const sortedReceipts = new Array<Receipt>()
   for (let i = 0; i < results.length; i++) {
     const receipt = results[i];
+    if (receipt === undefined) {
+      continue;
+    }
+    if (receipt.status !== STATUS_READY) {
+      throw new Error("receipts not ready"); 
+    }
+    sortedReceipts.push(receipt)
+  }
+
+  sortedReceipts.sort((a,b) => {
+    const dataA = JSON.parse(a.data);
+    const blkNumberA= Number(dataA.block_num)
+
+    const dataB = JSON.parse(b.data);
+    const blkNumberB= Number(dataB.block_num)
+
+    if (blkNumberA < blkNumberB) {
+      return -1
+    } else {
+      return 1
+    }
+  })
+
+  for (let i = 0; i < sortedReceipts.length; i++) {
+    const receipt = sortedReceipts[i];
     if (receipt === undefined) {
       continue;
     }
