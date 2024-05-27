@@ -82,6 +82,10 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     const dataB = JSON.parse(b.data);
     const blkNumberB= Number(dataB.block_num)
 
+    if (blkNumberA === 13414538 || blkNumberB === 13414538) {
+      console.log("compare" , blkNumberA, blkNumberB)
+    }
+    
     if (blkNumberA < blkNumberB) {
       return -1
     } else {
