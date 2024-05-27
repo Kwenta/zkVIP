@@ -126,6 +126,9 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     }
   }
 
+  console.log(claimableReceiptIndexes)
+  console.log(unclaimableReceiptIndexes)
+
   var proverIndex = -1
   var initialClaimableReceiptIndex = 0
   if (unclaimableReceiptIndexes.length <= 236 && claimableReceiptIndexes.length <= 20) {
