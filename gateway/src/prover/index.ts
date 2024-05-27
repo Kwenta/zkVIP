@@ -81,10 +81,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 
     const dataB = JSON.parse(b.data);
     const blkNumberB= Number(dataB.block_num)
-
-    if (blkNumberA === 13414538 || blkNumberB === 13414538) {
-      console.log("compare" , blkNumberA, blkNumberB)
-    }
     
     if (blkNumberA < blkNumberB) {
       return -1
@@ -92,25 +88,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       return 1
     }
   })
-
-  for (let i = 0; i < sortedReceipts.length - 1; i++) {
-    const receipt0 = sortedReceipts[i];
-    const data0 = JSON.parse(receipt0.data);
-    const blkNumber0= Number(data0.block_num)
-
-    const receipt1 = sortedReceipts[i+1];
-    const data1 = JSON.parse(receipt1.data);
-    const blkNumber1= Number(data1.block_num)
-
-    if (blkNumber0 > blkNumber1) {
-      console.log("xxxxxxxxxxx unsorted: ", blkNumber0, blkNumber1)
-    } else {
-      if (blkNumber0 === 13414507) {
-        console.log("13414507 index ", i)
-      }
-      console.log("sorted: ", blkNumber0, blkNumber1)
-    }
-  }
 
   for (let i = 0; i < sortedReceipts.length; i++) {
     const receipt = sortedReceipts[i];
@@ -124,16 +101,11 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       claimableReceiptIndexes.push(i)
     } else if (blkNumber < startBlkNum && blkNumber >= startBlkNum - 43200 * 30) {
 
-      console.log("push index", i)
       unclaimableReceiptIndexes.push(i)
     } else {
       console.error("out of range  receipt block number", data)
     }
   }
-
-  console.log(claimableReceiptIndexes)
- 
-  console.log(unclaimableReceiptIndexes.slice(100))
 
   var proverIndex = -1
   var initialClaimableReceiptIndex = 0
@@ -149,12 +121,12 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   } else if (claimableReceiptIndexes.length == 0) {
     console.error("no claimable receipts")
   } else {
-    console.error("receipts out of range", results.length)
+    console.error("receipts out of range", sortedReceipts.length)
   }
 
   var receiptIndex = 0
   unclaimableReceiptIndexes.forEach(index => {
-    const receipt = results[index];
+    const receipt = sortedReceipts[index];
     if (receipt === undefined) {
       return;
     }
@@ -163,13 +135,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     if (isNaN(blkNumber)) {
       console.error("invalid receipt block number", data)
     }
-
-    if (blkNumber === 13414507) {
-      console.log("Add 13414507", receiptIndex, index)
-    } else if (blkNumber === 13414538) {
-      console.log("Add 13414538", receiptIndex, index)
-    }
-
     proofReq.addReceipt(
       new ReceiptData({
         block_num: Number(data.block_num),
@@ -186,7 +151,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   })
 
   claimableReceiptIndexes.forEach(index => {
-    const receipt = results[index];
+    const receipt = sortedReceipts[index];
     if (receipt === undefined) {
       return;
     }
