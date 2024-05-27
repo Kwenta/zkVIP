@@ -93,14 +93,22 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     }
   })
 
+  for (let i = 0; i < sortedReceipts.length - 1; i++) {
+    const receipt0 = sortedReceipts[i];
+    const data0 = JSON.parse(receipt0.data);
+    const blkNumber0= Number(data0.block_num)
+
+    const receipt1 = sortedReceipts[i+1];
+    const data1 = JSON.parse(receipt1.data);
+    const blkNumber1= Number(data1.block_num)
+
+    if (blkNumber0 > blkNumber1) {
+      console.log("unsorted: ", blkNumber0, blkNumber1)
+    }
+  }
+
   for (let i = 0; i < sortedReceipts.length; i++) {
     const receipt = sortedReceipts[i];
-    if (receipt === undefined) {
-      continue;
-    }
-    if (receipt.status !== STATUS_READY) {
-      throw new Error("receipts not ready"); 
-    }
     const data = JSON.parse(receipt.data);
     const blkNumber= Number(data.block_num)
     if (isNaN(blkNumber)) {
