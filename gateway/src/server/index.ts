@@ -53,7 +53,7 @@ prepareNewDayTradeClaims();
 setInterval(prepareUserTradeVolumeFees, 30000);
 
 submitUserSwapAmountTx();
-setInterval(submitUserSwapAmountTx, 3000);
+setInterval(submitUserSwapAmountTx, 1000);
 
 
 app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
