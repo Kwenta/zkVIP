@@ -120,6 +120,8 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     if (blkNumber >= startBlkNum && blkNumber <= endBlkNum) {
       claimableReceiptIndexes.push(i)
     } else if (blkNumber < startBlkNum && blkNumber >= startBlkNum - 43200 * 30) {
+
+      console.log("push index", i)
       unclaimableReceiptIndexes.push(i)
     } else {
       console.error("out of range  receipt block number", data)
@@ -127,7 +129,8 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   }
 
   console.log(claimableReceiptIndexes)
-  console.log(unclaimableReceiptIndexes)
+ 
+  console.log(unclaimableReceiptIndexes.slice(100))
 
   var proverIndex = -1
   var initialClaimableReceiptIndex = 0
