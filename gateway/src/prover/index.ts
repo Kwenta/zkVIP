@@ -141,7 +141,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       console.error("invalid receipt block number", data)
     }
 
-    console.log(data.block_num, receiptIndex)
+    console.log(data.block_num)
     proofReq.addReceipt(
       new ReceiptData({
         block_num: Number(data.block_num),
@@ -168,7 +168,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       console.error("invalid receipt block number", data)
     }
 
-    console.log(data.block_num, initialClaimableReceiptIndex)
+    console.log(data.block_num)
 
     proofReq.addReceipt(
       new ReceiptData({
