@@ -173,7 +173,6 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   functions: {
     "accountIdAccumulatedFee(uint128)": FunctionFragment;
     "accountIdClaimPeriod(uint128)": FunctionFragment;
-    "accountModule()": FunctionFragment;
     "brevisBatchCallback(uint64,(bytes32,bytes32,bytes32,bytes32,bytes32)[],bytes[])": FunctionFragment;
     "brevisCallback(bytes32,bytes)": FunctionFragment;
     "brevisProof()": FunctionFragment;
@@ -184,7 +183,6 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     "renounceOwnership()": FunctionFragment;
     "rewardToken()": FunctionFragment;
     "rewardTokenDecimals()": FunctionFragment;
-    "setAccountModule(address)": FunctionFragment;
     "setClaimer(address)": FunctionFragment;
     "setFeeRebateTierModule(address)": FunctionFragment;
     "setRewardToken(address,uint24)": FunctionFragment;
@@ -202,10 +200,6 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "accountIdClaimPeriod",
     values: [BigNumberish]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "accountModule",
-    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "brevisBatchCallback",
@@ -237,10 +231,6 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "rewardTokenDecimals",
     values?: undefined
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setAccountModule",
-    values: [string]
   ): string;
   encodeFunctionData(functionFragment: "setClaimer", values: [string]): string;
   encodeFunctionData(
@@ -288,10 +278,6 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "accountModule",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
     functionFragment: "brevisBatchCallback",
     data: BytesLike
   ): Result;
@@ -320,10 +306,6 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "rewardTokenDecimals",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setAccountModule",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setClaimer", data: BytesLike): Result;
@@ -446,8 +428,6 @@ export interface FeeReimbursementApp extends BaseContract {
       }
     >;
 
-    accountModule(overrides?: CallOverrides): Promise<[string]>;
-
     brevisBatchCallback(
       _chainId: BigNumberish,
       _proofDataArray: Brevis.ProofDataStruct[],
@@ -481,11 +461,6 @@ export interface FeeReimbursementApp extends BaseContract {
     rewardToken(overrides?: CallOverrides): Promise<[string]>;
 
     rewardTokenDecimals(overrides?: CallOverrides): Promise<[number]>;
-
-    setAccountModule(
-      _accountModule: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<ContractTransaction>;
 
     setClaimer(
       _claimer: string,
@@ -552,8 +527,6 @@ export interface FeeReimbursementApp extends BaseContract {
     }
   >;
 
-  accountModule(overrides?: CallOverrides): Promise<string>;
-
   brevisBatchCallback(
     _chainId: BigNumberish,
     _proofDataArray: Brevis.ProofDataStruct[],
@@ -587,11 +560,6 @@ export interface FeeReimbursementApp extends BaseContract {
   rewardToken(overrides?: CallOverrides): Promise<string>;
 
   rewardTokenDecimals(overrides?: CallOverrides): Promise<number>;
-
-  setAccountModule(
-    _accountModule: string,
-    overrides?: Overrides & { from?: string | Promise<string> }
-  ): Promise<ContractTransaction>;
 
   setClaimer(
     _claimer: string,
@@ -658,8 +626,6 @@ export interface FeeReimbursementApp extends BaseContract {
       }
     >;
 
-    accountModule(overrides?: CallOverrides): Promise<string>;
-
     brevisBatchCallback(
       _chainId: BigNumberish,
       _proofDataArray: Brevis.ProofDataStruct[],
@@ -688,11 +654,6 @@ export interface FeeReimbursementApp extends BaseContract {
     rewardToken(overrides?: CallOverrides): Promise<string>;
 
     rewardTokenDecimals(overrides?: CallOverrides): Promise<number>;
-
-    setAccountModule(
-      _accountModule: string,
-      overrides?: CallOverrides
-    ): Promise<void>;
 
     setClaimer(_claimer: string, overrides?: CallOverrides): Promise<void>;
 
@@ -792,8 +753,6 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    accountModule(overrides?: CallOverrides): Promise<BigNumber>;
-
     brevisBatchCallback(
       _chainId: BigNumberish,
       _proofDataArray: Brevis.ProofDataStruct[],
@@ -827,11 +786,6 @@ export interface FeeReimbursementApp extends BaseContract {
     rewardToken(overrides?: CallOverrides): Promise<BigNumber>;
 
     rewardTokenDecimals(overrides?: CallOverrides): Promise<BigNumber>;
-
-    setAccountModule(
-      _accountModule: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
-    ): Promise<BigNumber>;
 
     setClaimer(
       _claimer: string,
@@ -894,8 +848,6 @@ export interface FeeReimbursementApp extends BaseContract {
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    accountModule(overrides?: CallOverrides): Promise<PopulatedTransaction>;
-
     brevisBatchCallback(
       _chainId: BigNumberish,
       _proofDataArray: Brevis.ProofDataStruct[],
@@ -932,11 +884,6 @@ export interface FeeReimbursementApp extends BaseContract {
 
     rewardTokenDecimals(
       overrides?: CallOverrides
-    ): Promise<PopulatedTransaction>;
-
-    setAccountModule(
-      _accountModule: string,
-      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     setClaimer(
