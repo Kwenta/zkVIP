@@ -2,6 +2,8 @@ import * as dotenv from 'dotenv';
 import { DeployFunction } from 'hardhat-deploy/types';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { verify } from './utils';
+import {ethers} from 'hardhat';
+import {FeeReimbursementApp} from '../typechain'; 
 
 dotenv.config();
 

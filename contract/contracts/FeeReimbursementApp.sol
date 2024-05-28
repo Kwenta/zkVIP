@@ -32,6 +32,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     event FeeRebateAccumulated(uint128 accountId, uint248 feeRebate, uint248 volume30D, uint248 feeRebateWithRate,  uint64 startBlockNumber,uint64 endBlockNumber);
     event VkHashesUpdated(bytes32[] vkHashes, uint16[] sizes);
     event FeeReimbursed(uint128 accountId, uint248 feeRebate);
+    event BrevisProofUpdated(address);
     
     constructor(address _brevisProof) BrevisApp(IBrevisProof(_brevisProof)) {}
 
@@ -121,5 +122,10 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         uint248 feeRebate = accountIdAccumulatedFee[accountId];
         accountIdAccumulatedFee[accountId] = 0;
         emit FeeReimbursed(accountId, feeRebate);
+    }
+
+    function setBrevisProof(address _brevisProof) external onlyOwner {
+        brevisProof = IBrevisProof(_brevisProof);
+        emit BrevisProofUpdated(_brevisProof);
     }
 }

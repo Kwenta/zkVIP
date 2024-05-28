@@ -183,6 +183,7 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     "renounceOwnership()": FunctionFragment;
     "rewardToken()": FunctionFragment;
     "rewardTokenDecimals()": FunctionFragment;
+    "setBrevisProof(address)": FunctionFragment;
     "setClaimer(address)": FunctionFragment;
     "setFeeRebateTierModule(address)": FunctionFragment;
     "setRewardToken(address,uint24)": FunctionFragment;
@@ -231,6 +232,10 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   encodeFunctionData(
     functionFragment: "rewardTokenDecimals",
     values?: undefined
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setBrevisProof",
+    values: [string]
   ): string;
   encodeFunctionData(functionFragment: "setClaimer", values: [string]): string;
   encodeFunctionData(
@@ -308,6 +313,10 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     functionFragment: "rewardTokenDecimals",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "setBrevisProof",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "setClaimer", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "setFeeRebateTierModule",
@@ -336,17 +345,24 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   ): Result;
 
   events: {
+    "BrevisProofUpdated(address)": EventFragment;
     "FeeRebateAccumulated(uint128,uint248,uint248,uint248,uint64,uint64)": EventFragment;
     "FeeReimbursed(uint128,uint248)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "VkHashesUpdated(bytes32[],uint16[])": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "BrevisProofUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "FeeRebateAccumulated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "FeeReimbursed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "VkHashesUpdated"): EventFragment;
 }
+
+export type BrevisProofUpdatedEvent = TypedEvent<[string], { arg0: string }>;
+
+export type BrevisProofUpdatedEventFilter =
+  TypedEventFilter<BrevisProofUpdatedEvent>;
 
 export type FeeRebateAccumulatedEvent = TypedEvent<
   [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
@@ -462,6 +478,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
     rewardTokenDecimals(overrides?: CallOverrides): Promise<[number]>;
 
+    setBrevisProof(
+      _brevisProof: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
     setClaimer(
       _claimer: string,
       overrides?: Overrides & { from?: string | Promise<string> }
@@ -561,6 +582,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
   rewardTokenDecimals(overrides?: CallOverrides): Promise<number>;
 
+  setBrevisProof(
+    _brevisProof: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
   setClaimer(
     _claimer: string,
     overrides?: Overrides & { from?: string | Promise<string> }
@@ -655,6 +681,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
     rewardTokenDecimals(overrides?: CallOverrides): Promise<number>;
 
+    setBrevisProof(
+      _brevisProof: string,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     setClaimer(_claimer: string, overrides?: CallOverrides): Promise<void>;
 
     setFeeRebateTierModule(
@@ -703,6 +734,9 @@ export interface FeeReimbursementApp extends BaseContract {
   };
 
   filters: {
+    "BrevisProofUpdated(address)"(arg0?: null): BrevisProofUpdatedEventFilter;
+    BrevisProofUpdated(arg0?: null): BrevisProofUpdatedEventFilter;
+
     "FeeRebateAccumulated(uint128,uint248,uint248,uint248,uint64,uint64)"(
       accountId?: null,
       feeRebate?: null,
@@ -786,6 +820,11 @@ export interface FeeReimbursementApp extends BaseContract {
     rewardToken(overrides?: CallOverrides): Promise<BigNumber>;
 
     rewardTokenDecimals(overrides?: CallOverrides): Promise<BigNumber>;
+
+    setBrevisProof(
+      _brevisProof: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
 
     setClaimer(
       _claimer: string,
@@ -884,6 +923,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
     rewardTokenDecimals(
       overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    setBrevisProof(
+      _brevisProof: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
     setClaimer(
