@@ -52,7 +52,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         if (feeRebate > 0) {
             percentage = feeRebateTierModule.getFeeRebatePercentage(volume30D);
             if (percentage != 0) {
-                feeRebateWithRate = feeRebate * percentage; 
+                feeRebateWithRate = feeRebate * percentage / 100; 
             }
         }
        
