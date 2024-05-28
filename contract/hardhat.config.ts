@@ -28,6 +28,8 @@ const holeskyEndpoint = process.env.HOLESKY_ENDPOINT || 'https://holesky.drpc.or
 const holeskyPrivateKey =  process.env.HOLESKY_PRIVATE_KEY || DEFAULT_PRIVATE_KEY;
 const baseEndpoint = process.env.BASE_ENDPOINT || DEFAULT_ENDPOINT;
 const basePrivateKey = process.env.BASE_PRIVATE_KEY || DEFAULT_PRIVATE_KEY;
+const optimismEndpoint = process.env.OPTIMISM_ENDPOINT ||  process.env.DEFAULT_ENDPOINT;
+const optimismPrivateKey = process.env.OPTIMISM_PRIVATE_KEY ||  process.env.DEFAULT_PRIVATE_KEY;
 
 const config: HardhatUserConfig = {
   defaultNetwork: 'hardhat',
@@ -64,7 +66,11 @@ const config: HardhatUserConfig = {
     base: {
       url: baseEndpoint,
       accounts: [`0x${basePrivateKey}`]
-    }
+    },
+    optimism: {
+      url: optimismEndpoint,
+      accounts: [`0x${optimismPrivateKey}`]
+    },
   },
   namedAccounts: {
     deployer: {
@@ -99,6 +105,7 @@ const config: HardhatUserConfig = {
       arbitrumSepolia: process.env.ARBISCAN_API_KEY as string,
       holeskyTest: process.env.ETHERSCAN_API_KEY as string,
       base: process.env.BASESCAN_API_KEY as string,
+      optimisticEthereum: process.env.OPSCAN_API_KEY as string,
     },
     customChains: [
       {
