@@ -367,7 +367,7 @@ export type BrevisProofUpdatedEventFilter =
 export type FeeRebateAccumulatedEvent = TypedEvent<
   [string, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
   {
-    accountId: string;
+    account: string;
     feeRebate: BigNumber;
     volume30D: BigNumber;
     feeRebateWithRate: BigNumber;
@@ -738,7 +738,7 @@ export interface FeeReimbursementApp extends BaseContract {
     BrevisProofUpdated(arg0?: null): BrevisProofUpdatedEventFilter;
 
     "FeeRebateAccumulated(address,uint248,uint248,uint248,uint64,uint64)"(
-      accountId?: null,
+      account?: null,
       feeRebate?: null,
       volume30D?: null,
       feeRebateWithRate?: null,
@@ -746,7 +746,7 @@ export interface FeeReimbursementApp extends BaseContract {
       endBlockNumber?: null
     ): FeeRebateAccumulatedEventFilter;
     FeeRebateAccumulated(
-      accountId?: null,
+      account?: null,
       feeRebate?: null,
       volume30D?: null,
       feeRebateWithRate?: null,

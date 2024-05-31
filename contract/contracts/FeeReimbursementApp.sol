@@ -29,7 +29,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     mapping(bytes32 => uint16) public vkHashesToCircuitSize; // batch tier vk hashes => tier batch size
     mapping(address => ClaimPeriod) public accountClaimPeriod;
     mapping(address => uint248) public accountAccumulatedFee;
-    event FeeRebateAccumulated(address accountId, uint248 feeRebate, uint248 volume30D, uint248 feeRebateWithRate,  uint64 startBlockNumber,uint64 endBlockNumber);
+    event FeeRebateAccumulated(address account, uint248 feeRebate, uint248 volume30D, uint248 feeRebateWithRate,  uint64 startBlockNumber,uint64 endBlockNumber);
     event VkHashesUpdated(bytes32[] vkHashes, uint16[] sizes);
     event FeeReimbursed(address account, uint248 feeRebate);
     event BrevisProofUpdated(address);
