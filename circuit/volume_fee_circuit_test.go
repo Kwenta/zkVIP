@@ -25,7 +25,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
+					EventID:    common.Hex2Hash(OrderSettledEvent),
 					IsTopic:    true,
 					FieldIndex: 2,
 					Value:      common.Hex2Hash("0x0000000000000000000000000000000080000000000000000000000000000312"),
@@ -33,7 +33,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
+					EventID:    common.Hex2Hash(OrderSettledEvent),
 					IsTopic:    false,
 					FieldIndex: 0,
 					Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000a984d9ce18f8b9bdd2"),
@@ -41,7 +41,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
+					EventID:    common.Hex2Hash(OrderSettledEvent),
 					IsTopic:    false,
 					FieldIndex: 3,
 					Value:      common.Hex2Hash("0xfffffffffffffffffffffffffffffffffffffffffffffffff8ac2acc26980000"),
@@ -49,7 +49,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
+					EventID:    common.Hex2Hash(OrderSettledEvent),
 					IsTopic:    false,
 					FieldIndex: 5,
 					Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000001fb2eda8bc65aa81"),
@@ -66,7 +66,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
+					EventID:    common.Hex2Hash(OrderSettledEvent),
 					IsTopic:    true,
 					FieldIndex: 2,
 					Value:      common.Hex2Hash("0x0000000000000000000000000000000080000000000000000000000000000312"),
@@ -74,7 +74,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
+					EventID:    common.Hex2Hash(OrderSettledEvent),
 					IsTopic:    false,
 					FieldIndex: 0,
 					Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000a984d9ce18f8b9bdd2"),
@@ -82,7 +82,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
+					EventID:    common.Hex2Hash(OrderSettledEvent),
 					IsTopic:    false,
 					FieldIndex: 3,
 					Value:      common.Hex2Hash("0xfffffffffffffffffffffffffffffffffffffffffffffffff8ac2acc26980000"),
@@ -90,14 +90,14 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
+					EventID:    common.Hex2Hash(OrderSettledEvent),
 					IsTopic:    false,
 					FieldIndex: 5,
 					Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000001fb2eda8bc65aa81"),
 				},
 			},
 		},
-		MaxReceipts-MaxClaimableBlocksPerCircuit,
+		MaxReceipts-MaxClaimableTradesPerCircuit,
 	)
 
 	app.AddReceipt(
@@ -108,7 +108,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
+					EventID:    common.Hex2Hash(OrderSettledEvent),
 					IsTopic:    true,
 					FieldIndex: 2,
 					Value:      common.Hex2Hash("0x0000000000000000000000000000000080000000000000000000000000000312"),
@@ -116,7 +116,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
+					EventID:    common.Hex2Hash(OrderSettledEvent),
 					IsTopic:    false,
 					FieldIndex: 0,
 					Value:      common.Hex2Hash("0x0000000000000000000000000000000000000000000000a984d9ce18f8b9bdd2"),
@@ -124,7 +124,7 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
+					EventID:    common.Hex2Hash(OrderSettledEvent),
 					IsTopic:    false,
 					FieldIndex: 3,
 					Value:      common.Hex2Hash("0xfffffffffffffffffffffffffffffffffffffffffffffffff8ac2acc26980000"),
@@ -132,17 +132,17 @@ func TestVolumeFeeCircuit(t *testing.T) {
 				{
 					Contract:   common.Hex2Addr(ContractAddress),
 					LogIndex:   10,
-					EventID:    common.Hex2Hash(OrderSettledEventId),
+					EventID:    common.Hex2Hash(OrderSettledEvent),
 					IsTopic:    false,
 					FieldIndex: 5,
 					Value:      common.Hex2Hash("0x8000000000000000000000000000031200000000000000000000000000000000000000000000003f65db5178cb5502000000000000000000000000000000000000000000010c849c96549c69cc6b0000000000cfdcb40000000000cfdcb5"),
 				},
 			},
 		},
-		MaxReceipts-MaxClaimableBlocksPerCircuit+1,
+		MaxReceipts-MaxClaimableTradesPerCircuit+1,
 	)
 
-	var claimBlockNums [MaxClaimableBlocksPerCircuit]sdk.Uint248
+	var claimBlockNums [MaxClaimableTradesPerCircuit]sdk.Uint248
 
 	for i := range claimBlockNums {
 		claimBlockNums[i] = sdk.ConstUint248(0)

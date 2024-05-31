@@ -171,12 +171,12 @@ export declare namespace Brevis {
 export interface FeeReimbursementAppInterface extends utils.Interface {
   contractName: "FeeReimbursementApp";
   functions: {
-    "accountIdAccumulatedFee(uint128)": FunctionFragment;
-    "accountIdClaimPeriod(uint128)": FunctionFragment;
+    "accountAccumulatedFee(address)": FunctionFragment;
+    "accountClaimPeriod(address)": FunctionFragment;
     "brevisBatchCallback(uint64,(bytes32,bytes32,bytes32,bytes32,bytes32)[],bytes[])": FunctionFragment;
     "brevisCallback(bytes32,bytes)": FunctionFragment;
     "brevisProof()": FunctionFragment;
-    "claim(uint128)": FunctionFragment;
+    "claim(address)": FunctionFragment;
     "claimer()": FunctionFragment;
     "feeRebateTierModule()": FunctionFragment;
     "owner()": FunctionFragment;
@@ -195,12 +195,12 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   };
 
   encodeFunctionData(
-    functionFragment: "accountIdAccumulatedFee",
-    values: [BigNumberish]
+    functionFragment: "accountAccumulatedFee",
+    values: [string]
   ): string;
   encodeFunctionData(
-    functionFragment: "accountIdClaimPeriod",
-    values: [BigNumberish]
+    functionFragment: "accountClaimPeriod",
+    values: [string]
   ): string;
   encodeFunctionData(
     functionFragment: "brevisBatchCallback",
@@ -214,7 +214,7 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     functionFragment: "brevisProof",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "claim", values: [BigNumberish]): string;
+  encodeFunctionData(functionFragment: "claim", values: [string]): string;
   encodeFunctionData(functionFragment: "claimer", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "feeRebateTierModule",
@@ -275,11 +275,11 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(
-    functionFragment: "accountIdAccumulatedFee",
+    functionFragment: "accountAccumulatedFee",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
-    functionFragment: "accountIdClaimPeriod",
+    functionFragment: "accountClaimPeriod",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -346,8 +346,8 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
 
   events: {
     "BrevisProofUpdated(address)": EventFragment;
-    "FeeRebateAccumulated(uint128,uint248,uint248,uint248,uint64,uint64)": EventFragment;
-    "FeeReimbursed(uint128,uint248)": EventFragment;
+    "FeeRebateAccumulated(address,uint248,uint248,uint248,uint64,uint64)": EventFragment;
+    "FeeReimbursed(address,uint248)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "VkHashesUpdated(bytes32[],uint16[])": EventFragment;
   };
@@ -365,9 +365,9 @@ export type BrevisProofUpdatedEventFilter =
   TypedEventFilter<BrevisProofUpdatedEvent>;
 
 export type FeeRebateAccumulatedEvent = TypedEvent<
-  [BigNumber, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
+  [string, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
   {
-    accountId: BigNumber;
+    accountId: string;
     feeRebate: BigNumber;
     volume30D: BigNumber;
     feeRebateWithRate: BigNumber;
@@ -380,8 +380,8 @@ export type FeeRebateAccumulatedEventFilter =
   TypedEventFilter<FeeRebateAccumulatedEvent>;
 
 export type FeeReimbursedEvent = TypedEvent<
-  [BigNumber, BigNumber],
-  { accountId: BigNumber; feeRebate: BigNumber }
+  [string, BigNumber],
+  { account: string; feeRebate: BigNumber }
 >;
 
 export type FeeReimbursedEventFilter = TypedEventFilter<FeeReimbursedEvent>;
@@ -429,13 +429,13 @@ export interface FeeReimbursementApp extends BaseContract {
   removeListener: OnEvent<this>;
 
   functions: {
-    accountIdAccumulatedFee(
-      arg0: BigNumberish,
+    accountAccumulatedFee(
+      arg0: string,
       overrides?: CallOverrides
     ): Promise<[BigNumber]>;
 
-    accountIdClaimPeriod(
-      arg0: BigNumberish,
+    accountClaimPeriod(
+      arg0: string,
       overrides?: CallOverrides
     ): Promise<
       [BigNumber, BigNumber] & {
@@ -460,7 +460,7 @@ export interface FeeReimbursementApp extends BaseContract {
     brevisProof(overrides?: CallOverrides): Promise<[string]>;
 
     claim(
-      accountId: BigNumberish,
+      account: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -533,13 +533,13 @@ export interface FeeReimbursementApp extends BaseContract {
     ): Promise<[number]>;
   };
 
-  accountIdAccumulatedFee(
-    arg0: BigNumberish,
+  accountAccumulatedFee(
+    arg0: string,
     overrides?: CallOverrides
   ): Promise<BigNumber>;
 
-  accountIdClaimPeriod(
-    arg0: BigNumberish,
+  accountClaimPeriod(
+    arg0: string,
     overrides?: CallOverrides
   ): Promise<
     [BigNumber, BigNumber] & {
@@ -564,7 +564,7 @@ export interface FeeReimbursementApp extends BaseContract {
   brevisProof(overrides?: CallOverrides): Promise<string>;
 
   claim(
-    accountId: BigNumberish,
+    account: string,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -637,13 +637,13 @@ export interface FeeReimbursementApp extends BaseContract {
   ): Promise<number>;
 
   callStatic: {
-    accountIdAccumulatedFee(
-      arg0: BigNumberish,
+    accountAccumulatedFee(
+      arg0: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    accountIdClaimPeriod(
-      arg0: BigNumberish,
+    accountClaimPeriod(
+      arg0: string,
       overrides?: CallOverrides
     ): Promise<
       [BigNumber, BigNumber] & {
@@ -667,7 +667,7 @@ export interface FeeReimbursementApp extends BaseContract {
 
     brevisProof(overrides?: CallOverrides): Promise<string>;
 
-    claim(accountId: BigNumberish, overrides?: CallOverrides): Promise<void>;
+    claim(account: string, overrides?: CallOverrides): Promise<void>;
 
     claimer(overrides?: CallOverrides): Promise<string>;
 
@@ -737,7 +737,7 @@ export interface FeeReimbursementApp extends BaseContract {
     "BrevisProofUpdated(address)"(arg0?: null): BrevisProofUpdatedEventFilter;
     BrevisProofUpdated(arg0?: null): BrevisProofUpdatedEventFilter;
 
-    "FeeRebateAccumulated(uint128,uint248,uint248,uint248,uint64,uint64)"(
+    "FeeRebateAccumulated(address,uint248,uint248,uint248,uint64,uint64)"(
       accountId?: null,
       feeRebate?: null,
       volume30D?: null,
@@ -754,11 +754,11 @@ export interface FeeReimbursementApp extends BaseContract {
       endBlockNumber?: null
     ): FeeRebateAccumulatedEventFilter;
 
-    "FeeReimbursed(uint128,uint248)"(
-      accountId?: null,
+    "FeeReimbursed(address,uint248)"(
+      account?: null,
       feeRebate?: null
     ): FeeReimbursedEventFilter;
-    FeeReimbursed(accountId?: null, feeRebate?: null): FeeReimbursedEventFilter;
+    FeeReimbursed(account?: null, feeRebate?: null): FeeReimbursedEventFilter;
 
     "OwnershipTransferred(address,address)"(
       previousOwner?: string | null,
@@ -777,13 +777,13 @@ export interface FeeReimbursementApp extends BaseContract {
   };
 
   estimateGas: {
-    accountIdAccumulatedFee(
-      arg0: BigNumberish,
+    accountAccumulatedFee(
+      arg0: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
-    accountIdClaimPeriod(
-      arg0: BigNumberish,
+    accountClaimPeriod(
+      arg0: string,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -803,7 +803,7 @@ export interface FeeReimbursementApp extends BaseContract {
     brevisProof(overrides?: CallOverrides): Promise<BigNumber>;
 
     claim(
-      accountId: BigNumberish,
+      account: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -877,13 +877,13 @@ export interface FeeReimbursementApp extends BaseContract {
   };
 
   populateTransaction: {
-    accountIdAccumulatedFee(
-      arg0: BigNumberish,
+    accountAccumulatedFee(
+      arg0: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
-    accountIdClaimPeriod(
-      arg0: BigNumberish,
+    accountClaimPeriod(
+      arg0: string,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 
@@ -903,7 +903,7 @@ export interface FeeReimbursementApp extends BaseContract {
     brevisProof(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     claim(
-      accountId: BigNumberish,
+      account: string,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
