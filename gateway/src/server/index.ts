@@ -28,6 +28,8 @@ import {
 import { validTimeNumber, UserTradeVolumeFee, findNextDay, findDayStartTimestamp, findDayEndTimestamp } from "./type.ts";
 import { BigNumber } from "ethers";
 import moment from "moment";
+import { postSwapsQuery } from "../graphql/index.ts";
+import { error } from "console";
 
 const app = express();
 
@@ -54,6 +56,10 @@ setInterval(prepareUserTradeVolumeFees, 30000);
 
 submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 1000);
+
+postSwapsQuery(1714799749, 1715459199, 1715459199).then().catch(error => {
+  console.error("postSwapsQuery error", error)
+})
 
 app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
   try {

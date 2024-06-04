@@ -1,10 +1,10 @@
 import { GraphRpc, PoolAddr } from "./common.ts";
 
 export const postSwapsQuery = async (
-  recipient: string,
-  pool: string = PoolAddr
+  timestamp30DAgo: number,
+  startTimestamp: number,
+  endTimestamp: number,
 ) => {
-  const txs: string[] = [];
   return fetch(GraphRpc, {
     method: "POST",
     headers: {
@@ -13,27 +13,27 @@ export const postSwapsQuery = async (
     },
     body: JSON.stringify({
       query: `{
-        swaps(orderBy: timestamp, orderDirection: desc, where: {pool:"${pool}", recipient: "${recipient}"}) 
+        futuresTrades(orderBy: timestamp, orderDirection: asc, where: {timestamp_gte:"${timestamp30DAgo}", timestamp_lte: "${endTimestamp}"}) 
       {
-        transaction {
-          id
-        }
+        orderFeeFlowTxhash,
+        executionTxhash,
       }
     }`,
     }),
   })
     .then((r) => r.json())
     .then((res) => {
-      if (res.errors !== undefined && res.errors !== null) {
-        throw new Error("invalid gql response");
-      }
-      const swapList = res?.data?.swaps;
-      swapList?.forEach((item: any) => {
-        const tx = item.transaction.id
-        txs.push(tx);
-      });
-      const errorInfo = null;
-      return { txs: txs, error: errorInfo };
+      console.log("res", res)
+      // if (res.errors !== undefined && res.errors !== null) {
+      //   throw new Error("invalid gql response");
+      // }
+      // const swapList = res?.data?.swaps;
+      // swapList?.forEach((item: any) => {
+      //   const tx = item.transaction.id
+      //   txs.push(tx);
+      // });
+      // const errorInfo = null;
+      // return { txs: txs, error: errorInfo };
     })
     .catch((error) => {
       console.log("getPositions graphql error:", error);

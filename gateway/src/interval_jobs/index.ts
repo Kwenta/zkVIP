@@ -17,7 +17,7 @@ import {
   insertReceipt,
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
-import { getAvailableAccountIds, postSwapsQuery } from "../graphql/index.ts";
+import { getAvailableAccountIds } from "../graphql/index.ts";
 import { sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { QueryOrderTxsByAccount } from "../query/index.ts";
 import { querySingleReceipt, querySingleStorage } from "../rpc/index.ts";
