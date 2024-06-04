@@ -5,13 +5,6 @@ export const postSwapsQuery = async (
   startTimestamp: number,
   endTimestamp: number
 ) => {
-  const a = JSON.stringify({
-    query:
-      '\n\n{\n        futuresTrades(orderBy: timestamp, orderDirection: asc, where: {timestamp_gte:"123456789", timestamp_lte: "123456789"}) \n      {\n        orderFeeFlowTxhash,\n        executionTxhash,\n      }\n    }',
-  });
-  const b = JSON.parse(a);
-
-  console.log("bbbbb", b);
   return fetch(
     "https://subgraph.satsuma-prod.com/616cc2144c5c/kwenta/optimism-perps/version/0.0.22/api",
     {
@@ -22,23 +15,28 @@ export const postSwapsQuery = async (
       },
       body: JSON.stringify({
         query: `{
-          futuresTrades(orderBy: timestamp, orderDirection: asc, where: {timestamp_gte:"123456789", timestamp_lte: "123456789"}) 
+          futuresTrades(orderBy: timestamp, orderDirection: asc, where: {timestamp_gte:"${timestamp30DAgo}", timestamp_lte: "${endTimestamp}"}) 
         {
           orderFeeFlowTxhash,
           executionTxhash,
+          account,
+          abstractAccount,
+          blockNumber,
         }
       }`,
       }),
     }
   )
-    .then((r) => {
-      r.json();
-      console.log(333333, r);
-    })
-    .catch((error) => {
-      console.log("getPositions graphql error:", error, a);
-      return { txs: [], error: error };
-    });
+  .then((r) => {
+      return r.json();
+  })
+  .then((response) => {
+    console.log("response", response?.data?.futuresTrades)
+  })
+  .catch((error) => {
+    console.log("graphql error:", error, );
+    return { txs: [], error: error };
+  });
 };
 
 export const getAvailableAccountIds = async () => {};
