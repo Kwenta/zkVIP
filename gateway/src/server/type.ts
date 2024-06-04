@@ -50,14 +50,14 @@ type Storage = {
 }; 
 
 function validTimeNumber(input: Number): boolean {
-  return moment(input.toString(), "YYYYMMDD", true).isValid()
+  return moment.utc(input.toString(), "YYYYMMDD", true).isValid()
 }
 
 function getCurrentDay(input: number): string {
   if (isNaN(input)) {
     return ""
   }
-  const date = moment(input.toString(), "YYYYMMDD", true)
+  const date = moment.utc(input.toString(), "YYYYMMDD", true)
   if (!date.isValid()) {
     return ""
   }
@@ -68,7 +68,7 @@ function findNextDay(input: number): string {
   if (isNaN(input)) {
     return ""
   }
-  const date = moment(input.toString(), "YYYYMMDD", true)
+  const date = moment.utc(input.toString(), "YYYYMMDD", true)
   if (!date.isValid()) {
     return ""
   }
@@ -76,4 +76,26 @@ function findNextDay(input: number): string {
   return date.add(1, "d").format("YYYY-MM-DD")
 }
 
-export { UserTradeVolumeFee, Receipt, Storage, validTimeNumber, getCurrentDay, findNextDay };
+function findDayStartTimestamp(input: number): number {
+  if (isNaN(input)) {
+    return 0
+  }
+  const date = moment.utc(input.toString(), "YYYYMMDD", true)
+  if (!date.isValid()) {
+    return 0
+  }
+  return date.utc().unix()
+}
+
+function findDayEndTimestamp(input: number): number {
+  if (isNaN(input)) {
+    return 0
+  }
+  const date = moment.utc(input.toString(), "YYYYMMDD", true)
+  if (!date.isValid()) {
+    return 0
+  }
+  return date.utc().add(1, "d").unix() - 1
+}
+
+export { UserTradeVolumeFee, Receipt, Storage, validTimeNumber, getCurrentDay, findNextDay, findDayStartTimestamp, findDayEndTimestamp};

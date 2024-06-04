@@ -25,7 +25,7 @@ import {
   monitorFeeAccumulated,
   monitorBrevisRequest,
 } from "../ether_interactions/index.ts";
-import { validTimeNumber, UserTradeVolumeFee, findNextDay } from "./type.ts";
+import { validTimeNumber, UserTradeVolumeFee, findNextDay, findDayStartTimestamp, findDayEndTimestamp } from "./type.ts";
 import { BigNumber } from "ethers";
 import moment from "moment";
 
@@ -54,7 +54,6 @@ setInterval(prepareUserTradeVolumeFees, 30000);
 
 submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 1000);
-
 
 app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
   try {

@@ -9,7 +9,8 @@ import {
 
 const prisma = new PrismaClient();
 
-async function insertReceipt(tx_hash: string, account: string): Promise<any> {
+// transaction_type: OrderFeeFlowTx is 1, ExecutionTx is 2
+async function insertReceipt(tx_hash: string, account: string, transaction_type: bigint): Promise<any> {
   return prisma.receipt.create({
     data: {
       id: uuidv4(),
@@ -18,6 +19,7 @@ async function insertReceipt(tx_hash: string, account: string): Promise<any> {
       status: STATUS_INIT,
       create_time: new Date(),
       update_time: new Date(),
+      transaction_type: transaction_type,
     },
   });
 }

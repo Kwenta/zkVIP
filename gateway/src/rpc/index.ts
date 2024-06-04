@@ -1,7 +1,21 @@
 import { BigNumber, ethers } from "ethers";
-import { STATUS_READY } from "../constants/index.ts";
+import { DelayedOrderSubmittedEvent, OrderFlowFeeImposedEvent, OrderFlowFeeImposedEventContractAddress, PositionModifiedEvent, STATUS_READY, SynthetixPerpsV2ProxyContractAddress } from "../constants/index.ts";
 import { updateReceipt, updateStorage } from "../db/index.ts";
 import { sourceChainProvider } from "../ether_interactions/index.ts";
+
+type Log = {
+  contract: string,
+  log_index: number,
+  event_id: string,
+  is_topic: boolean,
+  field_index: number,
+  value: string,
+} 
+type ReceiptInfo = {
+  block_num: number,
+  tx_hash: string,
+  fields: Log[],
+}
 
 async function querySingleReceipt(receipt: any) {
     return sourceChainProvider
@@ -14,75 +28,26 @@ async function querySingleReceipt(receipt: any) {
           console.debug("tx receipt not found", receipt.id, receipt.tx_hash);
           return;
         }
-        let logsFound = false;
-        let data = "";
-        transactionReceipt.logs.forEach((log, i) => {
-          if (log.topics.length < 3) {
-            return 
+        if (receipt.transaction_type == 1) {
+          const result = getJSONForOrderFeeFlowTx(receipt.account, transactionReceipt)
+          if (result.logsFound) {
+            updateReceipt(
+              receipt.id,
+              STATUS_READY,
+              result.data,
+            );
           }
-
-          let logAddress = log.address.toLowerCase()
-          let topic0 = log.topics[0].toLowerCase();
-          
-          if (
-            logAddress ===
-              "0x0A2AF931eFFd34b81ebcc57E3d3c9B1E1dE1C9Ce".toLowerCase() &&
-            topic0.toLowerCase() ===
-              "0x460080a757ec90719fe90ab2384c0196cdeed071a9fd7ce1ada43481d96b7db5" &&
-            BigNumber.from(log.topics[2]).eq(BigNumber.from(receipt.account))
-          ) {
-            logsFound = true;
-            data = JSON.stringify({
-              block_num: transactionReceipt.blockNumber,
-              tx_hash: transactionReceipt.transactionHash,
-              fields: [
-                // accountId
-                {
-                  contract: logAddress,
-                  log_index: i,
-                  event_id: topic0,
-                  is_topic: true,
-                  field_index: 2,
-                  value: log.topics[2].toLowerCase(),
-                },
-                // fillPrice
-                {
-                  contract: logAddress,
-                  log_index: i,
-                  event_id: topic0,
-                  is_topic: false,
-                  field_index: 0,
-                  value: "0x" + log.data.replace("0x", "").slice(0, 64),
-                },
-                // sizeDelta
-                {
-                  contract: logAddress,
-                  log_index: i,
-                  event_id: topic0,
-                  is_topic: false,
-                  field_index: 3,
-                  value: "0x" + log.data.replace("0x", "").slice(64 * 3, 64 * 4),
-                },  
-                // totalFees
-                {
-                  contract: logAddress,
-                  log_index: i,
-                  event_id: topic0,
-                  is_topic: false,
-                  field_index: 5,
-                  value: "0x" + log.data.replace("0x", "").slice(64 * 5, 64 * 6),
-                },   
-              ],
-            });
+        } else if (receipt.transaction_type == 2) {
+          const result = getJSONForExecutionFlowTx(receipt.account, transactionReceipt)
+          if (result.logsFound) {
+            updateReceipt(
+              receipt.id,
+              STATUS_READY,
+              result.data,
+            );
           }
-        });
-  
-        if (logsFound) {
-          updateReceipt(
-            receipt.id,
-            STATUS_READY,
-            data,
-          );
+        } else {
+          console.error("unexpected transaction type")
         }
       }, null);
 }
@@ -105,6 +70,148 @@ async function querySingleStorage(storage: any) {
       })
     );
   }, null);
+}
+
+function getJSONForOrderFeeFlowTx(
+  account: string,
+  transactionReceipt: ethers.providers.TransactionReceipt
+) {
+  let data = "";
+
+  let original: ReceiptInfo = {
+    block_num: transactionReceipt.blockNumber,
+    tx_hash: transactionReceipt.transactionHash,
+    fields: [],
+  };
+
+  transactionReceipt.logs.forEach((log, i) => {
+    if (log.topics.length < 2) {
+      return 
+    }
+
+    let logAddress = log.address.toLowerCase()
+    let topic0 = log.topics[0].toLowerCase();
+    
+    // OrderFlowFee Events
+    if (
+      logAddress === OrderFlowFeeImposedEventContractAddress &&
+      topic0.toLowerCase() === OrderFlowFeeImposedEvent &&
+      BigNumber.from(log.topics[1]).eq(BigNumber.from(account))
+    ) {
+      // OrderFlowFeeImposed account
+      original.fields.push({
+        contract: OrderFlowFeeImposedEventContractAddress,
+        log_index: i,
+        event_id: OrderFlowFeeImposedEvent,
+        is_topic: true,
+        field_index: 1,
+        value: account,
+      })
+      // OrderFlowFeeImposed amount
+      original.fields.push({
+        contract: OrderFlowFeeImposedEventContractAddress,
+        log_index: i,
+        event_id: OrderFlowFeeImposedEvent,
+        is_topic: false,
+        field_index: 0,
+        value: "0x" + log.data.replace("0x", "").slice(0, 64),
+      })
+    } else  if (
+      logAddress === SynthetixPerpsV2ProxyContractAddress &&
+      topic0.toLowerCase() === DelayedOrderSubmittedEvent &&
+      BigNumber.from(log.topics[1]).eq(BigNumber.from(account))
+    ) {
+      // DelayedOrderSubmittedEvent account
+      original.fields.push({
+        contract: SynthetixPerpsV2ProxyContractAddress,
+        log_index: i,
+        event_id: DelayedOrderSubmittedEvent,
+        is_topic: true,
+        field_index: 1,
+        value: account,
+      })
+      // DelayedOrderSubmittedEvent keeperDeposit
+      original.fields.push({
+        contract: SynthetixPerpsV2ProxyContractAddress,
+        log_index: i,
+        event_id: DelayedOrderSubmittedEvent,
+        is_topic: false,
+        field_index: 6,
+        value: "0x" + log.data.replace("0x", "").slice(6 * 64, 7 * 64),
+      })
+    }
+  });
+  data = JSON.stringify(original)
+  return {data: data, logsFound: original.fields.length == 4}
+}
+
+function getJSONForExecutionFlowTx(  
+  account: string,
+  transactionReceipt: ethers.providers.TransactionReceipt
+) {
+  let logsFound = false;
+  let data = "";
+
+  transactionReceipt.logs.forEach((log, i) => {
+    if (log.topics.length < 3) {
+      return 
+    }
+
+    let logAddress = log.address.toLowerCase()
+    let topic0 = log.topics[0].toLowerCase();
+    
+    // PositionModified Event
+    if (
+      logAddress === SynthetixPerpsV2ProxyContractAddress &&
+      topic0.toLowerCase() === PositionModifiedEvent &&
+      BigNumber.from(log.topics[2]).eq(BigNumber.from(account))
+    ) {
+      logsFound = true;
+      data = JSON.stringify({
+        block_num: transactionReceipt.blockNumber,
+        tx_hash: transactionReceipt.transactionHash,
+        fields: [
+          // account
+          {
+            contract: logAddress,
+            log_index: i,
+            event_id: topic0,
+            is_topic: true,
+            field_index: 2,
+            value: log.topics[2].toLowerCase(),
+          },
+          // tradeSize
+          {
+            contract: logAddress,
+            log_index: i,
+            event_id: topic0,
+            is_topic: false,
+            field_index: 2,
+            value: "0x" + log.data.replace("0x", "").slice(2 * 64, 3 * 64),
+          },
+          // lastPrice
+          {
+            contract: logAddress,
+            log_index: i,
+            event_id: topic0,
+            is_topic: false,
+            field_index: 3,
+            value: "0x" + log.data.replace("0x", "").slice(3 * 64, 4 * 64),
+          },  
+          // fee
+          {
+            contract: logAddress,
+            log_index: i,
+            event_id: topic0,
+            is_topic: false,
+            field_index: 5,
+            value: "0x" + log.data.replace("0x", "").slice(5 * 64, 6 * 64),
+          },   
+        ],
+      });
+    }
+  });
+  return {data: data, logsFound: logsFound}
 }
 
 export {

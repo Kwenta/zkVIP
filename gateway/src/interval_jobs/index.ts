@@ -107,6 +107,7 @@ export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
   const start = getCurrentDay(Number(userSwapAmount.start_ymd))
   const end = findNextDay(Number(userSwapAmount.end_ymd))
 
+
   if (start.length === 0 || end.length === 0) {
     console.error("invalid start end time format", userSwapAmount.start_ymd, userSwapAmount.end_ymd, userSwapAmount.id)
     userSwapAmount.status = PROOF_STATUS_INIT
@@ -136,9 +137,9 @@ export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
 
   duneResult.txs.forEach((tx) => {
     promises.push(
-      insertReceipt(tx, userSwapAmount.account).then((receipt) => {
-        return receipt.id;
-      })
+      // insertReceipt(tx, userSwapAmount.account).then((receipt) => {
+      //   return receipt.id;
+      // })
     );
   });
 

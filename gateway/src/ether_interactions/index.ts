@@ -42,19 +42,17 @@ const userSwapAmountApp = FeeReimbursementApp__factory.connect(
 
 async function monitorFeeAccumulated() {
   // event FeeReimbursed(address indexed user, uint128 accountId, uint248 feeRebate, uint32 startYearMonthDay, uint32 endYearMonthDay, uint64 startBlockNumber,uint64 endBlockNumber);
-  // event FeeRebateAccumulated(uint128 accountId, uint248 feeRebate, uint248 volume30D, uint248 feeRebateWithRate,  uint64 startBlockNumber,uint64 endBlockNumber)
  
-  userSwapAmountApp.on("FeeRebateAccumulated", (accountId, feeRebate, volume30D, feeRebateWithRate, startBlockNumber, endBlockNumber) => {
-    const accountIdBN = accountId as BigNumber;
+  userSwapAmountApp.on("FeeRebateAccumulated", (account, feeRebate, volume30D, feeRebateWithRate, startBlockNumber, endBlockNumber) => {
     const feeRebateBN = feeRebate as BigNumber;
     const volume30DBN = volume30D as BigNumber;
     const feeRebateWithRateBN = feeRebateWithRate as BigNumber;
     const startBlockNumberBN = startBlockNumber as BigNumber;
     const endBlockNumberBN = endBlockNumber as BigNumber;
 
-    console.log("Fee Accumulated Event", accountId, feeRebate, volume30D, feeRebateWithRate, startBlockNumber, endBlockNumber)
+    console.log("Fee Accumulated Event", account, feeRebate, volume30D, feeRebateWithRate, startBlockNumber, endBlockNumber)
     if (
-      accountIdBN === undefined || accountIdBN === null ||
+      account === undefined || account === null ||
       feeRebateBN === undefined || feeRebateBN === null ||
       volume30DBN === undefined || volume30DBN === null ||
       feeRebateWithRateBN === undefined || feeRebateWithRateBN === null ||
@@ -64,7 +62,7 @@ async function monitorFeeAccumulated() {
       return;
     }
     
-    findUserExistingUTVF(accountIdBN.toString(), BigInt(startBlockNumberBN.toString()), BigInt(endBlockNumberBN.toString()))
+    findUserExistingUTVF(account, BigInt(startBlockNumberBN.toString()), BigInt(endBlockNumberBN.toString()))
       .then(utvf => {
         if (utvf) {
           utvf.status = PROOF_STATUS_ONCHAIN_VERIFIED
@@ -74,7 +72,7 @@ async function monitorFeeAccumulated() {
       }).catch(error => {
         console.error(
           "failed to update user swap amount",
-          accountId,
+          account,
           startBlockNumber,
           endBlockNumber, 
           error
