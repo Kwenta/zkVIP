@@ -8,13 +8,14 @@ datasource db {
 }
 
 model receipt {
-  id          String    @id
-  tx_hash     String?
-  status      BigInt?
-  data        String?
-  create_time DateTime? @db.Timestamptz(6)
-  update_time DateTime? @db.Timestamptz(6)
-  account     String?
+  id               String    @id
+  tx_hash          String?
+  status           BigInt?
+  data             String?
+  create_time      DateTime? @db.Timestamptz(6)
+  update_time      DateTime? @db.Timestamptz(6)
+  account          String?
+  transaction_type BigInt    @default(0)
 }
 
 model user_trade_volume_fee {

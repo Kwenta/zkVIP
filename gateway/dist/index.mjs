@@ -115,7 +115,8 @@ async function insertUserTradeVolumeFee(src_chain_id, dst_chain_id, account, sta
       end_ymd,
       status: PROOF_STATUS_INIT,
       create_time: /* @__PURE__ */ new Date(),
-      update_time: /* @__PURE__ */ new Date()
+      update_time: /* @__PURE__ */ new Date(),
+      request_sent: false
     }
   });
 }
@@ -171,7 +172,7 @@ async function findUserTradeVolumeFees(status) {
 }
 async function findTxToBeSent() {
   return prisma.user_trade_volume_fee.findMany({
-    take: 3,
+    take: 1,
     where: {
       status: {
         gte: PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
@@ -3166,7 +3167,7 @@ async function submitUserSwapAmountTx() {
     }
     await Promise.all(promises);
   } catch (error) {
-    console.error("failed to submit total fee transactions", error);
+    console.error("failed to submit tx", error);
   }
 }
 
@@ -3192,7 +3193,7 @@ monitorBrevisRequest();
 prepareNewDayTradeClaims();
 setInterval(prepareUserTradeVolumeFees, 3e4);
 submitUserSwapAmountTx();
-setInterval(submitUserSwapAmountTx, 3e3);
+setInterval(submitUserSwapAmountTx, 1e3);
 app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
   try {
     const { account, start_year_month_day, end_year_month_day } = req.body;
