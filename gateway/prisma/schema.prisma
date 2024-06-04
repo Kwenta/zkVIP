@@ -41,6 +41,7 @@ model user_trade_volume_fee {
   fee_rebate        String    @default("")
   start_blk_num     BigInt    @default(0)
   end_blk_num       BigInt    @default(0)
+  owner_address     String    @default("")
 }
 
 model storage {
