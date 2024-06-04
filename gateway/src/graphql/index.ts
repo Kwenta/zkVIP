@@ -5,27 +5,21 @@ export const postSwapsQuery = async (
   startTimestamp: number,
   endTimestamp: number,
 ) => {
-  // const a = JSON.stringify({
-  //   query: `{
-  //     futuresTrades(orderBy: timestamp, orderDirection: asc, where: {timestamp_gte:"${timestamp30DAgo}", timestamp_lte: "${endTimestamp}"}) 
-  //   {
-  //     orderFeeFlowTxhash,
-  //     executionTxhash,
-  //   }
-  // }`,
-
-
-  // })
-
-
-  const b = `{query: "\n\n{\n        futuresTrades(orderBy: timestamp, orderDirection: asc, where: {timestamp_gte:\"123456789\", timestamp_lte: \"123456789\"}) \n      {\n        orderFeeFlowTxhash,\n        executionTxhash,\n      }\n    }\n\n"}`
   return fetch(GraphRpc, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Accept: "application/json",
     },
-    body: b,
+    body: JSON.stringify({
+      query: `{
+        futuresTrades(orderBy: timestamp, orderDirection: asc, where: {timestamp_gte:"${timestamp30DAgo}", timestamp_lte: "${endTimestamp}"}) 
+      {
+        orderFeeFlowTxhash,
+        executionTxhash,
+      }
+    }`,
+    }),
   })
     .then((r) => r.json())
     .then((res) => {
@@ -42,7 +36,7 @@ export const postSwapsQuery = async (
       // return { txs: txs, error: errorInfo };
     })
     .catch((error) => {
-      console.log("getPositions graphql error:", error,  b);
+      console.log("getPositions graphql error:", error);
       return { txs: [], error: error };
     });
 };
