@@ -16,6 +16,10 @@ export const postSwapsQuery = async (
         query: `{
             futuresTrades(orderBy: timestamp, orderDirection: asc, where: {timestamp_gte:"${timestamp30DAgo}", timestamp_lte: "${endTimestamp}"}) 
           {
+            blockNumber,
+            account,
+            abstractAccount,
+            timestamp,
             orderFeeFlowTxhash,
             executionTxhash,
           }
