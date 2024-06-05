@@ -57,9 +57,9 @@ submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 1000);
 
 
-getAllTradesWithin30Day(1712016000, 1714607999).then(result => {
-  const tsStart = 1714521600
-  const tsEnd = 1714607999
+getAllTradesWithin30Day(1714608000, 1717246799).then(result => {
+  const tsStart = 1717200000
+  const tsEnd = 1717246799
   console.log(`result: ${result.trades.length}, err: ${result.error}`)
   const accountTradesMap = getAccountTradesMap(result.trades)
   console.log(`accountTradesMap: ${accountTradesMap}`)
@@ -89,7 +89,7 @@ getAllTradesWithin30Day(1712016000, 1714607999).then(result => {
       unclaimableLength: claimableTrades.length,
       claimableLength: trades.length-claimableTrades.length,
     })
-    console.log(`account ${account} claimable trades: ${claimableTrades.length} and unclaimable trades ${trades.length-claimableTrades.length}`)
+    // console.log(`account ${account} claimable trades: ${claimableTrades.length} and unclaimable trades ${trades.length-claimableTrades.length}`)
   }
 
   tradesInfos.sort((a,b) => {
