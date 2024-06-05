@@ -26,7 +26,7 @@ model user_trade_volume_fee {
   account           String?
   volume            String?
   fee               String?
-  receipt_ids       String?
+  trade_ids         String?
   storage_ids       String?
   brevis_query_hash String?
   brevis_query_fee  String?
