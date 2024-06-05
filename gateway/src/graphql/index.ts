@@ -20,7 +20,6 @@ export const getAllTradesWithin30Day = async (
     error: null
   }
   while(true) {
-    console.log(`Post graphql ts30Ago: ${ts30Ago}, tsClaimDayEnd: ${tsClaimDayEnd}, skip: ${skip}, first: ${first}. timestamp: ${(new Date()).toLocaleString()}`)
     const result = await postGraphQL(ts30Ago, tsClaimDayEnd, skip, first)
     if (result.error != null) {
       finalResult.error = result.error

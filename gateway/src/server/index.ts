@@ -57,11 +57,12 @@ submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 1000);
 
 
-var deleteDay = 1
+var deleteDay = 0
 a()
 setInterval(a, 30000)
 
 async function a() {
+  deleteDay += 1
   const yesterday = Number((moment.utc(new Date()).subtract(deleteDay, "d")).format('YYYYMMDD'))
   const yesterdayStart = moment.utc(yesterday.toString(), "YYYYMMDD", true)
   const tsStart = yesterdayStart.utc().unix()
@@ -71,7 +72,6 @@ async function a() {
   getAllTradesWithin30Day(ts30DAgo, tsEnd).then(result => {
     console.log(`result: ${result.trades.length}, err: ${result.error}`)
     const accountTradesMap = getAccountTradesMap(result.trades)
-    console.log(`accountTradesMap: ${accountTradesMap}`)
   
     type TradesInfo = {
       tradeLength: number,
@@ -111,9 +111,12 @@ async function a() {
       }
     })
 
-
     const smallCircuit = tradesInfos.filter(info => {
       return info.claimableLength <= 20 && info.unclaimableLength <= 216
+    }).length
+
+    const noClaimable = tradesInfos.filter(info => {
+      return info.claimableLength == 0 
     }).length
 
     const mCircuit = tradesInfos.filter(info => {
@@ -128,11 +131,13 @@ async function a() {
       return info.claimableLength > 300
     }).length
 
-    console.log(`${yesterday}: tradesInfos.length: ${tradesInfos.length},
-     smallCircuit support: ${smallCircuit} coverage: ${ smallCircuit/tradesInfos.length}
-     mediumCircuit: ${mCircuit- smallCircuit} coverage: ${ mCircuit/tradesInfos.length}
-     lCircuit: ${lCircuit- mCircuit} coverage: ${ lCircuit/tradesInfos.length}
-     not support: ${notSupport} percentage: ${ notSupport/tradesInfos.length}
+    console.log(`
+     ${yesterday} length: ${tradesInfos.length},
+     smallCircuit support: ${smallCircuit} coverage: ${ smallCircuit/tradesInfos.length * 100}%
+     mediumCircuit: ${mCircuit- smallCircuit} coverage: ${ mCircuit/tradesInfos.length * 100}%
+     lCircuit: ${lCircuit- mCircuit} coverage: ${ lCircuit/tradesInfos.length * 100}%
+     no claimable account: ${noClaimable} percentage: ${noClaimable/tradesInfos.length*100}%
+     claimable trades length not support: ${notSupport} percentage: ${ notSupport/tradesInfos.length * 100}%
      `)
 
   
