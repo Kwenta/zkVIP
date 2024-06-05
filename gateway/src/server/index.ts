@@ -111,7 +111,7 @@ async function a() {
     })
 
     const smallCircuit = tradesInfos.filter(info => {
-      return info.claimableLength <= 20 && info.unclaimableLength <= 216
+      return info.claimableLength > 0 && info.claimableLength <= 20 && info.unclaimableLength <= 216
     }).length
 
     const noClaimable = tradesInfos.filter(info => {
@@ -123,11 +123,11 @@ async function a() {
     }).length
 
     const mCircuit = tradesInfos.filter(info => {
-      return info.claimableLength <= 50 && info.unclaimableLength <= 412
+      return info.claimableLength > 0 && info.claimableLength <= 50 && info.unclaimableLength <= 412
     }).length
 
     const lCircuit = tradesInfos.filter(info => {
-      return info.claimableLength <= 300
+      return info.claimableLength > 0 && info.claimableLength <= 300
     }).length
 
     const notSupport = tradesInfos.filter(info => {
