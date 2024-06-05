@@ -31,7 +31,7 @@ export const getAllTradesWithin30Day = async (
       return finalResult
     }
 
-    finalResult.trades.concat(result.trades)
+    finalResult.trades = finalResult.trades.concat(result.trades)
     skip += first
   }
 };

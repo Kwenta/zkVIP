@@ -60,7 +60,9 @@ setInterval(submitUserSwapAmountTx, 1000);
 getAllTradesWithin30Day(1712016000, 1714607999).then(result => {
   const tsStart = 1714521600
   const tsEnd = 1714607999
+  console.log(`result: ${result.trades.length}, err: ${result.error}`)
   const accountTradesMap = getAccountTradesMap(result.trades)
+  console.log(`accountTradesMap: ${accountTradesMap}`)
     for (let [account, trades] of accountTradesMap) {      
       if (trades.length === 0) {
         continue
