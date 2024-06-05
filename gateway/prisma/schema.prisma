@@ -64,4 +64,5 @@ model trade {
   order_fee_flow_tx_receipt_id String @default("")
   execution_tx_receipt_id      String @id(map: "untitled_table_5_pkey") @default("")
   execution_tx_block_number    BigInt @default(0)
+  volume                       String @default("")
 }
