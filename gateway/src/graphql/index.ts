@@ -189,7 +189,7 @@ const postGraphQL = async (
       const trades: Trade[] =[]
       responseJson?.data?.futuresTrades?.forEach((element: any) => {
         trades.push({
-          blockNumber: element.blockNumber.toNumber(),
+          blockNumber: element.blockNumber,
           account: element.account,
           abstractAccount: element.abstractAccount,
           timestamp: element.timestamp,
