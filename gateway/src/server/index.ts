@@ -50,8 +50,8 @@ setInterval(prepareUserTradeVolumeFees, 2000);
 monitorFeeAccumulated();
 monitorBrevisRequest();
 
-prepareNewDayTradeClaims();
-setInterval(prepareUserTradeVolumeFees, 60000);
+// prepareNewDayTradeClaims();
+// setInterval(prepareUserTradeVolumeFees, 60000);
 
 submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 1000);
