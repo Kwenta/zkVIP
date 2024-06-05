@@ -198,7 +198,38 @@ async function getDailyTrack(year_month_day) {
 // src/interval_jobs/index.ts
 import { BigNumber as BigNumber5 } from "ethers";
 
+// src/graphql/common.ts
+var GraphRpc = "https://subgraph.satsuma-prod.com/616cc2144c5c/kwenta/optimism-perps/version/0.0.22/api";
+
 // src/graphql/index.ts
+var postSwapsQuery = async (timestamp30DAgo, startTimestamp, endTimestamp) => {
+  try {
+    const res = await fetch(GraphRpc, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        query: `{
+            futuresTrades(orderBy: timestamp, orderDirection: asc, where: {timestamp_gte:"${timestamp30DAgo}", timestamp_lte: "${endTimestamp}"}) 
+          {
+            orderFeeFlowTxhash,
+            executionTxhash,
+          }
+        }`
+      })
+    });
+    console.log(6677777, res);
+    if (res.status === 200) {
+      const resBody = await res.json();
+      console.log(111222333, resBody);
+    }
+  } catch (error) {
+    console.log("getPositions66 graphql error:", error);
+    return { txs: [], error };
+  }
+};
 var getAvailableAccountIds = async () => {
 };
 
@@ -3164,13 +3195,13 @@ function getJSONForExecutionFlowTx(account, transactionReceipt) {
 // src/server/type.ts
 import moment from "moment";
 function validTimeNumber(input) {
-  return moment(input.toString(), "YYYYMMDD", true).isValid();
+  return moment.utc(input.toString(), "YYYYMMDD", true).isValid();
 }
 function getCurrentDay(input) {
   if (isNaN(input)) {
     return "";
   }
-  const date = moment(input.toString(), "YYYYMMDD", true);
+  const date = moment.utc(input.toString(), "YYYYMMDD", true);
   if (!date.isValid()) {
     return "";
   }
@@ -3180,31 +3211,11 @@ function findNextDay(input) {
   if (isNaN(input)) {
     return "";
   }
-  const date = moment(input.toString(), "YYYYMMDD", true);
+  const date = moment.utc(input.toString(), "YYYYMMDD", true);
   if (!date.isValid()) {
     return "";
   }
   return date.add(1, "d").format("YYYY-MM-DD");
-}
-function findDayStartTimestamp(input) {
-  if (isNaN(input)) {
-    return 0;
-  }
-  const date = moment(input.toString(), "YYYYMMDD", true);
-  if (!date.isValid()) {
-    return 0;
-  }
-  return date.unix();
-}
-function findDayEndTimestamp(input) {
-  if (isNaN(input)) {
-    return 0;
-  }
-  const date = moment(input.toString(), "YYYYMMDD", true);
-  if (!date.isValid()) {
-    return 0;
-  }
-  return date.add(1, "d").unix() - 1;
 }
 
 // src/interval_jobs/index.ts
@@ -3376,8 +3387,9 @@ prepareNewDayTradeClaims();
 setInterval(prepareUserTradeVolumeFees, 3e4);
 submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 1e3);
-console.log("findDayStartTimestamp(20240401)", findDayStartTimestamp(20240401));
-console.log("findDayEndTimestamp(20240401)", findDayEndTimestamp(20240401));
+postSwapsQuery(1714799749, 1715459199, 1715459199).then().catch((error) => {
+  console.error("postSwapsQuery error", error);
+});
 app.post("/kwenta/newTradeFeeReimbursement", async (req, res) => {
   try {
     const { account, start_year_month_day, end_year_month_day } = req.body;
