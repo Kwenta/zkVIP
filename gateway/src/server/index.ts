@@ -63,16 +63,49 @@ getAllTradesWithin30Day(1712016000, 1714607999).then(result => {
   console.log(`result: ${result.trades.length}, err: ${result.error}`)
   const accountTradesMap = getAccountTradesMap(result.trades)
   console.log(`accountTradesMap: ${accountTradesMap}`)
-    for (let [account, trades] of accountTradesMap) {      
-      if (trades.length === 0) {
-        continue
-      }
 
-      const claimableTrades = trades.filter(trade => {
-        return trade.timestamp >= tsStart && trade.timestamp <= tsEnd
-      })
-      console.log(`account ${account} claimable trades: ${claimableTrades.length} and unclaimable trades ${trades.length-claimableTrades.length}`)
+  type TradesInfo = {
+    tradeLength: number,
+    unclaimableLength: number,
+    claimableLength: number,
   }
+  const tradesInfos: TradesInfo[] = []
+  for (let [account, trades] of accountTradesMap) {      
+    if (trades.length === 0) {
+      tradesInfos.push({
+        tradeLength: 0,
+        unclaimableLength: 0,
+        claimableLength: 0,
+      })
+      continue
+    }
+
+    const claimableTrades = trades.filter(trade => {
+      return trade.timestamp >= tsStart && trade.timestamp <= tsEnd
+    })
+
+    tradesInfos.push({
+      tradeLength: trades.length,
+      unclaimableLength: claimableTrades.length,
+      claimableLength: trades.length-claimableTrades.length,
+    })
+    console.log(`account ${account} claimable trades: ${claimableTrades.length} and unclaimable trades ${trades.length-claimableTrades.length}`)
+  }
+
+  tradesInfos.sort((a,b) => {
+    if (a.tradeLength > b.tradeLength) {
+      return -1
+    } else if (a.tradeLength == b.tradeLength && a.claimableLength > b.claimableLength) {
+      return -1
+    } else {
+      return 1
+    }
+  })
+
+  tradesInfos.forEach(tradesInfo => {
+    console.log(`trades ${tradesInfo.tradeLength} claimable: ${tradesInfo.claimableLength} and unclaimable: ${tradesInfo.unclaimableLength}`)
+  })
+
 }).catch(error => {
   console.error("get all trades within 30day error", error)
 })
