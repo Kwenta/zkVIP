@@ -10,7 +10,7 @@ type UserTradeVolumeFee = {
   account: string;
   volume: string;
   fee: string;
-  receipt_ids: string;
+  trade_ids: string;
   storage_ids: string;
   brevis_query_hash: string;
   brevis_query_fee: string;
@@ -35,6 +35,7 @@ type Receipt = {
   should_be_filtered_out: boolean;
   reason: string;
   account: string;
+  transaction_type: number,
 };
 
 type Storage = {

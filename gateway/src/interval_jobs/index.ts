@@ -10,33 +10,84 @@ import {
   findNotReadyReceipts, 
   findNotReadyStorages, 
   findTxToBeSent, 
+  findUserExistingUTVF, 
   findUserTradeVolumeFees,
   getDailyTrack,
   getUserTradeVolumeFee,
   insertDailyTrack,
   insertReceipt,
+  insertUserTradeVolumeFee,
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
-import { getAvailableAccountIds } from "../graphql/index.ts";
+import { getAllTradesWithin30Day, getAccountTradesMap, saveTrades } from "../graphql/index.ts";
 import { sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { QueryOrderTxsByAccount } from "../query/index.ts";
 import { querySingleReceipt, querySingleStorage } from "../rpc/index.ts";
-import { findNextDay, getCurrentDay } from "../server/type.ts";
+import { findDayStartTimestamp, findNextDay, getCurrentDay } from "../server/type.ts";
 import moment from "moment";
 import { submitBrevisRequestTx } from "../ether_interactions/index.ts";
 
 export async function prepareNewDayTradeClaims() {
   try {
-    const today = Number((moment(new Date())).format('YYYYMMDD'))
-    var todayInTrack = await getDailyTrack(BigInt(today));
-    if (todayInTrack != undefined && todayInTrack != null && todayInTrack) {
+    const yesterday = Number((moment.utc(new Date()).subtract(1, "d")).format('YYYYMMDD'))
+    var track = await getDailyTrack(BigInt(yesterday));
+    if (track != undefined && track != null && track) {
       return;
     }
 
-    // TODO: Get yesterday's all available accountId
-    await getAvailableAccountIds()
-    // TODO: Uncomment insertDailyTrack for today
-    // await insertDailyTrack(BigInt(today))
+    const yesterdayStart = moment.utc(yesterday.toString(), "YYYYMMDD", true)
+    const tsStart = yesterdayStart.utc().unix()
+    const tsEnd = yesterdayStart.utc().add(1, "d").unix() - 1
+    const ts30DAgo = yesterdayStart.utc().subtract(29, "d").unix()
+
+    const result = await getAllTradesWithin30Day(ts30DAgo, tsEnd)
+    if (result.error !== null) {
+      throw result.error
+    }
+
+    const accountTradesMap = getAccountTradesMap(result.trades)
+    for (let [account, trades] of accountTradesMap) {      
+      if (trades.length === 0) {
+        continue
+      }
+
+      const claimableTrades = trades.filter(trade => {
+        return trade.timestamp >= tsStart && trade.timestamp <= tsEnd
+      })
+      console.log(`account ${account} claimable trades: ${claimableTrades.length} and unclaimable trades ${trades.length-claimableTrades.length}`)
+
+       // No available fee rebate trade
+      if (claimableTrades.length === 0) {
+        continue
+      }
+      
+      var utvf = await findUserExistingUTVF(account, BigInt(yesterday), BigInt(yesterday));
+      if (utvf != undefined && utvf != null && utvf) {
+        return;
+      }
+
+      const src_chain_id = BigInt(process.env.SRC_CHAIN_ID ?? 10);
+      const dst_chain_id = BigInt(process.env.DST_CHAIN_ID ?? 10);
+
+      var utvf = await insertUserTradeVolumeFee(
+        src_chain_id,
+        dst_chain_id,
+        account,
+        trades[0].account,
+        BigInt(yesterday),
+        BigInt(yesterday),
+      );
+
+      const receiptIds = await saveTrades(trades, account)
+    
+      utvf.status = PROOF_STATUS_INPUT_READY
+      utvf.trade_ids = receiptIds
+      utvf.start_blk_num = BigInt(claimableTrades[0].blockNumber)
+      utvf.end_blk_num = BigInt(claimableTrades[claimableTrades.length - 1].blockNumber)
+      
+      await updateUserTradeVolumeFee(utvf)
+    }
+    await insertDailyTrack(BigInt(yesterday))
   } catch (error) {
     console.error("failed to prepare new day trade claims", error)
   }
@@ -73,89 +124,12 @@ export async function getStorageInfos() {
 export async function prepareUserTradeVolumeFees() {
   try {
     let promises = Array<Promise<void>>();
-    promises.push(prepareUserSwapAmountInput());
     promises.push(prepareUserSwapAmountProof());
     promises.push(uploadUserSwapAmountProof());
     await Promise.all(promises);
   } catch (error) {
     console.error("failed to prepare utvfs", error);
   }
-}
-
-async function prepareUserSwapAmountInput() {
-  try {
-    const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_INIT);
-    let promises = Array<Promise<void>>();
-    for (let i = 0; i < utvfs.length; i++) {
-      promises.push(queryUserSwapAmountInput(utvfs[i]));
-    }
-    await Promise.all(promises);
-  } catch (error) {
-    console.error("failed to prepare utvf input", error);
-  }
-}
-
-export async function queryUserSwapAmountInput(userSwapAmountOld: any) {
-  const userSwapAmount = await getUserTradeVolumeFee(userSwapAmountOld.id)
-
-  if (userSwapAmount.status != PROOF_STATUS_INIT) {
-    return 
-  }
-  userSwapAmount.status = PROOF_STATUS_INPUT_REQUEST_SENT
-  await updateUserTradeVolumeFee(userSwapAmount)
-
-  const start = getCurrentDay(Number(userSwapAmount.start_ymd))
-  const end = findNextDay(Number(userSwapAmount.end_ymd))
-
-
-  if (start.length === 0 || end.length === 0) {
-    console.error("invalid start end time format", userSwapAmount.start_ymd, userSwapAmount.end_ymd, userSwapAmount.id)
-    userSwapAmount.status = PROOF_STATUS_INIT
-    updateUserTradeVolumeFee(userSwapAmount)
-  }
-
-  console.log("Start to send dune query: ", userSwapAmount.id, (new Date()).toLocaleString())
-
-  const duneResult = await QueryOrderTxsByAccount(start, end, userSwapAmount.account)
-
-  console.log("Dune resule returned: ", userSwapAmount.id, (new Date()).toLocaleString())
-
-
-  if (duneResult.txs.length === 0) {
-    console.error("no order settled found")
-    userSwapAmount.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID
-    updateUserTradeVolumeFee(userSwapAmount)
-    return
-  } else if (BigNumber.from(duneResult.volume).lte(BigNumber.from("100000000000000000000000"))) {
-    console.error("invalid volume", duneResult.volume, userSwapAmount.account)
-    userSwapAmount.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID
-    updateUserTradeVolumeFee(userSwapAmount)
-    return
-  }
-
-  const promises = Array<Promise<string>>();
-
-  duneResult.txs.forEach((tx) => {
-    promises.push(
-      // insertReceipt(tx, userSwapAmount.account).then((receipt) => {
-      //   return receipt.id;
-      // })
-    );
-  });
-
-  const receiptIds = await Promise.all(promises);
-  userSwapAmount.receipt_ids = receiptIds.reduce(
-    (accumulator, currentValue) => accumulator + "," + currentValue
-  );
-  userSwapAmount.status = PROOF_STATUS_INPUT_READY;
-  userSwapAmount.volume = duneResult.volume
-  userSwapAmount.fee = duneResult.fee
-
-  console.log("User Circuit Input Ready: ", userSwapAmount.id, (new Date()).toLocaleString())
-
-  updateUserTradeVolumeFee(userSwapAmount).then(value => {
-    sendUserTradeVolumeFeeProvingRequest(value)
-  }).then();
 }
 
 async function prepareUserSwapAmountProof() {

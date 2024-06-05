@@ -13,6 +13,8 @@ import {
   PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
   PROOF_STATUS_PROVING_SENT,
   STATUS_READY,
+  TX_TYPE_EXECUTION,
+  TX_TYPE_ORDER_FEE_FLOW,
 } from "../constants/index.ts";
 import { BigNumber, ethers } from "ethers";
 
@@ -37,7 +39,7 @@ const brevis = new Brevis("appsdk.brevis.network:11080");
 
 const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   const proofReq = new ProofRequest();
-  const ids = utvf.receipt_ids.split(",");
+  const ids = utvf.trade_ids.split(",");
   let promises = Array<Promise<Receipt | undefined>>();
   const startBlkNum = Number(utvf.start_blk_num)
   const endBlkNum = Number(utvf.end_blk_num)
@@ -72,7 +74,16 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     if (receipt.status !== STATUS_READY) {
       throw new Error("receipts not ready"); 
     }
-    sortedReceipts.push(receipt)
+
+    const data= JSON.parse(receipt.data);
+    const blkNumber = Number(data.block_num)
+    if (blkNumber >= startBlkNum - 43200 * 30 && blkNumber <= endBlkNum && receipt.transaction_type == TX_TYPE_EXECUTION) {
+      sortedReceipts.push(receipt)
+    // } else if () {
+    //   sortedReceipts.push(receipt)
+    } else {
+      console.log(`error: invalid transaction ${receipt.tx_hash} block number ${blkNumber}`)
+    }
   }
 
   sortedReceipts.sort((a,b) => {
@@ -84,40 +95,64 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     
     if (blkNumberA < blkNumberB) {
       return -1
+    } else if (blkNumberA == blkNumberB && Number(dataA.transaction_type) < Number(dataB.transaction_type)) {
+      return -1
     } else {
       return 1
     }
   })
 
-  for (let i = 0; i < sortedReceipts.length; i++) {
-    const receipt = sortedReceipts[i];
-    const data = JSON.parse(receipt.data);
-    const blkNumber= Number(data.block_num)
-    if (isNaN(blkNumber)) {
-      console.error("invalid receipt block number", data)
-    }
+  // var first
+  // for (let i = 0; i < sortedReceipts.length; i++) {
+    // const receipt = sortedReceipts[i];
+    // const data = JSON.parse(receipt.data);
+    // const blkNumber= Number(data.block_num)
+  //   if (isNaN(blkNumber)) {
+  //     console.error("invalid receipt block number", data)
+  //   }
 
-    if (blkNumber >= startBlkNum && blkNumber <= endBlkNum) {
-      claimableReceiptIndexes.push(i)
-    } else if (blkNumber < startBlkNum && blkNumber >= startBlkNum - 43200 * 30) {
+  //   if (blkNumber >= startBlkNum && blkNumber <= endBlkNum) {
+  //     claimableReceiptIndexes.push(i)
+  //   } else if (blkNumber < startBlkNum && blkNumber >= startBlkNum - 43200 * 30) {
 
-      unclaimableReceiptIndexes.push(i)
-    } else {
-      console.error("out of range  receipt block number", data)
-    }
-  }
+  //     unclaimableReceiptIndexes.push(i)
+  //   } else {
+  //     console.error("out of range  receipt block number", data)
+  //   }
+  // }
+
+  // firstClaimableTrade sortedReceipts.findIndex(receipt => {
+  //   const data = JSON.parse(receipt.data);
+  //   const blkNumber= Number(data.block_num)
+  //   return receipt.transaction_type == TX_TYPE_EXECUTION && blkNumber >= startBlkNum
+  // })
+
+  // const claimableTradeOrderFlowFeeTxReceipts = sortedReceipts.filter(receipt => {
+  //   const data = JSON.parse(receipt.data);
+  //   const blkNumber= Number(data.block_num)
+
+  //   return blkNumber >= startBlkNum && receipt.transaction_type == TX_TYPE_ORDER_FEE_FLOW
+  // })
+
+  // const claimableTradeExecutionTxReceipts = sortedReceipts.filter(receipt => {
+  //   const data = JSON.parse(receipt.data);
+  //   const blkNumber = Number(data.block_num)
+  //   return blkNumber >= startBlkNum && receipt.transaction_type == TX_TYPE_EXECUTION
+  // })
+
+
 
   var proverIndex = -1
   var initialClaimableReceiptIndex = 0
-  if (unclaimableReceiptIndexes.length <= 236 && claimableReceiptIndexes.length <= 20) {
+  if (unclaimableReceiptIndexes.length <= 216 && claimableReceiptIndexes.length <= 40) {
     proverIndex = 0
-    initialClaimableReceiptIndex = 236
-  } else if (unclaimableReceiptIndexes.length <= 462 && claimableReceiptIndexes.length <= 50) {
+    initialClaimableReceiptIndex = 216
+  } else if (unclaimableReceiptIndexes.length <= 412 && claimableReceiptIndexes.length <= 100) {
     proverIndex = 1
-    initialClaimableReceiptIndex = 462
-  } else if (unclaimableReceiptIndexes.length <= 4700 && claimableReceiptIndexes.length <=300) {
+    initialClaimableReceiptIndex = 412
+  } else if (unclaimableReceiptIndexes.length <= 4400 && claimableReceiptIndexes.length <=600) {
     proverIndex = 2
-    initialClaimableReceiptIndex = 4700
+    initialClaimableReceiptIndex = 4400
   } else if (claimableReceiptIndexes.length == 0) {
     console.error("no claimable receipts")
   } else {

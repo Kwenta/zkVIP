@@ -49,6 +49,14 @@ async function getReceipt(id: string): Promise<any> {
   });
 }
 
+async function getReceiptByHash(tx_hash: string): Promise<any> {
+  return prisma.receipt.findFirst({
+    where: {
+      tx_hash: tx_hash?.toLocaleLowerCase()
+    }
+  })
+}
+
 async function findNotReadyReceipts(): Promise<any> {
   var now = new Date();
   return prisma.receipt.findMany({
@@ -121,15 +129,22 @@ async function insertUserTradeVolumeFee(
   src_chain_id: bigint,
   dst_chain_id: bigint,
   account: string,
+  owner: string,
   start_ymd: bigint,
   end_ymd: bigint,
 ): Promise<any> {
+  console.log(
+    `Insert user trade volume fee: src_chain_id: ${src_chain_id}, dst_chain_id: ${dst_chain_id}, 
+      account: ${account}, owner: ${owner}, start_ymd: ${start_ymd}, end_ymd: ${end_ymd}`
+  )
+
   return prisma.user_trade_volume_fee.create({
     data: {
       id: uuidv4(),
       src_chain_id: src_chain_id,
       dst_chain_id: dst_chain_id,
       account: account?.toLocaleLowerCase(),
+      owner_address: owner,
       start_ymd: start_ymd,
       end_ymd: end_ymd,
       status: PROOF_STATUS_INIT,
@@ -148,7 +163,7 @@ async function updateUserTradeVolumeFee(utvf: any): Promise<any> {
     data: {
       volume: utvf.volume,
       fee: utvf.fee,
-      receipt_ids: utvf.receipt_ids,
+      trade_ids: utvf.trade_ids,
       storage_ids: utvf.storage_ids,
       brevis_query_hash: utvf.brevis_query_hash?.toLocaleLowerCase(),
       brevis_query_fee: utvf.brevis_query_fee,
@@ -244,10 +259,35 @@ async function getDailyTrack(year_month_day: bigint): Promise<any> {
   });
 }
 
+async function insertTrade(
+  order_fee_flow_tx_receipt_id: string,
+  execution_tx_receipt_id: string,
+  execution_tx_block_number: number
+): Promise<any> {
+  return prisma.trade.create({
+    data: {
+      order_fee_flow_tx_receipt_id: order_fee_flow_tx_receipt_id,
+      execution_tx_receipt_id: execution_tx_receipt_id,
+      execution_tx_block_number: BigInt(execution_tx_block_number),
+    }
+  })
+}
+
+async function getTrade(
+  execution_tx_receipt_id: string
+): Promise<any> {
+  return prisma.trade.findUnique({
+    where: {
+      execution_tx_receipt_id: execution_tx_receipt_id,
+    }
+  })
+}
+
 export {
   insertReceipt,
   updateReceipt,
   getReceipt,
+  getReceiptByHash,
   findNotReadyReceipts,
   insertUserTradeVolumeFee,
   updateUserTradeVolumeFee,
@@ -262,4 +302,6 @@ export {
   insertDailyTrack,
   getDailyTrack,
   findTxToBeSent,
+  insertTrade,
+  getTrade
 };
