@@ -70,7 +70,6 @@ async function a() {
   const ts30DAgo = yesterdayStart.utc().subtract(29, "d").unix()
 
   getAllTradesWithin30Day(ts30DAgo, tsEnd).then(result => {
-    console.log(`result: ${result.trades.length}, err: ${result.error}`)
     const accountTradesMap = getAccountTradesMap(result.trades)
   
     type TradesInfo = {
@@ -119,6 +118,10 @@ async function a() {
       return info.claimableLength == 0 
     }).length
 
+    const claimable = tradesInfos.filter(info => {
+      return info.claimableLength > 0 
+    }).length
+
     const mCircuit = tradesInfos.filter(info => {
       return info.claimableLength <= 50 && info.unclaimableLength <= 412
     }).length
@@ -133,9 +136,10 @@ async function a() {
 
     console.log(`
      ${yesterday} length: ${tradesInfos.length},
-     smallCircuit support: ${smallCircuit} coverage: ${ smallCircuit/tradesInfos.length * 100}%
-     mediumCircuit: ${mCircuit- smallCircuit} coverage: ${ mCircuit/tradesInfos.length * 100}%
-     lCircuit: ${lCircuit- mCircuit} coverage: ${ lCircuit/tradesInfos.length * 100}%
+     claimable account length: ${claimable}
+     smallCircuit support: ${smallCircuit} coverage: ${ smallCircuit/claimable * 100}%
+     mediumCircuit: ${mCircuit- smallCircuit} coverage: ${ (mCircuit-smallCircuit)/claimable * 100}%
+     lCircuit: ${lCircuit- mCircuit} coverage: ${ (lCircuit- mCircuit)/claimable * 100}%
      no claimable account: ${noClaimable} percentage: ${noClaimable/tradesInfos.length*100}%
      claimable trades length not support: ${notSupport} percentage: ${ notSupport/tradesInfos.length * 100}%
      `)
