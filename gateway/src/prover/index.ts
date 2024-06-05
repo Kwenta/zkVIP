@@ -59,8 +59,11 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   }
 
   const trades = await Promise.all(tradePromises)
-  const validTrades = trades.filter(value => {
-    return value !== undefined
+  const validTrades: Trade[] = []
+  trades.forEach(trade => {
+    if (trade !== undefined) {
+      validTrades.push(trade)
+    }
   })
 
   validTrades.sort((a,b) => {
@@ -101,7 +104,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 
   const receipts = await Promise.all(receiptPromises);
 
-  const validReceipts = new Array<Receipt>()
+  const validReceipts: Receipt[] = []
   for (let i = 0; i < receipts.length; i++) {
     const receipt = receipts[i];
     if (receipt === undefined) {
