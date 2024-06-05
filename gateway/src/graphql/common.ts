@@ -7,6 +7,8 @@ type Trade = {
   timestamp: number,
   orderFeeFlowTxhash: string,
   executionTxhash: string,
+  size: string,
+  price: string,
 }
 
 export {

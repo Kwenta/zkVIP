@@ -1,7 +1,8 @@
 import * as sdk from "brevis-sdk-typescript";
-import { Receipt, UserTradeVolumeFee } from "../server/type.ts";
+import { Receipt, Trade, UserTradeVolumeFee } from "../server/type.ts";
 import {
   getReceipt,
+  getTrade,
   getUserTradeVolumeFee,
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
@@ -39,13 +40,51 @@ const brevis = new Brevis("appsdk.brevis.network:11080");
 
 const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   const proofReq = new ProofRequest();
-  const ids = utvf.trade_ids.split(",");
-  let promises = Array<Promise<Receipt | undefined>>();
+  const tradeIds = utvf.trade_ids.split(",");
   const startBlkNum = Number(utvf.start_blk_num)
   const endBlkNum = Number(utvf.end_blk_num)
-  for (let i = 0; i < ids.length; i++) {
-    promises.push(
-      getReceipt(ids[i]).then((value) => {
+
+  let tradePromises = Array<Promise<Trade | undefined>>();
+  for (let i = 0; i < tradeIds.length; i++) {
+    tradePromises.push(
+      getTrade(tradeIds[i]).then((value) => {
+        const r = value as Trade;
+        if (r === undefined || r === null) {
+          return undefined;
+        } else {
+          return r;
+        }
+      })
+    );
+  }
+
+  const trades = await Promise.all(tradePromises)
+  const validTrades = trades.filter(value => {
+    return value !== undefined
+  })
+
+  validTrades.sort((a,b) => {
+    if (a.execution_tx_block_number < b.execution_tx_block_number) {
+      return -1
+    } else {
+      return 1
+    }
+  })
+
+  const receiptIds: string[] = []
+  validTrades.forEach(trade => {
+    if (trade.order_fee_flow_tx_receipt_id.length > 0) {
+      receiptIds.push(trade.order_fee_flow_tx_receipt_id)
+    }
+    if (trade.execution_tx_receipt_id.length > 0) {
+      receiptIds.push(trade.execution_tx_receipt_id)
+    }
+  })
+
+  let receiptPromises = Array<Promise<Receipt | undefined>>();
+  for (let i = 0; i < receiptIds.length; i++) {
+    receiptPromises.push(
+      getReceipt(receiptIds[i]).then((value) => {
         const r = value as Receipt;
         if (r === undefined || r === null) {
           return undefined;
@@ -60,14 +99,11 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     );
   }
 
-  const results = await Promise.all(promises);
+  const receipts = await Promise.all(receiptPromises);
 
-  var unclaimableReceiptIndexes = Array<number>();
-  var claimableReceiptIndexes = Array<number>();
-
-  const sortedReceipts = new Array<Receipt>()
-  for (let i = 0; i < results.length; i++) {
-    const receipt = results[i];
+  const validReceipts = new Array<Receipt>()
+  for (let i = 0; i < receipts.length; i++) {
+    const receipt = receipts[i];
     if (receipt === undefined) {
       continue;
     }
@@ -75,18 +111,10 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       throw new Error("receipts not ready"); 
     }
 
-    const data= JSON.parse(receipt.data);
-    const blkNumber = Number(data.block_num)
-    if (blkNumber >= startBlkNum - 43200 * 30 && blkNumber <= endBlkNum && receipt.transaction_type == TX_TYPE_EXECUTION) {
-      sortedReceipts.push(receipt)
-    // } else if () {
-    //   sortedReceipts.push(receipt)
-    } else {
-      console.log(`error: invalid transaction ${receipt.tx_hash} block number ${blkNumber}`)
-    }
+    validReceipts.push(receipt)
   }
 
-  sortedReceipts.sort((a,b) => {
+  validReceipts.sort((a,b) => {
     const dataA = JSON.parse(a.data);
     const blkNumberA= Number(dataA.block_num)
 
@@ -102,66 +130,60 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     }
   })
 
-  // var first
-  // for (let i = 0; i < sortedReceipts.length; i++) {
-    // const receipt = sortedReceipts[i];
-    // const data = JSON.parse(receipt.data);
-    // const blkNumber= Number(data.block_num)
-  //   if (isNaN(blkNumber)) {
-  //     console.error("invalid receipt block number", data)
-  //   }
-
-  //   if (blkNumber >= startBlkNum && blkNumber <= endBlkNum) {
-  //     claimableReceiptIndexes.push(i)
-  //   } else if (blkNumber < startBlkNum && blkNumber >= startBlkNum - 43200 * 30) {
-
-  //     unclaimableReceiptIndexes.push(i)
-  //   } else {
-  //     console.error("out of range  receipt block number", data)
-  //   }
-  // }
-
-  // firstClaimableTrade sortedReceipts.findIndex(receipt => {
-  //   const data = JSON.parse(receipt.data);
-  //   const blkNumber= Number(data.block_num)
-  //   return receipt.transaction_type == TX_TYPE_EXECUTION && blkNumber >= startBlkNum
-  // })
-
-  // const claimableTradeOrderFlowFeeTxReceipts = sortedReceipts.filter(receipt => {
-  //   const data = JSON.parse(receipt.data);
-  //   const blkNumber= Number(data.block_num)
-
-  //   return blkNumber >= startBlkNum && receipt.transaction_type == TX_TYPE_ORDER_FEE_FLOW
-  // })
-
-  // const claimableTradeExecutionTxReceipts = sortedReceipts.filter(receipt => {
-  //   const data = JSON.parse(receipt.data);
-  //   const blkNumber = Number(data.block_num)
-  //   return blkNumber >= startBlkNum && receipt.transaction_type == TX_TYPE_EXECUTION
-  // })
+  var unclaimableTrades = validTrades.filter(trade => {
+    return ((trade?.execution_tx_block_number ?? 0 ) >= startBlkNum -  43200 * 30) && ((trade?.execution_tx_block_number ?? 0 < startBlkNum))
+  })
 
 
+  if (unclaimableTrades.length > 4400) {
+    // Sort unclaimableTrades by volume desc
+    unclaimableTrades.sort((a, b) => {
+      if (BigNumber.from(a.volume).gt(BigNumber.from(b.volume))) {
+        return -1 
+      } else {
+        return 1
+      }
+    })
+
+    // Use the first 4400 trade to calculate the largest volume
+    unclaimableTrades = unclaimableTrades.slice(0,4400)
+
+    // Sort unclaimableTrades by block number asc to fit circuit input
+    unclaimableTrades.sort((a,b) => {
+      if (a.execution_tx_block_number < b.execution_tx_block_number) {
+        return -1
+      } else {
+        return 1
+      }
+    })
+  }
+
+  const claimableTrades = validTrades.filter(trade => {
+    return ((trade?.execution_tx_block_number ?? 0 ) >= startBlkNum) && ((trade?.execution_tx_block_number ?? 0 <= endBlkNum))
+  })
 
   var proverIndex = -1
   var initialClaimableReceiptIndex = 0
-  if (unclaimableReceiptIndexes.length <= 216 && claimableReceiptIndexes.length <= 40) {
+  if (unclaimableTrades.length <= 216 && claimableTrades.length <= 20) {
     proverIndex = 0
     initialClaimableReceiptIndex = 216
-  } else if (unclaimableReceiptIndexes.length <= 412 && claimableReceiptIndexes.length <= 100) {
+  } else if (unclaimableTrades.length <= 412 && claimableTrades.length <= 50) {
     proverIndex = 1
     initialClaimableReceiptIndex = 412
-  } else if (unclaimableReceiptIndexes.length <= 4400 && claimableReceiptIndexes.length <=600) {
+  } else if (unclaimableTrades.length <= 4400 && claimableTrades.length <=300) {
     proverIndex = 2
     initialClaimableReceiptIndex = 4400
-  } else if (claimableReceiptIndexes.length == 0) {
-    console.error("no claimable receipts")
+  } else if (claimableTrades.length > 300) {
+    console.error("unsupport no claimable trades")
   } else {
-    console.error("receipts out of range", sortedReceipts.length)
+    console.error(`claimable trades out of range: ${claimableTrades.length}`)
   }
 
-  var receiptIndex = 0
-  unclaimableReceiptIndexes.forEach(index => {
-    const receipt = sortedReceipts[index];
+  var unClaimableReceiptIndex = 0
+  unclaimableTrades.forEach(trade => {
+    const receipt = validReceipts.find(value => {
+      return value.id === trade.execution_tx_receipt_id
+    })
     if (receipt === undefined) {
       return;
     }
@@ -181,16 +203,18 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
           new sdk.Field(data.fields[3]), 
         ],
       }),
-      receiptIndex++
+      unClaimableReceiptIndex++
     );
   })
 
-  claimableReceiptIndexes.forEach(index => {
-    const receipt = sortedReceipts[index];
-    if (receipt === undefined) {
+  claimableTrades.forEach(trade => {
+    const orderFeeFlowTxReceipt = validReceipts.find(value => {
+      return value.id === trade.order_fee_flow_tx_receipt_id
+    })
+    if (orderFeeFlowTxReceipt === undefined) {
       return;
     }
-    const data = JSON.parse(receipt.data);
+    const data = JSON.parse(orderFeeFlowTxReceipt.data);
     const blkNumber= Number(data.block_num)
     if (isNaN(blkNumber)) {
       console.error("invalid receipt block number", data)
@@ -199,7 +223,33 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     proofReq.addReceipt(
       new ReceiptData({
         block_num: Number(data.block_num),
-        tx_hash: receipt.tx_hash,
+        tx_hash: orderFeeFlowTxReceipt.tx_hash,
+        fields: [
+          new sdk.Field(data.fields[0]),
+          new sdk.Field(data.fields[1]),
+          new sdk.Field(data.fields[2]),
+          new sdk.Field(data.fields[3]), 
+        ],
+      }),
+      initialClaimableReceiptIndex++
+    );
+
+    const executionTxReceipt = validReceipts.find(value => {
+      return value.id === trade.execution_tx_receipt_id
+    })
+    if (executionTxReceipt === undefined) {
+      return;
+    }
+    const executionTxReceiptData = JSON.parse(executionTxReceipt.data);
+    const executionTxReceiptBlk= Number(executionTxReceiptData.block_num)
+    if (isNaN(executionTxReceiptBlk)) {
+      console.error(`invalid receipt id ${executionTxReceipt.id} block number ${executionTxReceipt.data}`)
+    }
+
+    proofReq.addReceipt(
+      new ReceiptData({
+        block_num: Number(data.block_num),
+        tx_hash: orderFeeFlowTxReceipt.tx_hash,
         fields: [
           new sdk.Field(data.fields[0]),
           new sdk.Field(data.fields[1]),

@@ -25,7 +25,8 @@ import { QueryOrderTxsByAccount } from "../query/index.ts";
 import { querySingleReceipt, querySingleStorage } from "../rpc/index.ts";
 import { findDayStartTimestamp, findNextDay, getCurrentDay } from "../server/type.ts";
 import moment from "moment";
-import { submitBrevisRequestTx } from "../ether_interactions/index.ts";
+import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
+import { FeeReimbursementApp } from '../../../contract/typechain/FeeReimbursementApp';
 
 export async function prepareNewDayTradeClaims() {
   try {
@@ -78,11 +79,20 @@ export async function prepareNewDayTradeClaims() {
         BigInt(yesterday),
       );
 
-      const receiptIds = await saveTrades(trades, account)
+      const trade_ids = await saveTrades(trades, account)
     
       utvf.status = PROOF_STATUS_INPUT_READY
-      utvf.trade_ids = receiptIds
-      utvf.start_blk_num = BigInt(claimableTrades[0].blockNumber)
+      utvf.trade_ids = trade_ids
+
+      const claimPeriod = await userSwapAmountApp.accountClaimPeriod(account)
+    
+      // Make sure start block number is bigger than claim period in contract
+      var startBlockNumber = claimableTrades[0].blockNumber
+      if (claimPeriod[1].gt(BigNumber.from(startBlockNumber))) {
+        startBlockNumber = claimPeriod[1].toNumber() + 1
+      }
+
+      utvf.start_blk_num = BigInt(startBlockNumber)
       utvf.end_blk_num = BigInt(claimableTrades[claimableTrades.length - 1].blockNumber)
       
       await updateUserTradeVolumeFee(utvf)

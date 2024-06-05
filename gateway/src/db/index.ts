@@ -262,7 +262,8 @@ async function getDailyTrack(year_month_day: bigint): Promise<any> {
 async function insertTrade(
   order_fee_flow_tx_receipt_id: string,
   execution_tx_receipt_id: string,
-  execution_tx_block_number: number
+  execution_tx_block_number: number,
+  volume: string,
 ): Promise<any> {
   return prisma.trade.create({
     data: {

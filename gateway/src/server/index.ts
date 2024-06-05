@@ -27,7 +27,7 @@ import {
 import { validTimeNumber, UserTradeVolumeFee, findNextDay, findDayStartTimestamp, findDayEndTimestamp } from "./type.ts";
 import { BigNumber } from "ethers";
 import moment from "moment";
-import { getAllTradesWithin30Day } from "../graphql/index.ts";
+import { getAccountTradesMap, getAllTradesWithin30Day } from "../graphql/index.ts";
 import { error } from "console";
 
 const app = express();
@@ -56,6 +56,21 @@ monitorBrevisRequest();
 submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 1000);
 
-getAllTradesWithin30Day(1714799749, 1715459199).then().catch(error => {
+
+getAllTradesWithin30Day(1712016000, 1714607999).then(result => {
+  const tsStart = 1714521600
+  const tsEnd = 1714607999
+  const accountTradesMap = getAccountTradesMap(result.trades)
+    for (let [account, trades] of accountTradesMap) {      
+      if (trades.length === 0) {
+        continue
+      }
+
+      const claimableTrades = trades.filter(trade => {
+        return trade.timestamp >= tsStart && trade.timestamp <= tsEnd
+      })
+      console.log(`account ${account} claimable trades: ${claimableTrades.length} and unclaimable trades ${trades.length-claimableTrades.length}`)
+  }
+}).catch(error => {
   console.error("get all trades within 30day error", error)
 })

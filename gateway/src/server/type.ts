@@ -35,7 +35,7 @@ type Receipt = {
   should_be_filtered_out: boolean;
   reason: string;
   account: string;
-  transaction_type: number,
+  transaction_type: bigint,
 };
 
 type Storage = {
@@ -49,6 +49,13 @@ type Storage = {
   create_time: Date;
   update_time: Date;
 }; 
+
+type Trade = {
+  order_fee_flow_tx_receipt_id: string;
+  execution_tx_receipt_id: string;
+  execution_tx_block_number: bigint;
+  volume: string;
+};
 
 function validTimeNumber(input: Number): boolean {
   return moment.utc(input.toString(), "YYYYMMDD", true).isValid()
@@ -99,4 +106,4 @@ function findDayEndTimestamp(input: number): number {
   return date.utc().add(1, "d").unix() - 1
 }
 
-export { UserTradeVolumeFee, Receipt, Storage, validTimeNumber, getCurrentDay, findNextDay, findDayStartTimestamp, findDayEndTimestamp};
+export { UserTradeVolumeFee, Receipt, Storage, Trade, validTimeNumber, getCurrentDay, findNextDay, findDayStartTimestamp, findDayEndTimestamp};
