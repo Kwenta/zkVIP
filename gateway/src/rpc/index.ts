@@ -18,7 +18,6 @@ type ReceiptInfo = {
 }
 
 async function querySingleReceipt(receipt: any) {
-    console.log("query receipt: ", receipt.tx_hash)
     return sourceChainProvider
       .getTransactionReceipt(receipt.tx_hash)
       .catch((error) => {
@@ -97,6 +96,10 @@ function getJSONForOrderFeeFlowTx(
     let logAddress = log.address.toLowerCase()
     let topic0 = log.topics[0].toLowerCase();
     
+    if (topic0.toLowerCase() === DelayedOrderSubmittedEvent) {
+      console.log(`delayed order event tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
+    }
+
     // OrderFlowFee Events
     if (
       logAddress === OrderFlowFeeImposedEventContractAddress &&
@@ -168,7 +171,7 @@ function getJSONForExecutionFlowTx(
     let topic0 = log.topics[0].toLowerCase();
     
     if (topic0.toLowerCase() === PositionModifiedEvent) {
-      console.log(`tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
+      console.log(`position modified event tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
     }
 
     // PositionModified Event
