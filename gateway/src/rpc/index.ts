@@ -93,7 +93,8 @@ function getJSONForOrderFeeFlowTx(
     let topic0 = log.topics[0].toLowerCase();
     
     if (topic0.toLowerCase() === DelayedOrderSubmittedEvent) {
-      console.log(`delayed order event tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
+      // console.log(`delayed order event tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
+      console.log(`Delayed order contract address: ${logAddress}`)
     }
 
     // OrderFlowFee Events
@@ -166,7 +167,8 @@ function getJSONForExecutionFlowTx(
     let topic0 = log.topics[0].toLowerCase();
     
     if (topic0.toLowerCase() === PositionModifiedEvent) {
-      console.log(`position modified event tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
+      // console.log(`position modified event tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
+      console.log(`PositionModified contract address: ${logAddress}`)
     }
 
     // PositionModified Event
