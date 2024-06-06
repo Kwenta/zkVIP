@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from "ethers";
-import { DelayedOrderSubmittedEvent, OrderFlowFeeImposedEvent, OrderFlowFeeImposedEventContractAddress, PositionModifiedEvent, STATUS_READY, SynthetixPerpsV2ProxyContractAddress } from "../constants/index.ts";
+import { DelayedOrderSubmittedEvent, OrderFlowFeeImposedEvent, OrderFlowFeeImposedEventContractAddress, PositionModifiedEvent, STATUS_READY, SynthetixPerpsV2ProxyContractAddress, TX_TYPE_EXECUTION, TX_TYPE_ORDER_FEE_FLOW } from "../constants/index.ts";
 import { updateReceipt, updateStorage } from "../db/index.ts";
 import { sourceChainProvider } from "../ether_interactions/index.ts";
 
@@ -18,6 +18,7 @@ type ReceiptInfo = {
 }
 
 async function querySingleReceipt(receipt: any) {
+    console.log("query receipt: ", receipt.tx_hash)
     return sourceChainProvider
       .getTransactionReceipt(receipt.tx_hash)
       .catch((error) => {
@@ -28,7 +29,7 @@ async function querySingleReceipt(receipt: any) {
           console.debug("tx receipt not found", receipt.id, receipt.tx_hash);
           return;
         }
-        if (receipt.transaction_type == 1) {
+        if (Number(receipt.transaction_type) === TX_TYPE_ORDER_FEE_FLOW) {
           const result = getJSONForOrderFeeFlowTx(receipt.account, transactionReceipt)
           if (result.logsFound) {
             updateReceipt(
@@ -36,8 +37,10 @@ async function querySingleReceipt(receipt: any) {
               STATUS_READY,
               result.data,
             );
+          } else {
+            console.error("Failed to find order fee flow logs")
           }
-        } else if (receipt.transaction_type == 2) {
+        } else if (Number(receipt.transaction_type) === TX_TYPE_EXECUTION) {
           const result = getJSONForExecutionFlowTx(receipt.account, transactionReceipt)
           if (result.logsFound) {
             updateReceipt(
@@ -45,6 +48,8 @@ async function querySingleReceipt(receipt: any) {
               STATUS_READY,
               result.data,
             );
+          } else {
+            console.error("Failed to find execution logs")
           }
         } else {
           console.error("unexpected transaction type")
@@ -142,6 +147,8 @@ function getJSONForOrderFeeFlowTx(
     }
   });
   data = JSON.stringify(original)
+
+  console.log("original.fields.length", original.fields.length)
   return {data: data, logsFound: original.fields.length == 4}
 }
 
