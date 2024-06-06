@@ -284,7 +284,6 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
   utvf.status = PROOF_STATUS_PROVING_SENT
   await updateUserTradeVolumeFee(utvf)
   try {
-    console.log("Start to Build Proof Request: ", utvf.id, (new Date()).toLocaleString())
     const r = await buildUserTradeVolumeFeeProofReq(utvf);
     console.log("User Circuit Proof Request Sent: ", utvf.id, (new Date()).toLocaleString())
     if (r.proverIndex < 0) {
@@ -349,7 +348,6 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
       updateUserTradeVolumeFee(utvf)
     }
   } catch (error) {
-    console.log("Prove failed back to PROOF_STATUS_INPUT_READY: ", utvf.id, (new Date()).toLocaleString())
     utvf.status = PROOF_STATUS_INPUT_READY
     await updateUserTradeVolumeFee(utvf)
   }

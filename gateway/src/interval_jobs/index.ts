@@ -11,6 +11,7 @@ import {
   findNotReadyStorages, 
   findTxToBeSent, 
   findUserExistingUTVF, 
+  findUserExistingUTVFByDate, 
   findUserTradeVolumeFees,
   getDailyTrack,
   getUserTradeVolumeFee,
@@ -57,30 +58,29 @@ export async function prepareNewDayTradeClaims() {
       const claimableTrades = trades.filter(trade => {
         return trade.timestamp >= tsStart && trade.timestamp <= tsEnd
       })
-      console.log(`account ${account} claimable trades: ${claimableTrades.length} and unclaimable trades ${trades.length-claimableTrades.length}`)
 
        // No available fee rebate trade
       if (claimableTrades.length === 0) {
         continue
       }
       
-      var utvf = await findUserExistingUTVF(account, BigInt(yesterday), BigInt(yesterday));
+      var utvf = await findUserExistingUTVFByDate(account, BigInt(yesterday), BigInt(yesterday));
       if (utvf != undefined && utvf != null && utvf) {
         return;
+      } else {
+        const src_chain_id = BigInt(process.env.SRC_CHAIN_ID ?? 10);
+        const dst_chain_id = BigInt(process.env.DST_CHAIN_ID ?? 10);
+  
+        utvf = await insertUserTradeVolumeFee(
+          src_chain_id,
+          dst_chain_id,
+          account,
+          trades[0].account,
+          BigInt(yesterday),
+          BigInt(yesterday),
+        );
       }
-
-      const src_chain_id = BigInt(process.env.SRC_CHAIN_ID ?? 10);
-      const dst_chain_id = BigInt(process.env.DST_CHAIN_ID ?? 10);
-
-      var utvf = await insertUserTradeVolumeFee(
-        src_chain_id,
-        dst_chain_id,
-        account,
-        trades[0].account,
-        BigInt(yesterday),
-        BigInt(yesterday),
-      );
-
+     
       const trade_ids = await saveTrades(trades, account)
     
       utvf.status = PROOF_STATUS_INPUT_READY

@@ -202,6 +202,24 @@ async function findUserExistingUTVF(
   });
 }
 
+async function findUserExistingUTVFByDate(
+  account: string,
+  start_ymd: bigint,
+  end_ymd: bigint
+): Promise<any> {
+  return prisma.user_trade_volume_fee.findFirst({
+    where: {
+      account: account?.toLocaleLowerCase(),
+      start_ymd: {
+        equals: start_ymd,
+      },
+      end_ymd: {
+        equals: end_ymd,
+      }
+    },
+  });
+}
+
 async function findUserTradeVolumeFees(status: bigint): Promise<any> {
   return prisma.user_trade_volume_fee.findMany({
     take: 10,
@@ -270,6 +288,7 @@ async function insertTrade(
       order_fee_flow_tx_receipt_id: order_fee_flow_tx_receipt_id,
       execution_tx_receipt_id: execution_tx_receipt_id,
       execution_tx_block_number: BigInt(execution_tx_block_number),
+      volume: volume,
     }
   })
 }
@@ -284,6 +303,20 @@ async function getTrade(
   })
 }
 
+async function updateTrade(
+  execution_tx_receipt_id: string,
+  volume: string,
+): Promise<any> {
+  return prisma.trade.updateMany({
+    where: {
+      execution_tx_receipt_id: execution_tx_receipt_id?.toLocaleLowerCase(),
+    },
+    data: {
+      volume: volume,
+    },
+  })
+}
+
 export {
   insertReceipt,
   updateReceipt,
@@ -294,6 +327,7 @@ export {
   updateUserTradeVolumeFee,
   getUserTradeVolumeFee,
   findUserExistingUTVF,
+  findUserExistingUTVFByDate,
   findUserTradeVolumeFees,
   updateBrevisRequestStatus,
   insertStorage,
@@ -304,5 +338,6 @@ export {
   getDailyTrack,
   findTxToBeSent,
   insertTrade,
-  getTrade
+  getTrade,
+  updateTrade
 };

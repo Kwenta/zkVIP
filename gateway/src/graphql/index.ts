@@ -1,6 +1,6 @@
 import { error } from "console";
 import { GraphRpc, Trade } from "./common.ts";
-import { getReceiptByHash, getTrade, insertReceipt, insertTrade } from "../db/index.ts";
+import { getReceiptByHash, getTrade, insertReceipt, insertTrade, updateTrade } from "../db/index.ts";
 import { TX_TYPE_EXECUTION, TX_TYPE_ORDER_FEE_FLOW } from "../constants/index.ts";
 import { BigNumber } from "ethers";
 
@@ -76,7 +76,7 @@ export const saveTrades = async (
     }
 
     const volume = BigNumber.from(trade.size).abs().mul(BigNumber.from(trade.price)).div(BigNumber.from('1000000000000000000'))
-
+    
     promises.push(insertOrFindTrade(
       executionTxId,
       orderFlowTxId,
@@ -104,6 +104,10 @@ const insertOrFindTrade = async(
   }
   if (trade === undefined || trade === null) {
     throw new Error(`failed to insert trade for order_fee_flow_tx_receipt_id: ${order_fee_flow_tx_receipt_id}, execution_tx_receipt_id: ${execution_tx_receipt_id}, execution_tx_block_number: ${execution_tx_block_number}`)
+  }
+
+  if (trade.volume.length === 0) {
+    await updateTrade(execution_tx_receipt_id, volume)
   }
   return trade.execution_tx_receipt_id
 }
