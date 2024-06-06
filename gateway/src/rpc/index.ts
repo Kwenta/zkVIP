@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from "ethers";
-import { DelayedOrderSubmittedEvent, OrderFlowFeeImposedEvent, OrderFlowFeeImposedEventContractAddress, PositionModifiedEvent, STATUS_READY, SynthetixPerpsV2ProxyContractAddress, TX_TYPE_EXECUTION, TX_TYPE_ORDER_FEE_FLOW } from "../constants/index.ts";
+import { DelayedOrderSubmittedEvent, OrderFlowFeeImposedEvent, OrderFlowFeeImposedEventContractAddress, PositionModifiedEvent, STATUS_READY, SynthetixPerpsV2ProxyContractAddress, SynthetixPerpsV2ProxyFTMPERPContractAddress, TX_TYPE_EXECUTION, TX_TYPE_ORDER_FEE_FLOW } from "../constants/index.ts";
 import { updateReceipt, updateStorage } from "../db/index.ts";
 import { sourceChainProvider } from "../ether_interactions/index.ts";
 
@@ -169,9 +169,8 @@ function getJSONForExecutionFlowTx(
     
     // PositionModified Event
     if (
-      logAddress === SynthetixPerpsV2ProxyContractAddress &&
-      topic0.toLowerCase() === PositionModifiedEvent &&
-      BigNumber.from(log.topics[2]).eq(BigNumber.from(account))
+      (logAddress === SynthetixPerpsV2ProxyContractAddress || logAddress === SynthetixPerpsV2ProxyFTMPERPContractAddress)
+      && topic0.toLowerCase() === PositionModifiedEvent && BigNumber.from(log.topics[2]).eq(BigNumber.from(account))
     ) {
       logsFound = true;
       data = JSON.stringify({

@@ -28,6 +28,7 @@ const OrderFlowFeeImposedEvent                = "0x213209073252965f156ceca72c657
 const OrderFlowFeeImposedEventContractAddress = "0x6B32d15a6Cb77ea227A6Fb19532b2de542c45AC6".toLowerCase()
 const DelayedOrderSubmittedEvent              = "0x9deb3648ccf8efc44205985ac6ead4ffb30791fea9ce7f9437ae398b31cf9d5a".toLowerCase()
 const	SynthetixPerpsV2ProxyContractAddress    = "0x2B3bb4c683BFc5239B029131EEf3B1d214478d93".toLowerCase()
+const SynthetixPerpsV2ProxyFTMPERPContractAddress = "0x2c5e2148bf3409659967fe3684fd999a76171235".toLowerCase()
 const PositionModifiedEvent                   = "0xc0d933baa356386a245ade48f9a9c59db4612af2b5b9c17de5b451c628760f43".toLowerCase()
 
 function hexStringToUint8Array(hexString: string){
@@ -77,6 +78,7 @@ export {
     OrderFlowFeeImposedEventContractAddress,
     DelayedOrderSubmittedEvent,
     SynthetixPerpsV2ProxyContractAddress,
+    SynthetixPerpsV2ProxyFTMPERPContractAddress,
     PositionModifiedEvent,
     hexStringToUint8Array
 }
