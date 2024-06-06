@@ -106,6 +106,7 @@ const insertOrFindTrade = async(
     throw new Error(`failed to insert trade for order_fee_flow_tx_receipt_id: ${order_fee_flow_tx_receipt_id}, execution_tx_receipt_id: ${execution_tx_receipt_id}, execution_tx_block_number: ${execution_tx_block_number}`)
   }
 
+  console.log("trade volume", trade.volume)
   if (trade.volume.length === 0) {
     await updateTrade(execution_tx_receipt_id, volume)
   }
