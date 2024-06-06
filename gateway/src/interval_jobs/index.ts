@@ -66,7 +66,7 @@ export async function prepareNewDayTradeClaims() {
       
       var utvf = await findUserExistingUTVFByDate(account, BigInt(yesterday), BigInt(yesterday));
       if (utvf != undefined && utvf != null && utvf) {
-        return;
+        // return;
       } else {
         const src_chain_id = BigInt(process.env.SRC_CHAIN_ID ?? 10);
         const dst_chain_id = BigInt(process.env.DST_CHAIN_ID ?? 10);
