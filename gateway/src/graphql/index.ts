@@ -59,32 +59,30 @@ export const saveTrades = async (
   for (let i =0; i < trades.length; i++) {
     const trade = trades[i]
     
-    const tradePromises = Array<Promise<any>>();
+    var executionTxId = ""
+    var orderFlowTxId = ""
 
     if (trade.executionTxhash.length > 0) {
-      tradePromises.push(insertOrFindReceipt(trade.executionTxhash, account, TX_TYPE_EXECUTION))
+      executionTxId = await insertOrFindReceipt(trade.executionTxhash, account, TX_TYPE_EXECUTION)
     } else {
       console.log(`invalid trade with empty executionTxhash ${trade}`)
       continue
     }
 
     if (trade.orderFeeFlowTxhash.length > 0) {
-      tradePromises.push(insertOrFindReceipt(trade.orderFeeFlowTxhash, account, TX_TYPE_ORDER_FEE_FLOW))
+      orderFlowTxId = await insertOrFindReceipt(trade.orderFeeFlowTxhash, account, TX_TYPE_ORDER_FEE_FLOW)
     } else {
-      tradePromises.push(Promise.resolve(""))
+      orderFlowTxId = ''
     }
-
-    tradePromises.push(Promise.resolve(trade.blockNumber))
 
     const volume = BigNumber.from(trade.size).abs().mul(BigNumber.from(trade.price)).div(BigNumber.from('1000000000000000000'))
 
-    tradePromises.push(Promise.resolve(volume.toString()))
-
-    const tradeId = Promise.all(tradePromises).then(values => {
-      return insertOrFindTrade(values)
-    })
-
-    promises.push(tradeId)
+    promises.push(insertOrFindTrade(
+      executionTxId,
+      orderFlowTxId,
+      trade.blockNumber,
+      volume.toString(),
+    ))
   }
 
   const results = await Promise.all(promises);
@@ -94,32 +92,11 @@ export const saveTrades = async (
 }
 
 const insertOrFindTrade = async(
-  values: any[]
+  execution_tx_receipt_id: string,
+  order_fee_flow_tx_receipt_id: string,
+  execution_tx_block_number: number,
+  volume: string,
 ) => {
-  if (values.length != 4) {
-    return ""
-  }
-
-  var execution_tx_receipt_id = ""
-  if (typeof values[0] === 'string' || values[0] instanceof String) {
-    execution_tx_receipt_id = values[0].toString()
-  }
-
-  var order_fee_flow_tx_receipt_id = ""
-  if (typeof values[1] === 'string' || values[1] instanceof String) {
-    order_fee_flow_tx_receipt_id = values[1].toString()
-  }
-
-  var execution_tx_block_number = 0
-  if (typeof values[2] === 'number' || values[2] instanceof Number) {
-    execution_tx_block_number = Number(execution_tx_block_number)
-  }
-
-  var volume = ""
-  if (typeof values[3] === 'string' || values[3] instanceof String) {
-    volume = values[3].toString()
-  }
-
   var trade = await getTrade(execution_tx_receipt_id)
 
   if (trade === undefined || trade === null) {
