@@ -51,15 +51,15 @@ monitorFeeAccumulated();
 monitorBrevisRequest();
 
 prepareNewDayTradeClaims();
-// setInterval(prepareUserTradeVolumeFees, 60000);
+setInterval(prepareNewDayTradeClaims, 60000);
 
 submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 1000);
 
 
 var deleteDay = 0
-a()
-setInterval(a, 30000)
+// a()
+// setInterval(a, 30000)
 
 async function a() {
   deleteDay += 1
