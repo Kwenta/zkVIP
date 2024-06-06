@@ -42,8 +42,6 @@ app.use((req, res, next) => {
 });
 getReceiptInfos().then();
 setInterval(getReceiptInfos, 1000);
-getStorageInfos().then();
-setInterval(getStorageInfos, 10000);
 prepareUserTradeVolumeFees().then();
 setInterval(prepareUserTradeVolumeFees, 2000);
 

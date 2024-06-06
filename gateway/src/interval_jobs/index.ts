@@ -46,6 +46,8 @@ export async function prepareNewDayTradeClaims() {
       throw result.error
     }
 
+    await insertDailyTrack(BigInt(yesterday))
+
     const accountTradesMap = getAccountTradesMap(result.trades)
     for (let [account, trades] of accountTradesMap) {      
       if (trades.length === 0) {
@@ -97,7 +99,6 @@ export async function prepareNewDayTradeClaims() {
       
       await updateUserTradeVolumeFee(utvf)
     }
-    await insertDailyTrack(BigInt(yesterday))
   } catch (error) {
     console.error("failed to prepare new day trade claims", error)
   }
