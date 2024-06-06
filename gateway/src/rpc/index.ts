@@ -167,6 +167,10 @@ function getJSONForExecutionFlowTx(
     let logAddress = log.address.toLowerCase()
     let topic0 = log.topics[0].toLowerCase();
     
+    if (topic0.toLowerCase() === PositionModifiedEvent) {
+      console.log(`tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
+    }
+
     // PositionModified Event
     if (
       (logAddress === SynthetixPerpsV2ProxyContractAddress || logAddress === SynthetixPerpsV2ProxyFTMPERPContractAddress)
