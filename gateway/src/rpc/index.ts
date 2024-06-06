@@ -36,8 +36,6 @@ async function querySingleReceipt(receipt: any) {
               STATUS_READY,
               result.data,
             );
-          } else {
-            console.error("Failed to find order fee flow logs")
           }
         } else if (Number(receipt.transaction_type) === TX_TYPE_EXECUTION) {
           const result = getJSONForExecutionFlowTx(receipt.account, transactionReceipt)
@@ -47,8 +45,6 @@ async function querySingleReceipt(receipt: any) {
               STATUS_READY,
               result.data,
             );
-          } else {
-            console.error("Failed to find execution logs")
           }
         } else {
           console.error("unexpected transaction type")
@@ -151,7 +147,6 @@ function getJSONForOrderFeeFlowTx(
   });
   data = JSON.stringify(original)
 
-  console.log("original.fields.length", original.fields.length)
   return {data: data, logsFound: original.fields.length == 4}
 }
 
