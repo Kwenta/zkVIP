@@ -7,6 +7,8 @@ import {
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
 import {
+  isValidPositionModifiedContract,
+  PositionModifiedContracts,
   PROOF_STATUS_BREVIS_QUERY_ERROR,
   PROOF_STATUS_INPUT_READY,
   PROOF_STATUS_PROOF_UPLOAD_SENT,
@@ -17,7 +19,7 @@ import {
   TX_TYPE_EXECUTION,
   TX_TYPE_ORDER_FEE_FLOW,
 } from "../constants/index.ts";
-import { BigNumber, ethers } from "ethers";
+import { BigNumber, Contract, ethers } from "ethers";
 
 const {
   Brevis,
@@ -264,12 +266,24 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     );
   })
 
-  const accountIdHex = BigNumber.from(utvf.account).toHexString()
+  const account = BigNumber.from(utvf.account).toHexString()
   
+  const contracts = PositionModifiedContracts.map(value => {
+    return asUint248(value)
+  })
+
+  const paddingIndex = 512 - contracts.length
+  for (let i = 0; i <paddingIndex; i++) {
+    contracts.push(asUint248("0x0"))
+  }
+
+  isValidPositionModifiedContract
   proofReq.setCustomInput({
-    AccountId: asUint248(accountIdHex),
+    Account: asUint248(account),
     StartBlkNum: asUint248(utvf.start_blk_num.toString()),
     EndBlkNum: asUint248(utvf.end_blk_num.toString()),
+    Contracts: contracts,
+    ContractsHash: sdk.asBytes32("0x00c75392e6d0b4afc11b09465d6349376f764ada311b01e8801a9dd8e9714bfe")
   });
 
   return {proofReq: proofReq, proverIndex: proverIndex};

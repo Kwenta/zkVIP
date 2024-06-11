@@ -154,6 +154,7 @@ export {
     OrderFlowFeeImposedEventContractAddress,
     DelayedOrderSubmittedEvent,
     PositionModifiedEvent,
+    PositionModifiedContracts,
     hexStringToUint8Array,
     isValidPositionModifiedContract
 }
