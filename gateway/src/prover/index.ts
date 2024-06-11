@@ -201,11 +201,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     }
     console.log(`Add unclaimable receipt blk: ${data.block_num}`)
 
-    // uint248.IsEqual(r.Fields[0].EventID, PositionModifiedEventID),
-		// 	c.checkContractInclusion(api, r.Fields[0].Contract),
-		// 	uint248.IsEqual(r.Fields[0].IsTopic, sdk.ConstUint248(1)),
-		// 	uint248.IsEqual(r.Fields[0].Index, sdk.ConstUint248(2)),
-		// 	api.Bytes32.IsEqual(r.Fields[0].Value, api.ToBytes32(c.Account)), // account check
 		// 	uint248.IsEqual(r.Fields[1].EventID, PositionModifiedEventID),
 		// 	uint248.IsEqual(r.Fields[1].Contract, r.Fields[0].Contract),
 		// 	uint248.IsZero(r.Fields[1].IsTopic),
@@ -233,6 +228,14 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     }
     if (!isValidPositionModifiedContract(data.fields[0].contract)) {
       console.log("invalid f0 contract")
+    }
+
+    if (data.fields[0].value !== utvf.account)  {
+      console.log("invalid f0 value")
+    }
+
+    if (data.fields[0].index !== 2)  {
+      console.log("invalid f0 index")
     }
     if (Number(data.block_num) < startBlkNum -  43200 * 30) {
       console.log("invalid data block num gte")
