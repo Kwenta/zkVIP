@@ -197,6 +197,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     if (isNaN(blkNumber)) {
       console.error("invalid receipt block number", data)
     }
+    console.log(`Add unclaimable receipt blk: ${data.block_num}`)
     proofReq.addReceipt(
       new ReceiptData({
         block_num: Number(data.block_num),
@@ -219,21 +220,23 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     if (orderFeeFlowTxReceipt === undefined) {
       return;
     }
-    const data = JSON.parse(orderFeeFlowTxReceipt.data);
-    const blkNumber= Number(data.block_num)
+    const orderFeeFlowData = JSON.parse(orderFeeFlowTxReceipt.data);
+    const blkNumber= Number(orderFeeFlowData.block_num)
     if (isNaN(blkNumber)) {
-      console.error("invalid receipt block number", data)
+      console.error("invalid receipt block number", orderFeeFlowData)
     }
+
+    console.log(`Add claimable receipt 0 blk: ${orderFeeFlowData.block_num}`)
 
     proofReq.addReceipt(
       new ReceiptData({
-        block_num: Number(data.block_num),
+        block_num: Number(orderFeeFlowData.block_num),
         tx_hash: orderFeeFlowTxReceipt.tx_hash,
         fields: [
-          new sdk.Field(data.fields[0]),
-          new sdk.Field(data.fields[1]),
-          new sdk.Field(data.fields[2]),
-          new sdk.Field(data.fields[3]), 
+          new sdk.Field(orderFeeFlowData.fields[0]),
+          new sdk.Field(orderFeeFlowData.fields[1]),
+          new sdk.Field(orderFeeFlowData.fields[2]),
+          new sdk.Field(orderFeeFlowData.fields[3]), 
         ],
       }),
       initialClaimableReceiptIndex++
@@ -251,15 +254,17 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       console.error(`invalid receipt id ${executionTxReceipt.id} block number ${executionTxReceipt.data}`)
     }
 
+    console.log(`Add claimable receipt 1 blk: ${executionTxReceiptData.block_num}`)
+
     proofReq.addReceipt(
       new ReceiptData({
-        block_num: Number(data.block_num),
-        tx_hash: orderFeeFlowTxReceipt.tx_hash,
+        block_num: Number(executionTxReceiptData.block_num),
+        tx_hash: executionTxReceipt.tx_hash,
         fields: [
-          new sdk.Field(data.fields[0]),
-          new sdk.Field(data.fields[1]),
-          new sdk.Field(data.fields[2]),
-          new sdk.Field(data.fields[3]), 
+          new sdk.Field(executionTxReceiptData.fields[0]),
+          new sdk.Field(executionTxReceiptData.fields[1]),
+          new sdk.Field(executionTxReceiptData.fields[2]),
+          new sdk.Field(executionTxReceiptData.fields[3]), 
         ],
       }),
       initialClaimableReceiptIndex++
@@ -362,6 +367,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
       updateUserTradeVolumeFee(utvf)
     }
   } catch (error) {
+    console.log("error ", error)
     utvf.status = PROOF_STATUS_INPUT_READY
     await updateUserTradeVolumeFee(utvf)
   }
