@@ -192,7 +192,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     console.error(`claimable trades out of range: ${claimableTrades.length}`)
   }
 
-  const a: DebugReceipt[] = []
+  const debugReceipts: DebugReceipt[] = []
   var unClaimableReceiptIndex = 0
   unclaimableTrades.forEach(trade => {
     const receipt = validReceipts.find(value => {
@@ -222,10 +222,10 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       unClaimableReceiptIndex++
     );
 
-    a.push({
+    debugReceipts.push({
       data: data,
       tx_hash: receipt.tx_hash,
-      index: unClaimableReceiptIndex
+      index: unClaimableReceiptIndex - 1
     })
   })
 
@@ -257,10 +257,10 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       }),
       claimableReceiptIndex++
     );
-    a.push({
+    debugReceipts.push({
       data: orderFeeFlowData,
       tx_hash: orderFeeFlowTxReceipt.tx_hash,
-      index: claimableReceiptIndex
+      index: claimableReceiptIndex - 1
     })
 
     const executionTxReceipt = validReceipts.find(value => {
@@ -291,10 +291,10 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       claimableReceiptIndex++
     );
 
-    a.push({
+    debugReceipts.push({
       data: executionTxReceiptData,
       tx_hash: executionTxReceipt.tx_hash,
-      index: claimableReceiptIndex
+      index: claimableReceiptIndex -  1
     })
 
   })
@@ -319,15 +319,15 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     ContractsHash: sdk.asBytes32("0x00c75392e6d0b4afc11b09465d6349376f764ada311b01e8801a9dd8e9714bfe")
   });
 
-  const b = JSON.stringify({
-    receipts: a,
+  const debugRequest = JSON.stringify({
+    receipts: debugReceipts,
     contracts: PositionModifiedContracts,
     start: utvf.start_blk_num.toString(),
     account: account,
     end: utvf.end_blk_num.toString()
   })
 
-  console.log(`${b}`, )
+  console.debug(`${debugRequest}`)
 
   return {proofReq: proofReq, proverIndex: proverIndex};
 };

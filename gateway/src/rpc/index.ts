@@ -172,7 +172,8 @@ function getJSONForExecutionTx(
     // PositionModified Event
     if (
       isValidPositionModifiedContract(logAddress)
-      && topic0.toLowerCase() === PositionModifiedEvent && BigNumber.from(log.topics[2]).eq(BigNumber.from(account))
+      && topic0.toLowerCase() === PositionModifiedEvent && 
+      BigNumber.from(log.topics[2]).eq(BigNumber.from(account))
     ) {
       logsFound = true;
       data = JSON.stringify({
