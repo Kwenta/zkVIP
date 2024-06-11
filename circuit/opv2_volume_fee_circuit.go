@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/brevis-network/brevis-sdk/sdk"
-	"github.com/celer-network/goutils/log"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
@@ -68,25 +67,6 @@ func (c *OPV2VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) err
 
 	// For those unclaimable trades, circuit cares about account, trade size and last price
 	sdk.AssertEach(unclaimableTrades, func(r sdk.Receipt) sdk.Uint248 {
-		log.Info("r.BlockNum ",
-			r.BlockNum,
-			uint248.IsEqual(r.Fields[0].EventID, PositionModifiedEventID),
-			c.checkContractInclusion(api, r.Fields[0].Contract),
-			uint248.IsEqual(r.Fields[0].IsTopic, sdk.ConstUint248(1)),
-			uint248.IsEqual(r.Fields[0].Index, sdk.ConstUint248(2)),
-			api.Bytes32.IsEqual(r.Fields[0].Value, api.ToBytes32(c.Account)), // account check
-			uint248.IsEqual(r.Fields[1].EventID, PositionModifiedEventID),
-			uint248.IsEqual(r.Fields[1].Contract, r.Fields[0].Contract),
-			uint248.IsZero(r.Fields[1].IsTopic),
-			uint248.IsEqual(r.Fields[1].Index, sdk.ConstUint248(2)), // amount index
-			uint248.IsEqual(r.Fields[2].EventID, PositionModifiedEventID),
-			uint248.IsEqual(r.Fields[2].Contract, r.Fields[0].Contract),
-			uint248.IsZero(r.Fields[2].IsTopic),
-			uint248.IsEqual(r.Fields[2].Index, sdk.ConstUint248(3)),
-			uint248.IsZero(uint248.IsLessThan(r.BlockNum, startBlk30DAgo)), // r.BlockNum >= startBlkOneMonthAgo
-			uint248.IsLessThan(r.BlockNum, c.StartBlkNum),
-		)
-
 		assertionPassed := uint248.And(
 			uint248.IsEqual(r.Fields[0].EventID, PositionModifiedEventID),
 			c.checkContractInclusion(api, r.Fields[0].Contract),
