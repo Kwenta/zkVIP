@@ -40,7 +40,7 @@ const provers = [
 ]
 
 type DebugReceipt = {
-  data: string;
+  data: any;
   tx_hash: string;
   index: number;
 }
@@ -223,7 +223,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     );
 
     a.push({
-      data: receipt.data,
+      data: data,
       tx_hash: receipt.tx_hash,
       index: unClaimableReceiptIndex
     })
@@ -258,7 +258,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       claimableReceiptIndex++
     );
     a.push({
-      data: orderFeeFlowTxReceipt.data,
+      data: orderFeeFlowData,
       tx_hash: orderFeeFlowTxReceipt.tx_hash,
       index: claimableReceiptIndex
     })
@@ -292,7 +292,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     );
 
     a.push({
-      data: executionTxReceipt.data,
+      data: executionTxReceiptData,
       tx_hash: executionTxReceipt.tx_hash,
       index: claimableReceiptIndex
     })
