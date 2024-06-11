@@ -1,8 +1,11 @@
 package circuit
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/big"
+	"os"
 	"testing"
 
 	"github.com/brevis-network/brevis-sdk/sdk"
@@ -179,4 +182,40 @@ func TestOPV2VolumeFeeCircuit(t *testing.T) {
 	test.ProverSucceeded(t, DefaultOPV2VolumeFeeCircuit(), appCircuitAssignment, circuitInput)
 
 	assert.Equal(t, fmt.Sprintf("0x%x", out), "0x5ad2e3c62a7774a58c4b3b5dd17c78446c86c8d200000000000000000000000000000000000000000000001378c38494960019000000000000000000000000000000000000000000000bb86ded4243327d2900000000073136fa00000000073136fa10dfb8b21ed74d6e66cb67031efc7a2df88a7214b32138f9e030253b2f4b3abc")
+}
+
+type DebugInfo struct {
+	Receipts  []DebugReceipt `json:"receipts"`
+	Contracts []string       `json:"contracts"`
+	Start     string         `json:"start"`
+	Account   string         `json:"account"`
+	End       string         `json:"end"`
+}
+
+type DebugReceipt struct {
+	Data   string `json:"data"`
+	TxHash string `json:"tx_hash"`
+	Index  int    `json:"index"`
+}
+
+func TestQ(t *testing.T) {
+	jsonFile, err := os.Open("data.json")
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	data, err := io.ReadAll(jsonFile)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Infof("%s ", string(data))
+
+	d := DebugInfo{}
+	err = json.Unmarshal(data, &data)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	log.Infof("d %+v", d)
 }
