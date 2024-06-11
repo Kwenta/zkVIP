@@ -77,6 +77,15 @@ const PositionModifiedContracts = [
   "0xb7059ed9950f2d9fdc0155fc0d79e63d4441e806",
   "0x4308427c463caeaab50fff98a9dec569c31e4e87",
   "0xae90e9bb73b32505fb56a0f4fd4ec8cf94bab730",
+  "0x8b9b5f94aac2316f048025b3cbe442386e85984b",
+  "0x2fd9a39acf071aa61f92f3d7a98332c68d6b6602",
+  "0xfbbbfa96af2980ae4014d5d5a2ef14bd79b2a299",
+  "0x69f5f465a46f324fb7bf3fd7c0d5c00f7165c7ea",
+  "0x9615b6bfff240c44d3e33d0cd9a11f563a2e8d8b",
+  "0x27665271210acff4fab08ad9bb657e91866471f0",
+  "0xd91db82733987513286b81e7115091d96730b62a",
+  "0xf9ae92bc49a5dd96ae5840eaae75218016811c99",
+  "0xbb16c7b3244dfa1a6bf83fcce3ee4560837763cd",
 ]
 
 function hexStringToUint8Array(hexString: string){
