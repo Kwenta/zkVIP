@@ -94,6 +94,8 @@ export async function prepareNewDayTradeClaims() {
         startBlockNumber = claimPeriod[1].toNumber() + 1
       }
 
+      console.log(`startBlockNumber: ${startBlockNumber}, end_blk_num: ${claimableTrades[claimableTrades.length - 1].blockNumber}`)
+
       utvf.start_blk_num = BigInt(startBlockNumber)
       utvf.end_blk_num = BigInt(claimableTrades[claimableTrades.length - 1].blockNumber)
       
