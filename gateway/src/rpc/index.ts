@@ -36,6 +36,8 @@ async function querySingleReceipt(receipt: any) {
               STATUS_READY,
               result.data,
             );
+          } else {
+            console.log(`${transactionReceipt.transactionHash} not valid`)
           }
         } else if (Number(receipt.transaction_type) === TX_TYPE_EXECUTION) {
           const result = getJSONForExecutionFlowTx(receipt.account, transactionReceipt)
@@ -45,7 +47,9 @@ async function querySingleReceipt(receipt: any) {
               STATUS_READY,
               result.data,
             );
-          }
+          } else {
+            console.log(`${transactionReceipt.transactionHash} not valid`)
+          } 
         } else {
           console.error("unexpected transaction type")
         }
@@ -93,7 +97,6 @@ function getJSONForOrderFeeFlowTx(
     let topic0 = log.topics[0].toLowerCase();
     
     if (topic0.toLowerCase() === DelayedOrderSubmittedEvent && !isValidPositionModifiedContract(logAddress)) {
-      // console.log(`delayed order event tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
       console.log(`${logAddress}`)
     }
 
