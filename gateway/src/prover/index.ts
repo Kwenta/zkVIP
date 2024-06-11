@@ -136,9 +136,9 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   })
 
   var unclaimableTrades = validTrades.filter(trade => {
-    return ((trade?.execution_tx_block_number ?? 0 ) >= startBlkNum -  43200 * 30) && ((trade?.execution_tx_block_number ?? 0 < startBlkNum))
+    const bn = trade?.execution_tx_block_number ?? 0
+    return (Number(bn) >= startBlkNum -  43200 * 30) && (((Number(bn)) < startBlkNum))
   })
-
 
   if (unclaimableTrades.length > 4400) {
     // Sort unclaimableTrades by volume desc
@@ -155,7 +155,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 
     // Sort unclaimableTrades by block number asc to fit circuit input
     unclaimableTrades.sort((a,b) => {
-      if (a.execution_tx_block_number < b.execution_tx_block_number) {
+      if (Number(a.execution_tx_block_number) < Number(b.execution_tx_block_number)) {
         return -1
       } else {
         return 1
@@ -164,7 +164,8 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   }
 
   const claimableTrades = validTrades.filter(trade => {
-    return ((trade?.execution_tx_block_number ?? 0 ) >= startBlkNum) && ((trade?.execution_tx_block_number ?? 0 <= endBlkNum))
+    const bn = trade?.execution_tx_block_number ?? 0
+    return (Number(bn) >= startBlkNum) && ((Number(bn) <= endBlkNum))
   })
 
   var proverIndex = -1
