@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from "ethers";
-import { DelayedOrderSubmittedEvent, OrderFlowFeeImposedEvent, OrderFlowFeeImposedEventContractAddress, PositionModifiedEvent, STATUS_READY, SynthetixPerpsV2ProxyContractAddress, SynthetixPerpsV2ProxyFTMPERPContractAddress, TX_TYPE_EXECUTION, TX_TYPE_ORDER_FEE_FLOW } from "../constants/index.ts";
+import { DelayedOrderSubmittedEvent, isValidPositionModifiedContract, OrderFlowFeeImposedEvent, OrderFlowFeeImposedEventContractAddress, PositionModifiedEvent, STATUS_READY, TX_TYPE_EXECUTION, TX_TYPE_ORDER_FEE_FLOW } from "../constants/index.ts";
 import { updateReceipt, updateStorage } from "../db/index.ts";
 import { sourceChainProvider } from "../ether_interactions/index.ts";
 
@@ -122,13 +122,13 @@ function getJSONForOrderFeeFlowTx(
         value: "0x" + log.data.replace("0x", "").slice(0, 64),
       })
     } else  if (
-      logAddress === SynthetixPerpsV2ProxyContractAddress &&
+      isValidPositionModifiedContract(logAddress) &&
       topic0.toLowerCase() === DelayedOrderSubmittedEvent &&
       BigNumber.from(log.topics[1]).eq(BigNumber.from(account))
     ) {
       // DelayedOrderSubmittedEvent account
       original.fields.push({
-        contract: SynthetixPerpsV2ProxyContractAddress,
+        contract: logAddress,
         log_index: i,
         event_id: DelayedOrderSubmittedEvent,
         is_topic: true,
@@ -137,7 +137,7 @@ function getJSONForOrderFeeFlowTx(
       })
       // DelayedOrderSubmittedEvent keeperDeposit
       original.fields.push({
-        contract: SynthetixPerpsV2ProxyContractAddress,
+        contract: logAddress,
         log_index: i,
         event_id: DelayedOrderSubmittedEvent,
         is_topic: false,
@@ -168,12 +168,12 @@ function getJSONForExecutionFlowTx(
     
     if (topic0.toLowerCase() === PositionModifiedEvent) {
       // console.log(`position modified event tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
-      console.log(`PositionModified contract address: ${logAddress}`)
+      console.log(`${logAddress}`)
     }
 
     // PositionModified Event
     if (
-      (logAddress === SynthetixPerpsV2ProxyContractAddress || logAddress === SynthetixPerpsV2ProxyFTMPERPContractAddress)
+      isValidPositionModifiedContract(logAddress)
       && topic0.toLowerCase() === PositionModifiedEvent && BigNumber.from(log.topics[2]).eq(BigNumber.from(account))
     ) {
       logsFound = true;

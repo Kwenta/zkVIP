@@ -27,9 +27,12 @@ const TX_TYPE_EXECUTION = 2
 const OrderFlowFeeImposedEvent                = "0x213209073252965f156ceca72c65727bfcf77e3f25ca2a1f23a1b9db58295d48".toLowerCase()
 const OrderFlowFeeImposedEventContractAddress = "0x6B32d15a6Cb77ea227A6Fb19532b2de542c45AC6".toLowerCase()
 const DelayedOrderSubmittedEvent              = "0x9deb3648ccf8efc44205985ac6ead4ffb30791fea9ce7f9437ae398b31cf9d5a".toLowerCase()
-const	SynthetixPerpsV2ProxyContractAddress    = "0x2B3bb4c683BFc5239B029131EEf3B1d214478d93".toLowerCase()
-const SynthetixPerpsV2ProxyFTMPERPContractAddress = "0x2c5e2148bf3409659967fe3684fd999a76171235".toLowerCase()
 const PositionModifiedEvent                   = "0xc0d933baa356386a245ade48f9a9c59db4612af2b5b9c17de5b451c628760f43".toLowerCase()
+
+const PositionModifiedContracts = [
+  "0x2B3bb4c683BFc5239B029131EEf3B1d214478d93",
+  "0x2c5e2148bf3409659967fe3684fd999a76171235",
+]
 
 function hexStringToUint8Array(hexString: string){
     if (hexString.length % 2 !== 0){
@@ -46,6 +49,12 @@ function hexStringToUint8Array(hexString: string){
     }
   
     return arrayBuffer;
+}
+
+function isValidPositionModifiedContract(contract: string) {
+  return PositionModifiedContracts.find(value => {
+    return contract.toLowerCase() === value.toLowerCase()
+  })
 }
 
 export {
@@ -77,8 +86,7 @@ export {
     OrderFlowFeeImposedEvent,
     OrderFlowFeeImposedEventContractAddress,
     DelayedOrderSubmittedEvent,
-    SynthetixPerpsV2ProxyContractAddress,
-    SynthetixPerpsV2ProxyFTMPERPContractAddress,
     PositionModifiedEvent,
-    hexStringToUint8Array
+    hexStringToUint8Array,
+    isValidPositionModifiedContract
 }
