@@ -38,7 +38,7 @@ async function querySingleReceipt(receipt: any) {
             );
           }
         } else if (Number(receipt.transaction_type) === TX_TYPE_EXECUTION) {
-          const result = getJSONForExecutionFlowTx(receipt.account, transactionReceipt)
+          const result = getJSONForExecutionTx(receipt.account, transactionReceipt)
           if (result.logsFound) {
             updateReceipt(
               receipt.id,
@@ -150,7 +150,7 @@ function getJSONForOrderFeeFlowTx(
   return {data: data, logsFound: original.fields.length == 4}
 }
 
-function getJSONForExecutionFlowTx(  
+function getJSONForExecutionTx(  
   account: string,
   transactionReceipt: ethers.providers.TransactionReceipt
 ) {

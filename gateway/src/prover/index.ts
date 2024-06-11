@@ -9,6 +9,7 @@ import {
 import {
   isValidPositionModifiedContract,
   PositionModifiedContracts,
+  PositionModifiedEvent,
   PROOF_STATUS_BREVIS_QUERY_ERROR,
   PROOF_STATUS_INPUT_READY,
   PROOF_STATUS_PROOF_UPLOAD_SENT,
@@ -199,6 +200,47 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       console.error("invalid receipt block number", data)
     }
     console.log(`Add unclaimable receipt blk: ${data.block_num}`)
+
+    // uint248.IsEqual(r.Fields[0].EventID, PositionModifiedEventID),
+		// 	c.checkContractInclusion(api, r.Fields[0].Contract),
+		// 	uint248.IsEqual(r.Fields[0].IsTopic, sdk.ConstUint248(1)),
+		// 	uint248.IsEqual(r.Fields[0].Index, sdk.ConstUint248(2)),
+		// 	api.Bytes32.IsEqual(r.Fields[0].Value, api.ToBytes32(c.Account)), // account check
+		// 	uint248.IsEqual(r.Fields[1].EventID, PositionModifiedEventID),
+		// 	uint248.IsEqual(r.Fields[1].Contract, r.Fields[0].Contract),
+		// 	uint248.IsZero(r.Fields[1].IsTopic),
+		// 	uint248.IsEqual(r.Fields[1].Index, sdk.ConstUint248(2)), // amount index
+		// 	uint248.IsEqual(r.Fields[2].EventID, PositionModifiedEventID),
+		// 	uint248.IsEqual(r.Fields[2].Contract, r.Fields[0].Contract),
+		// 	uint248.IsZero(r.Fields[2].IsTopic),
+		// 	uint248.IsEqual(r.Fields[2].Index, sdk.ConstUint248(3)),
+		// 	uint248.IsZero(uint248.IsLessThan(r.BlockNum, startBlk30DAgo)), // r.BlockNum >= startBlkOneMonthAgo
+		// 	uint248.IsLessThan(r.BlockNum, c.StartBlkNum),         
+
+    // {
+    //   contract: logAddress,
+    //   log_index: i,
+    //   event_id: topic0,
+    //   is_topic: true,
+    //   field_index: 2,
+    //   value: log.topics[2].toLowerCase(),
+    // },
+    if (data.fields[0].event_id !== PositionModifiedEvent) {
+      console.log("invalid f0 event id")
+    }
+    if (!data.fields[0].is_topic) {
+      console.log("invalid f0 is topic")
+    }
+    if (!isValidPositionModifiedContract(data.fields[0].contract)) {
+      console.log("invalid f0 contract")
+    }
+    if (Number(data.block_num) < startBlkNum -  43200 * 30) {
+      console.log("invalid data block num gte")
+
+    } else if (Number(data.block_num) >=  startBlkNum) {
+      console.log("invalid data block num lt")
+    }
+
     proofReq.addReceipt(
       new ReceiptData({
         block_num: Number(data.block_num),
