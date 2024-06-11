@@ -39,6 +39,12 @@ const provers = [
   new Prover("222.74.153.228:53250")
 ]
 
+type DebugReceipt = {
+  data: string;
+  tx_hash: string;
+  index: number;
+}
+
 const brevis = new Brevis("appsdk.brevis.network:11080");
 
 const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
@@ -170,22 +176,23 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   })
 
   var proverIndex = -1
-  var initialClaimableReceiptIndex = 0
+  var claimableReceiptIndex = 0
   if (unclaimableTrades.length <= 216 && claimableTrades.length <= 20) {
     proverIndex = 0
-    initialClaimableReceiptIndex = 216
+    claimableReceiptIndex = 216
   } else if (unclaimableTrades.length <= 412 && claimableTrades.length <= 50) {
     proverIndex = 1
-    initialClaimableReceiptIndex = 412
+    claimableReceiptIndex = 412
   } else if (unclaimableTrades.length <= 4400 && claimableTrades.length <=300) {
     proverIndex = 2
-    initialClaimableReceiptIndex = 4400
+    claimableReceiptIndex = 4400
   } else if (claimableTrades.length > 300) {
     console.error("unsupport no claimable trades")
   } else {
     console.error(`claimable trades out of range: ${claimableTrades.length}`)
   }
 
+  const a: DebugReceipt[] = []
   var unClaimableReceiptIndex = 0
   unclaimableTrades.forEach(trade => {
     const receipt = validReceipts.find(value => {
@@ -201,49 +208,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     }
     console.log(`Add unclaimable receipt blk: ${data.block_num}`)
 
-		// 	uint248.IsEqual(r.Fields[1].EventID, PositionModifiedEventID),
-		// 	uint248.IsEqual(r.Fields[1].Contract, r.Fields[0].Contract),
-		// 	uint248.IsZero(r.Fields[1].IsTopic),
-		// 	uint248.IsEqual(r.Fields[1].Index, sdk.ConstUint248(2)), // amount index
-		// 	uint248.IsEqual(r.Fields[2].EventID, PositionModifiedEventID),
-		// 	uint248.IsEqual(r.Fields[2].Contract, r.Fields[0].Contract),
-		// 	uint248.IsZero(r.Fields[2].IsTopic),
-		// 	uint248.IsEqual(r.Fields[2].Index, sdk.ConstUint248(3)),
-		// 	uint248.IsZero(uint248.IsLessThan(r.BlockNum, startBlk30DAgo)), // r.BlockNum >= startBlkOneMonthAgo
-		// 	uint248.IsLessThan(r.BlockNum, c.StartBlkNum),         
-
-    // {
-    //   contract: logAddress,
-    //   log_index: i,
-    //   event_id: topic0,
-    //   is_topic: true,
-    //   field_index: 2,
-    //   value: log.topics[2].toLowerCase(),
-    // },
-    if (data.fields[0].event_id !== PositionModifiedEvent) {
-      console.log("invalid f0 event id")
-    }
-    if (!data.fields[0].is_topic) {
-      console.log("invalid f0 is topic")
-    }
-    if (!isValidPositionModifiedContract(data.fields[0].contract)) {
-      console.log("invalid f0 contract")
-    }
-
-    if (data.fields[0].value !== utvf.account)  {
-      console.log("invalid f0 value")
-    }
-
-    if (data.fields[0].index !== 2)  {
-      console.log("invalid f0 index")
-    }
-    if (Number(data.block_num) < startBlkNum -  43200 * 30) {
-      console.log("invalid data block num gte")
-
-    } else if (Number(data.block_num) >=  startBlkNum) {
-      console.log("invalid data block num lt")
-    }
-
     proofReq.addReceipt(
       new ReceiptData({
         block_num: Number(data.block_num),
@@ -257,6 +221,12 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       }),
       unClaimableReceiptIndex++
     );
+
+    a.push({
+      data: receipt.data,
+      tx_hash: receipt.tx_hash,
+      index: unClaimableReceiptIndex
+    })
   })
 
   claimableTrades.forEach(trade => {
@@ -285,8 +255,13 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
           new sdk.Field(orderFeeFlowData.fields[3]), 
         ],
       }),
-      initialClaimableReceiptIndex++
+      claimableReceiptIndex++
     );
+    a.push({
+      data: orderFeeFlowTxReceipt.data,
+      tx_hash: orderFeeFlowTxReceipt.tx_hash,
+      index: claimableReceiptIndex
+    })
 
     const executionTxReceipt = validReceipts.find(value => {
       return value.id === trade.execution_tx_receipt_id
@@ -313,8 +288,15 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
           new sdk.Field(executionTxReceiptData.fields[3]), 
         ],
       }),
-      initialClaimableReceiptIndex++
+      claimableReceiptIndex++
     );
+
+    a.push({
+      data: executionTxReceipt.data,
+      tx_hash: executionTxReceipt.tx_hash,
+      index: claimableReceiptIndex
+    })
+
   })
 
   const account = BigNumber.from(utvf.account).toHexString()
@@ -336,6 +318,16 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     Contracts: contracts,
     ContractsHash: sdk.asBytes32("0x00c75392e6d0b4afc11b09465d6349376f764ada311b01e8801a9dd8e9714bfe")
   });
+
+  const b = JSON.stringify({
+    receipts: a,
+    contracts: PositionModifiedContracts,
+    start: utvf.start_blk_num.toString(),
+    account: account,
+    end: utvf.end_blk_num.toString()
+  })
+
+  console.log(`${b}`, )
 
   return {proofReq: proofReq, proverIndex: proverIndex};
 };

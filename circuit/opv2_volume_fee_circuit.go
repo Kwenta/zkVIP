@@ -23,10 +23,9 @@ const (
 	OrderFlowFeeImposedEvent                = "0x213209073252965f156ceca72c65727bfcf77e3f25ca2a1f23a1b9db58295d48"
 	OrderFlowFeeImposedEventContractAddress = "0x6B32d15a6Cb77ea227A6Fb19532b2de542c45AC6"
 	DelayedOrderSubmittedEvent              = "0x9deb3648ccf8efc44205985ac6ead4ffb30791fea9ce7f9437ae398b31cf9d5a"
-
-	PositionModifiedEvent        = "0xc0d933baa356386a245ade48f9a9c59db4612af2b5b9c17de5b451c628760f43"
-	MaxReceipts                  = 256
-	MaxClaimableTradesPerCircuit = 20
+	PositionModifiedEvent                   = "0xc0d933baa356386a245ade48f9a9c59db4612af2b5b9c17de5b451c628760f43"
+	MaxReceipts                             = 256
+	MaxClaimableTradesPerCircuit            = 20
 )
 
 var OrderFlowFeeImposedEventID = sdk.ParseEventID(hexutil.MustDecode(OrderFlowFeeImposedEvent))
