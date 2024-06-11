@@ -4,13 +4,16 @@ import (
 	"fmt"
 
 	"github.com/brevis-network/brevis-sdk/sdk"
+	"github.com/celer-network/goutils/log"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 type OPV2VolumeFeeCircuit struct {
-	Account     sdk.Uint248 // User's address
-	StartBlkNum sdk.Uint248 // First claimable execution transaction block number
-	EndBlkNum   sdk.Uint248 // Last claimable execution transaction block number
+	Account       sdk.Uint248 // User's address
+	StartBlkNum   sdk.Uint248 // First claimable execution transaction block number
+	EndBlkNum     sdk.Uint248 // Last claimable execution transaction block number
+	Contracts     [512]sdk.Uint248
+	ContractsHash sdk.Bytes32
 }
 
 // Use AA' to calculate volume and fee for trade T.
@@ -21,16 +24,15 @@ const (
 	OrderFlowFeeImposedEvent                = "0x213209073252965f156ceca72c65727bfcf77e3f25ca2a1f23a1b9db58295d48"
 	OrderFlowFeeImposedEventContractAddress = "0x6B32d15a6Cb77ea227A6Fb19532b2de542c45AC6"
 	DelayedOrderSubmittedEvent              = "0x9deb3648ccf8efc44205985ac6ead4ffb30791fea9ce7f9437ae398b31cf9d5a"
-	SynthetixPerpsV2ProxyContractAddress    = "0x2B3bb4c683BFc5239B029131EEf3B1d214478d93"
-	PositionModifiedEvent                   = "0xc0d933baa356386a245ade48f9a9c59db4612af2b5b9c17de5b451c628760f43"
-	MaxReceipts                             = 256
-	MaxClaimableTradesPerCircuit            = 20
+
+	PositionModifiedEvent        = "0xc0d933baa356386a245ade48f9a9c59db4612af2b5b9c17de5b451c628760f43"
+	MaxReceipts                  = 256
+	MaxClaimableTradesPerCircuit = 20
 )
 
 var OrderFlowFeeImposedEventID = sdk.ParseEventID(hexutil.MustDecode(OrderFlowFeeImposedEvent))
 var OrderFlowFeeImposedEventContract = sdk.ConstUint248(OrderFlowFeeImposedEventContractAddress)
 var DelayedOrderSubmittedEventID = sdk.ParseEventID(hexutil.MustDecode(DelayedOrderSubmittedEvent))
-var SynthetixPerpsV2ProxyContract = sdk.ConstUint248(SynthetixPerpsV2ProxyContractAddress)
 var PositionModifiedEventID = sdk.ParseEventID(hexutil.MustDecode(PositionModifiedEvent))
 
 func DefaultOPV2VolumeFeeCircuit() *OPV2VolumeFeeCircuit {
@@ -72,16 +74,16 @@ func (c *OPV2VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) err
 	sdk.AssertEach(unclaimableTrades, func(r sdk.Receipt) sdk.Uint248 {
 		assertionPassed := uint248.And(
 			uint248.IsEqual(r.Fields[0].EventID, PositionModifiedEventID),
-			uint248.IsEqual(r.Fields[0].Contract, SynthetixPerpsV2ProxyContract),
+			c.checkContractInclusion(api, r.Fields[0].Contract),
 			uint248.IsEqual(r.Fields[0].IsTopic, sdk.ConstUint248(1)),
 			uint248.IsEqual(r.Fields[0].Index, sdk.ConstUint248(2)),
 			api.Bytes32.IsEqual(r.Fields[0].Value, api.ToBytes32(c.Account)), // account check
 			uint248.IsEqual(r.Fields[1].EventID, PositionModifiedEventID),
-			uint248.IsEqual(r.Fields[1].Contract, SynthetixPerpsV2ProxyContract),
+			uint248.IsEqual(r.Fields[1].Contract, r.Fields[0].Contract),
 			uint248.IsZero(r.Fields[1].IsTopic),
 			uint248.IsEqual(r.Fields[1].Index, sdk.ConstUint248(2)), // amount index
 			uint248.IsEqual(r.Fields[2].EventID, PositionModifiedEventID),
-			uint248.IsEqual(r.Fields[2].Contract, SynthetixPerpsV2ProxyContract),
+			uint248.IsEqual(r.Fields[2].Contract, r.Fields[0].Contract),
 			uint248.IsZero(r.Fields[2].IsTopic),
 			uint248.IsEqual(r.Fields[2].Index, sdk.ConstUint248(3)),
 			uint248.IsZero(uint248.IsLessThan(r.BlockNum, startBlk30DAgo)), // r.BlockNum >= startBlkOneMonthAgo
@@ -120,12 +122,12 @@ func (c *OPV2VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) err
 			uint248.IsZero(orderFlowFeeReceipt.Fields[1].IsTopic),
 			uint248.IsEqual(orderFlowFeeReceipt.Fields[1].Index, sdk.ConstUint248(0)), // amount index
 			uint248.IsEqual(orderFlowFeeReceipt.Fields[2].EventID, DelayedOrderSubmittedEventID),
-			uint248.IsEqual(orderFlowFeeReceipt.Fields[2].Contract, SynthetixPerpsV2ProxyContract),
+			c.checkContractInclusion(api, orderFlowFeeReceipt.Fields[2].Contract),
 			uint248.IsEqual(orderFlowFeeReceipt.Fields[2].IsTopic, sdk.ConstUint248(1)),
 			uint248.IsEqual(orderFlowFeeReceipt.Fields[2].Index, sdk.ConstUint248(1)),
 			api.Bytes32.IsEqual(orderFlowFeeReceipt.Fields[2].Value, api.ToBytes32(c.Account)), // account check
 			uint248.IsEqual(orderFlowFeeReceipt.Fields[3].EventID, DelayedOrderSubmittedEventID),
-			uint248.IsEqual(orderFlowFeeReceipt.Fields[3].Contract, SynthetixPerpsV2ProxyContract),
+			uint248.IsEqual(orderFlowFeeReceipt.Fields[3].Contract, orderFlowFeeReceipt.Fields[2].Contract),
 			uint248.IsZero(orderFlowFeeReceipt.Fields[3].IsTopic),
 			uint248.IsEqual(orderFlowFeeReceipt.Fields[3].Index, sdk.ConstUint248(6)), // keeperDeposit index
 		)
@@ -133,20 +135,20 @@ func (c *OPV2VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) err
 		executionReceipt := rs[1]
 		executionReceiptPassed := uint248.And(
 			uint248.IsEqual(executionReceipt.Fields[0].EventID, PositionModifiedEventID),
-			uint248.IsEqual(executionReceipt.Fields[0].Contract, SynthetixPerpsV2ProxyContract),
+			c.checkContractInclusion(api, executionReceipt.Fields[0].Contract),
 			uint248.IsEqual(executionReceipt.Fields[0].IsTopic, sdk.ConstUint248(1)),
 			uint248.IsEqual(executionReceipt.Fields[0].Index, sdk.ConstUint248(2)),
 			api.Bytes32.IsEqual(executionReceipt.Fields[0].Value, api.ToBytes32(c.Account)), // account check
 			uint248.IsEqual(executionReceipt.Fields[1].EventID, PositionModifiedEventID),
-			uint248.IsEqual(executionReceipt.Fields[1].Contract, SynthetixPerpsV2ProxyContract),
+			uint248.IsEqual(executionReceipt.Fields[1].Contract, executionReceipt.Fields[0].Contract),
 			uint248.IsZero(executionReceipt.Fields[1].IsTopic),
 			uint248.IsEqual(executionReceipt.Fields[1].Index, sdk.ConstUint248(2)), // tradeSize index
 			uint248.IsEqual(executionReceipt.Fields[2].EventID, PositionModifiedEventID),
-			uint248.IsEqual(executionReceipt.Fields[2].Contract, SynthetixPerpsV2ProxyContract),
+			uint248.IsEqual(executionReceipt.Fields[2].Contract, executionReceipt.Fields[0].Contract),
 			uint248.IsZero(executionReceipt.Fields[2].IsTopic),
 			uint248.IsEqual(executionReceipt.Fields[2].Index, sdk.ConstUint248(3)), // lastPrice index
 			uint248.IsEqual(executionReceipt.Fields[3].EventID, PositionModifiedEventID),
-			uint248.IsEqual(executionReceipt.Fields[3].Contract, SynthetixPerpsV2ProxyContract),
+			uint248.IsEqual(executionReceipt.Fields[3].Contract, executionReceipt.Fields[0].Contract),
 			uint248.IsZero(executionReceipt.Fields[3].IsTopic),
 			uint248.IsEqual(executionReceipt.Fields[3].Index, sdk.ConstUint248(5)), // fee index
 		)
@@ -185,10 +187,34 @@ func (c *OPV2VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) err
 
 	fee := sdk.Sum(feeMap)
 
+	hash, err := api.NewMiMC() // mimc.NewMiMC()
+	if err != nil {
+		return err
+	}
+	for _, contract := range c.Contracts {
+		hash.Write(contract.Val)
+	}
+
+	contractsHash := hash.Sum()
+	log.Info("contractsHash: ", contractsHash)
+	// contractsHash.
+	// sdk.Bytes32.FromValues(contractsHash)
+
+	// api.Bytes32.AssertIsEqual(sdk.Uint248{Val: contractsHash}, c.ContractsHash)
+
 	api.OutputAddress(c.Account)
 	api.OutputUint(248, fee)
 	api.OutputUint(248, volume)
 	api.OutputUint(64, c.StartBlkNum)
 	api.OutputUint(64, c.EndBlkNum)
+	api.OutputBytes32(c.ContractsHash)
 	return nil
+}
+
+func (c *OPV2VolumeFeeCircuit) checkContractInclusion(api *sdk.CircuitAPI, contract sdk.Uint248) sdk.Uint248 {
+	contractFound := sdk.ConstUint248(0)
+	for _, inputContract := range c.Contracts {
+		contractFound = api.Uint248.Or(contractFound, api.Uint248.IsEqual(inputContract, contract))
+	}
+	return contractFound
 }

@@ -3,8 +3,9 @@ module github.com/brevis-network/kwenta
 go 1.19
 
 require (
-	github.com/brevis-network/brevis-sdk v0.0.0-20240523083040-e1d3fb18900a
+	github.com/brevis-network/brevis-sdk v0.0.0-20240611021722-27cf74229e6b
 	github.com/celer-network/goutils v0.1.60
+	github.com/consensys/gnark-crypto v0.12.2-0.20231221171913-5d5eded6bb15
 	github.com/ethereum/go-ethereum v1.13.8
 	github.com/stretchr/testify v1.8.4
 )
@@ -18,7 +19,6 @@ require (
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/consensys/bavard v0.1.13 // indirect
 	github.com/consensys/gnark v0.9.2-0.20231206193932-4199bb354d89 // indirect
-	github.com/consensys/gnark-crypto v0.12.2-0.20231221171913-5d5eded6bb15 // indirect
 	github.com/crate-crypto/go-kzg-4844 v0.7.0 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect

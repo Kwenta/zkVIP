@@ -29,7 +29,7 @@ func main() {
 
 	switch *serviceName {
 	case "fee-reimbursement":
-		startService(circuit.DefaultVolumeFeeCircuit(), *numMaxDataPoints, *maxReceipts)
+		startService(circuit.DefaultOPV2VolumeFeeCircuit(), *numMaxDataPoints, *maxReceipts)
 	default:
 		panic("invalid -service flag")
 	}

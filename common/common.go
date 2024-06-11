@@ -6,6 +6,7 @@ import (
 	"log"
 	"strings"
 
+	"github.com/consensys/gnark-crypto/ecc/bls12-377/fr/mimc"
 	ec "github.com/ethereum/go-ethereum/common"
 )
 
@@ -68,4 +69,25 @@ func check(err error) {
 	if err != nil {
 		panic(err.Error())
 	}
+}
+
+func CalculateHash(data [][]byte) ([]byte, error) {
+	h := mimc.NewMiMC()
+	for _, value := range data {
+		h.Write(miMCBlockPad0(value, h.BlockSize()))
+	}
+	return h.Sum(nil), nil
+}
+
+// MiMCBlockPad0 pad 0 into miMC block up to specific block size in Big-Endian
+func miMCBlockPad0(data []byte, blockSize int) []byte {
+	var block = make([]byte, blockSize)
+	for i := 0; i < blockSize; i++ {
+		if i < blockSize-len(data) {
+			block[i] = 0
+		} else {
+			block[i] = data[len(data)-blockSize+i]
+		}
+	}
+	return block
 }
