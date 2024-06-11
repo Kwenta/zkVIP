@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/brevis-network/brevis-sdk/sdk"
-	"github.com/celer-network/goutils/log"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
@@ -36,11 +35,7 @@ var DelayedOrderSubmittedEventID = sdk.ParseEventID(hexutil.MustDecode(DelayedOr
 var PositionModifiedEventID = sdk.ParseEventID(hexutil.MustDecode(PositionModifiedEvent))
 
 func DefaultOPV2VolumeFeeCircuit() *OPV2VolumeFeeCircuit {
-	return &OPV2VolumeFeeCircuit{
-		Account:     sdk.ConstUint248(0),
-		StartBlkNum: sdk.ConstUint248(0),
-		EndBlkNum:   sdk.ConstUint248(0),
-	}
+	return &OPV2VolumeFeeCircuit{}
 }
 
 var _ sdk.AppCircuit = &OPV2VolumeFeeCircuit{}
@@ -196,11 +191,8 @@ func (c *OPV2VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) err
 	}
 
 	contractsHash := hash.Sum()
-	log.Info("contractsHash: ", contractsHash)
-	// contractsHash.
-	// sdk.Bytes32.FromValues(contractsHash)
 
-	// api.Bytes32.AssertIsEqual(sdk.Uint248{Val: contractsHash}, c.ContractsHash)
+	api.Bytes32.AssertIsEqual(api.Bytes32.FromFV(contractsHash), c.ContractsHash)
 
 	api.OutputAddress(c.Account)
 	api.OutputUint(248, fee)

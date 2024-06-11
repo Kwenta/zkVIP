@@ -3,7 +3,7 @@ module github.com/brevis-network/kwenta
 go 1.19
 
 require (
-	github.com/brevis-network/brevis-sdk v0.0.0-20240611021722-27cf74229e6b
+	github.com/brevis-network/brevis-sdk v0.0.0-20240611040125-92138fdd7a64
 	github.com/celer-network/goutils v0.1.60
 	github.com/consensys/gnark-crypto v0.12.2-0.20231221171913-5d5eded6bb15
 	github.com/ethereum/go-ethereum v1.13.8

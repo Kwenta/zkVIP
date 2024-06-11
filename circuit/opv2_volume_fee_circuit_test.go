@@ -164,7 +164,7 @@ func TestOPV2VolumeFeeCircuit(t *testing.T) {
 		EndBlkNum:     sdk.ConstUint248(120665850),
 		Account:       sdk.ConstUint248(account.Bytes()),
 		Contracts:     contracts,
-		ContractsHash: sdk.ConstBytes32(contractHash),
+		ContractsHash: sdk.ConstBytes32(contractHash[:]),
 	}
 
 	log.Infof("contractsHash 0x%x", contractHash)
@@ -178,5 +178,5 @@ func TestOPV2VolumeFeeCircuit(t *testing.T) {
 
 	test.ProverSucceeded(t, DefaultOPV2VolumeFeeCircuit(), appCircuitAssignment, circuitInput)
 
-	assert.Equal(t, fmt.Sprintf("0x%x", out), "0x5ad2e3c62a7774a58c4b3b5dd17c78446c86c8d200000000000000000000000000000000000000000000001378c38494960019000000000000000000000000000000000000000000000bb86ded4243327d2900000000073136fa00000000073136fa")
+	assert.Equal(t, fmt.Sprintf("0x%x", out), "0x5ad2e3c62a7774a58c4b3b5dd17c78446c86c8d200000000000000000000000000000000000000000000001378c38494960019000000000000000000000000000000000000000000000bb86ded4243327d2900000000073136fa00000000073136fa10dfb8b21ed74d6e66cb67031efc7a2df88a7214b32138f9e030253b2f4b3abc")
 }
