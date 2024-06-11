@@ -94,7 +94,7 @@ function getJSONForOrderFeeFlowTx(
     
     if (topic0.toLowerCase() === DelayedOrderSubmittedEvent) {
       // console.log(`delayed order event tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
-      console.log(`Delayed order contract address: ${logAddress}`)
+      console.log(`${logAddress}`)
     }
 
     // OrderFlowFee Events
