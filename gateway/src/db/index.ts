@@ -172,6 +172,9 @@ async function updateUserTradeVolumeFee(utvf: any): Promise<any> {
       update_time: new Date(),
       prover_id: utvf.prover_id,
       request_sent: utvf.request_sent,
+      start_blk_num: utvf.start_blk_num,
+      end_blk_num: utvf.end_blk_num,
+      fee_rebate: utvf.fee_rebate,
     },
   });
 }
