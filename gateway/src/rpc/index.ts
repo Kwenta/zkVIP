@@ -92,7 +92,7 @@ function getJSONForOrderFeeFlowTx(
     let logAddress = log.address.toLowerCase()
     let topic0 = log.topics[0].toLowerCase();
     
-    if (topic0.toLowerCase() === DelayedOrderSubmittedEvent) {
+    if (topic0.toLowerCase() === DelayedOrderSubmittedEvent && !isValidPositionModifiedContract(logAddress)) {
       // console.log(`delayed order event tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
       console.log(`${logAddress}`)
     }
@@ -166,8 +166,7 @@ function getJSONForExecutionFlowTx(
     let logAddress = log.address.toLowerCase()
     let topic0 = log.topics[0].toLowerCase();
     
-    if (topic0.toLowerCase() === PositionModifiedEvent) {
-      // console.log(`position modified event tx: ${transactionReceipt.transactionHash}, log address ${logAddress}`, logAddress, )
+    if (topic0.toLowerCase() === PositionModifiedEvent && !isValidPositionModifiedContract(logAddress)) {
       console.log(`${logAddress}`)
     }
 
