@@ -3,7 +3,6 @@ import {
   PROOF_STATUS_INELIGIBLE_ACCOUNT_ID,
   PROOF_STATUS_INIT,
   PROOF_STATUS_INPUT_READY,
-  PROOF_STATUS_INPUT_REQUEST_SENT,
   PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
 } from "../constants/index.ts";
 import {
@@ -14,9 +13,7 @@ import {
   findUserExistingUTVFByDate, 
   findUserTradeVolumeFees,
   getDailyTrack,
-  getUserTradeVolumeFee,
   insertDailyTrack,
-  insertReceipt,
   insertUserTradeVolumeFee,
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
@@ -47,8 +44,6 @@ export async function prepareNewDayTradeClaims() {
       throw result.error
     }
 
-    await insertDailyTrack(BigInt(yesterday))
-
     const accountTradesMap = getAccountTradesMap(result.trades)
     for (let [account, trades] of accountTradesMap) {      
       if (trades.length === 0) {
@@ -64,9 +59,10 @@ export async function prepareNewDayTradeClaims() {
         continue
       }
       
-      var utvf = await findUserExistingUTVFByDate(account, BigInt(yesterday), BigInt(yesterday));
-      if (utvf != undefined && utvf != null && utvf) {
-        // return;
+      var utvf = await findUserExistingUTVFByDate(account, BigInt(yesterday));
+      if (utvf != undefined && utvf != null && utvf && Number(utvf.status) > 1)  {
+        // no need to update trade infos
+        continue;
       } else {
         const src_chain_id = BigInt(process.env.SRC_CHAIN_ID ?? 10);
         const dst_chain_id = BigInt(process.env.DST_CHAIN_ID ?? 10);
@@ -77,15 +73,10 @@ export async function prepareNewDayTradeClaims() {
           account,
           trades[0].account,
           BigInt(yesterday),
-          BigInt(yesterday),
         );
       }
      
       const trade_ids = await saveTrades(trades, account)
-    
-      utvf.status = PROOF_STATUS_INPUT_READY
-      utvf.trade_ids = trade_ids
-
       const claimPeriod = await userSwapAmountApp.accountClaimPeriod(account)
     
       // Make sure start block number is bigger than claim period in contract
@@ -94,13 +85,15 @@ export async function prepareNewDayTradeClaims() {
         startBlockNumber = claimPeriod[1].toNumber() + 1
       }
 
-      console.log(`startBlockNumber: ${startBlockNumber}, end_blk_num: ${claimableTrades[claimableTrades.length - 1].blockNumber}`)
-
       utvf.start_blk_num = BigInt(startBlockNumber)
       utvf.end_blk_num = BigInt(claimableTrades[claimableTrades.length - 1].blockNumber)
-      
+      utvf.status = PROOF_STATUS_INPUT_READY
+      utvf.trade_ids = trade_ids
+
       await updateUserTradeVolumeFee(utvf)
     }
+
+    await insertDailyTrack(BigInt(yesterday))
   } catch (error) {
     console.error("failed to prepare new day trade claims", error)
   }

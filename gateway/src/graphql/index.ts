@@ -50,14 +50,50 @@ export const getAccountTradesMap = (
   return map
 };
 
+export const batchTradesWithSameTxAccount = (trades: Trade[]) => {
+  let map = new Map<string, Trade[]>()
+  trades.forEach(trade => {
+    const userTrades = map.get(trade.executionTxhash)
+    if (userTrades === undefined) {
+      map.set(trade.abstractAccount, [trade])
+    } else {
+      userTrades.push(trade)
+    }
+  })
+  const result :Trade[] = []
+  for (let [_, trades] of map) {
+    const trade = trades.reduce((t0, t1) => {
+      var orderFeeFlowTxhash = t0.orderFeeFlowTxhash
+      if (orderFeeFlowTxhash.length === 0) {
+        orderFeeFlowTxhash = t1.orderFeeFlowTxhash
+      }
+      return {
+        blockNumber: t0.blockNumber,
+        account: t0.account,
+        abstractAccount: t0.abstractAccount,
+        timestamp: t0.timestamp,
+        orderFeeFlowTxhash: orderFeeFlowTxhash,
+        executionTxhash: t0.executionTxhash,
+        volume: BigNumber.from(t0.volume).add(t1.volume).toString(),
+        feesPaid: BigNumber.from(t0.feesPaid).add(t1.feesPaid).toString()
+      }
+    })
+      
+    result.push(trade)
+  }
+
+  return result
+}
+
 export const saveTrades = async (
   trades: Trade[],
   account: string,
 ) => {
   const promises = Array<Promise<string>>();
  
-  for (let i =0; i < trades.length; i++) {
-    const trade = trades[i]
+  const batchedTrade = batchTradesWithSameTxAccount(trades)
+  for (let i =0; i < batchedTrade.length; i++) {
+    const trade = batchedTrade[i]
     
     var executionTxId = ""
     var orderFlowTxId = ""
@@ -75,13 +111,10 @@ export const saveTrades = async (
       orderFlowTxId = ''
     }
 
-    const volume = BigNumber.from(trade.size).abs().mul(BigNumber.from(trade.price)).div(BigNumber.from('1000000000000000000'))
-    
     promises.push(insertOrFindTrade(
       executionTxId,
       orderFlowTxId,
-      trade.blockNumber,
-      volume.toString(),
+      trade,
     ))
   }
 
@@ -94,21 +127,21 @@ export const saveTrades = async (
 const insertOrFindTrade = async(
   execution_tx_receipt_id: string,
   order_fee_flow_tx_receipt_id: string,
-  execution_tx_block_number: number,
-  volume: string,
+  tradeInfo: Trade,
 ) => {
-  var trade = await getTrade(execution_tx_receipt_id)
+  var trade = await getTrade(execution_tx_receipt_id, tradeInfo.abstractAccount)
 
   if (trade === undefined || trade === null) {
-    trade = await insertTrade(order_fee_flow_tx_receipt_id, execution_tx_receipt_id, execution_tx_block_number, volume)
+    trade = await insertTrade(
+      tradeInfo,
+      order_fee_flow_tx_receipt_id, 
+      execution_tx_receipt_id
+      )
   }
   if (trade === undefined || trade === null) {
-    throw new Error(`failed to insert trade for order_fee_flow_tx_receipt_id: ${order_fee_flow_tx_receipt_id}, execution_tx_receipt_id: ${execution_tx_receipt_id}, execution_tx_block_number: ${execution_tx_block_number}`)
+    throw new Error(`failed to insert trade for order_fee_flow_tx_receipt_id: ${order_fee_flow_tx_receipt_id}, execution_tx_receipt_id: ${execution_tx_receipt_id}, trade: ${tradeInfo}`)
   }
 
-  if (trade.volume.length === 0) {
-    await updateTrade(execution_tx_receipt_id, volume)
-  }
   return trade.execution_tx_receipt_id
 }
 
@@ -117,7 +150,7 @@ const insertOrFindReceipt = async(
   account: string,
   txType: number,
 ) => {
-  let receipt = await getReceiptByHash(txHash)
+  let receipt = await getReceiptByHash(txHash, account, BigInt(txType))
   if (receipt === undefined || receipt === null) {
     receipt = await insertReceipt(txHash, account, BigInt(txType))
   }
@@ -152,6 +185,7 @@ const postGraphQL = async (
             executionTxhash,
             size,
             price,
+            feesPaid,
           }
         }`,
       }),
@@ -169,6 +203,7 @@ const postGraphQL = async (
       }
       const trades: Trade[] =[]
       responseJson?.data?.futuresTrades?.forEach((element: any) => {
+        const volume = BigNumber.from(element.size).abs().mul(BigNumber.from(element.price)).div(BigNumber.from('1000000000000000000'))
         trades.push({
           blockNumber: element.blockNumber,
           account: element.account,
@@ -176,8 +211,8 @@ const postGraphQL = async (
           timestamp: element.timestamp,
           orderFeeFlowTxhash: element.orderFeeFlowTxhash ?? "",
           executionTxhash: element.executionTxhash,
-          size: element.size,
-          price: element.price,
+          feesPaid: element.feesPaid,
+          volume: volume.toString(),
         })
       });
       result.trades = trades

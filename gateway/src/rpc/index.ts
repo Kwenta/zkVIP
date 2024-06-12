@@ -76,8 +76,6 @@ function getJSONForOrderFeeFlowTx(
   account: string,
   transactionReceipt: ethers.providers.TransactionReceipt
 ) {
-  let data = "";
-
   let original: ReceiptInfo = {
     block_num: transactionReceipt.blockNumber,
     tx_hash: transactionReceipt.transactionHash,
@@ -145,17 +143,21 @@ function getJSONForOrderFeeFlowTx(
       })
     }
   });
-  data = JSON.stringify(original)
+  const data = JSON.stringify(original)
 
-  return {data: data, logsFound: original.fields.length == 4}
+  // 
+  return {data: data, logsFound: original.fields.length >= 4 && original.fields.length % 4 == 0 }
 }
 
 function getJSONForExecutionTx(  
   account: string,
   transactionReceipt: ethers.providers.TransactionReceipt
 ) {
-  let logsFound = false;
-  let data = "";
+  let original: ReceiptInfo = {
+    block_num: transactionReceipt.blockNumber,
+    tx_hash: transactionReceipt.transactionHash,
+    fields: [],
+  };
 
   transactionReceipt.logs.forEach((log, i) => {
     if (log.topics.length < 3) {
@@ -169,58 +171,57 @@ function getJSONForExecutionTx(
       console.log(`${logAddress}`)
     }
 
-    // PositionModified Event
+    // PositionModified Event 
     if (
       isValidPositionModifiedContract(logAddress)
       && topic0.toLowerCase() === PositionModifiedEvent && 
       BigNumber.from(log.topics[2]).eq(BigNumber.from(account))
     ) {
-      logsFound = true;
-      data = JSON.stringify({
-        block_num: transactionReceipt.blockNumber,
-        tx_hash: transactionReceipt.transactionHash,
-        fields: [
-          // account
-          {
-            contract: logAddress,
-            log_index: i,
-            event_id: topic0,
-            is_topic: true,
-            field_index: 2,
-            value: log.topics[2].toLowerCase(),
-          },
-          // tradeSize
-          {
-            contract: logAddress,
-            log_index: i,
-            event_id: topic0,
-            is_topic: false,
-            field_index: 2,
-            value: "0x" + log.data.replace("0x", "").slice(2 * 64, 3 * 64),
-          },
-          // lastPrice
-          {
-            contract: logAddress,
-            log_index: i,
-            event_id: topic0,
-            is_topic: false,
-            field_index: 3,
-            value: "0x" + log.data.replace("0x", "").slice(3 * 64, 4 * 64),
-          },  
-          // fee
-          {
-            contract: logAddress,
-            log_index: i,
-            event_id: topic0,
-            is_topic: false,
-            field_index: 5,
-            value: "0x" + log.data.replace("0x", "").slice(5 * 64, 6 * 64),
-          },   
-        ],
-      });
+      // account
+      original.fields.push({
+        contract: logAddress,
+        log_index: i,
+        event_id: topic0,
+        is_topic: true,
+        field_index: 2,
+        value: log.topics[2].toLowerCase(),
+      })
+
+      // tradeSize
+      original.fields.push({
+        contract: logAddress,
+        log_index: i,
+        event_id: topic0,
+        is_topic: false,
+        field_index: 2,
+        value: "0x" + log.data.replace("0x", "").slice(2 * 64, 3 * 64),
+      })
+
+      // lastPrice
+      original.fields.push({
+        contract: logAddress,
+        log_index: i,
+        event_id: topic0,
+        is_topic: false,
+        field_index: 3,
+        value: "0x" + log.data.replace("0x", "").slice(3 * 64, 4 * 64),
+      })
+
+      // fee
+      original.fields.push({
+        contract: logAddress,
+        log_index: i,
+        event_id: topic0,
+        is_topic: false,
+        field_index: 5,
+        value: "0x" + log.data.replace("0x", "").slice(5 * 64, 6 * 64),
+      })
     }
   });
-  return {data: data, logsFound: logsFound}
+
+  const data = JSON.stringify(original)
+
+  return {data: data, logsFound: original.fields.length >= 4 && original.fields.length % 4 == 0}
 }
 
 export {

@@ -103,7 +103,7 @@ async function insertUserTradeVolumeFee(src_chain_id, dst_chain_id, account, sta
       id: uuidv4(),
       src_chain_id,
       dst_chain_id,
-      account: account?.toLocaleLowerCase(),
+      account: account?.toLowerCase(),
       start_ymd,
       end_ymd,
       status: PROOF_STATUS_INIT,
@@ -123,7 +123,7 @@ async function updateUserTradeVolumeFee(utvf) {
       fee: utvf.fee,
       receipt_ids: utvf.receipt_ids,
       storage_ids: utvf.storage_ids,
-      brevis_query_hash: utvf.brevis_query_hash?.toLocaleLowerCase(),
+      brevis_query_hash: utvf.brevis_query_hash?.toLowerCase(),
       brevis_query_fee: utvf.brevis_query_fee,
       proof: utvf.proof,
       status: utvf.status,
@@ -143,7 +143,7 @@ async function getUserTradeVolumeFee(id) {
 async function findUserExistingUTVF(account, start_blk_num, end_blk_num) {
   return prisma.user_trade_volume_fee.findFirst({
     where: {
-      account: account?.toLocaleLowerCase(),
+      account: account?.toLowerCase(),
       start_blk_num: {
         equals: start_blk_num
       },
@@ -180,7 +180,7 @@ async function findTxToBeSent() {
 async function updateBrevisRequestStatus(brevis_query_hash) {
   return prisma.user_trade_volume_fee.updateMany({
     where: {
-      brevis_query_hash: brevis_query_hash?.toLocaleLowerCase()
+      brevis_query_hash: brevis_query_hash?.toLowerCase()
     },
     data: {
       request_sent: true

@@ -5,8 +5,7 @@ type UserTradeVolumeFee = {
   src_chain_id: bigint;
   dst_chain_id: bigint;
   trade_year_month: bigint;
-  start_ymd: bigint;
-  end_ymd: bigint;
+  ymd: bigint;
   account: string;
   volume: string;
   fee: string;
@@ -51,10 +50,16 @@ type Storage = {
 }; 
 
 type Trade = {
+  id: string;
   order_fee_flow_tx_receipt_id: string;
   execution_tx_receipt_id: string;
   execution_tx_block_number: bigint;
   volume: string;
+  create_time: Date;
+  update_time: Date;
+  status: bigint;
+  account: string;
+  fee: string;
 };
 
 function validTimeNumber(input: Number): boolean {

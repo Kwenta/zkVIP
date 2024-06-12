@@ -6,6 +6,7 @@ import {
   PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
   STATUS_INIT,
 } from "../constants/index.ts";
+import { Trade } from "../graphql/common.ts";
 
 const prisma = new PrismaClient();
 
@@ -14,7 +15,7 @@ async function insertReceipt(tx_hash: string, account: string, transaction_type:
   return prisma.receipt.create({
     data: {
       id: uuidv4(),
-      tx_hash: tx_hash?.toLocaleLowerCase(),
+      tx_hash: tx_hash?.toLowerCase(),
       account: account,
       status: STATUS_INIT,
       create_time: new Date(),
@@ -49,10 +50,18 @@ async function getReceipt(id: string): Promise<any> {
   });
 }
 
-async function getReceiptByHash(tx_hash: string): Promise<any> {
+async function getReceiptByHash(
+  tx_hash: string,
+  account: string,
+  transaction_type: bigint,
+): Promise<any> {
   return prisma.receipt.findFirst({
     where: {
-      tx_hash: tx_hash?.toLocaleLowerCase()
+      tx_hash: tx_hash?.toLowerCase(),
+      account: account?.toLowerCase(),
+      transaction_type: {
+        equals: transaction_type,
+      }
     }
   })
 }
@@ -130,23 +139,20 @@ async function insertUserTradeVolumeFee(
   dst_chain_id: bigint,
   account: string,
   owner: string,
-  start_ymd: bigint,
-  end_ymd: bigint,
+  ymd: bigint,
 ): Promise<any> {
   console.log(
     `Insert user trade volume fee: src_chain_id: ${src_chain_id}, dst_chain_id: ${dst_chain_id}, 
-      account: ${account}, owner: ${owner}, start_ymd: ${start_ymd}, end_ymd: ${end_ymd}`
+      account: ${account}, owner: ${owner}, ymd: ${ymd}`
   )
-
   return prisma.user_trade_volume_fee.create({
     data: {
       id: uuidv4(),
       src_chain_id: src_chain_id,
       dst_chain_id: dst_chain_id,
-      account: account?.toLocaleLowerCase(),
+      account: account?.toLowerCase(),
       owner_address: owner,
-      start_ymd: start_ymd,
-      end_ymd: end_ymd,
+      ymd: ymd,
       status: PROOF_STATUS_INIT,
       create_time: new Date(),
       update_time: new Date(),
@@ -165,7 +171,7 @@ async function updateUserTradeVolumeFee(utvf: any): Promise<any> {
       fee: utvf.fee,
       trade_ids: utvf.trade_ids,
       storage_ids: utvf.storage_ids,
-      brevis_query_hash: utvf.brevis_query_hash?.toLocaleLowerCase(),
+      brevis_query_hash: utvf.brevis_query_hash?.toLowerCase(),
       brevis_query_fee: utvf.brevis_query_fee,
       proof: utvf.proof,
       status: utvf.status,
@@ -194,7 +200,7 @@ async function findUserExistingUTVF(
 ): Promise<any> {
   return prisma.user_trade_volume_fee.findFirst({
     where: {
-      account: account?.toLocaleLowerCase(),
+      account: account?.toLowerCase(),
       start_blk_num: {
         equals: start_blk_num,
       },
@@ -207,18 +213,14 @@ async function findUserExistingUTVF(
 
 async function findUserExistingUTVFByDate(
   account: string,
-  start_ymd: bigint,
-  end_ymd: bigint
+  ymd: bigint,
 ): Promise<any> {
   return prisma.user_trade_volume_fee.findFirst({
     where: {
-      account: account?.toLocaleLowerCase(),
-      start_ymd: {
-        equals: start_ymd,
+      account: account?.toLowerCase(),
+      ymd: {
+        equals: ymd,
       },
-      end_ymd: {
-        equals: end_ymd,
-      }
     },
   });
 }
@@ -254,7 +256,7 @@ async function updateBrevisRequestStatus(
 ): Promise<any> {
   return prisma.user_trade_volume_fee.updateMany({
     where: {
-      brevis_query_hash: brevis_query_hash?.toLocaleLowerCase(),
+      brevis_query_hash: brevis_query_hash?.toLowerCase(),
     },
     data: {
       request_sent: true,
@@ -281,42 +283,47 @@ async function getDailyTrack(year_month_day: bigint): Promise<any> {
 }
 
 async function insertTrade(
+  trade: Trade,
   order_fee_flow_tx_receipt_id: string,
   execution_tx_receipt_id: string,
-  execution_tx_block_number: number,
-  volume: string,
 ): Promise<any> {
   return prisma.trade.create({
     data: {
+      id: uuidv4(),
       order_fee_flow_tx_receipt_id: order_fee_flow_tx_receipt_id,
       execution_tx_receipt_id: execution_tx_receipt_id,
-      execution_tx_block_number: BigInt(execution_tx_block_number),
-      volume: volume,
+      execution_tx_block_number: BigInt(trade.blockNumber),
+      account: trade.abstractAccount,
+      volume: trade.volume,
+      fee: trade.feesPaid,
+      status: STATUS_INIT,
+      create_time: new Date(),
+      update_time: new Date(), 
     }
   })
 }
 
 async function getTrade(
-  execution_tx_receipt_id: string
+  execution_tx_receipt_id: string,
+  account: string,
 ): Promise<any> {
-  return prisma.trade.findUnique({
+  return prisma.trade.findFirst({
     where: {
+      account: account,
       execution_tx_receipt_id: execution_tx_receipt_id,
     }
   })
 }
 
 async function updateTrade(
-  execution_tx_receipt_id: string,
-  volume: string,
+  id: string,
+  data: any,
 ): Promise<any> {
   return prisma.trade.updateMany({
     where: {
-      execution_tx_receipt_id: execution_tx_receipt_id?.toLocaleLowerCase(),
+      id: id?.toLowerCase(),
     },
-    data: {
-      volume: volume,
-    },
+    data: data,
   })
 }
 
