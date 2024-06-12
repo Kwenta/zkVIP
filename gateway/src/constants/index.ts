@@ -1,3 +1,5 @@
+require MarketsInfo from "../../../markets.json"
+
 const STATUS_UNKNOWN = BigInt(0)
 const STATUS_INIT = BigInt(1)
 const STATUS_READY = BigInt(2)
