@@ -67,4 +67,6 @@ model trade {
   update_time                  DateTime @default(now()) @db.Timestamptz(6)
   status                       BigInt   @default(0)
   id                           String   @id
+  account                      String   @default("")
+  fee                          String   @default("")
 }
