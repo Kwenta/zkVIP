@@ -2,13 +2,22 @@ package common
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"strings"
 
+	"github.com/brevis-network/brevis-sdk/sdk"
 	"github.com/consensys/gnark-crypto/ecc/bls12-377/fr/mimc"
 	ec "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
+
+type Contracts struct {
+	Contracts []string `json:"contracts"`
+}
 
 func CheckErr(err error, msg string) {
 	if err != nil {
@@ -90,4 +99,45 @@ func miMCBlockPad0(data []byte, blockSize int) []byte {
 		}
 	}
 	return block
+}
+
+func CalculateContractsHash() ([512]sdk.Uint248, []byte, error) {
+	var contractsBytes [512][]byte
+	var contractsInUint248 [512]sdk.Uint248
+	jsonFile, err := os.Open("../markets.json")
+	if err != nil {
+		return contractsInUint248, nil, err
+	}
+
+	data, err := io.ReadAll(jsonFile)
+	if err != nil {
+		return contractsInUint248, nil, err
+	}
+
+	contracts := Contracts{}
+	err = json.Unmarshal(data, &contracts)
+	if err != nil {
+		return contractsInUint248, nil, err
+	}
+
+	for i := 0; i < len(contractsBytes); i++ {
+		if i < len(contracts.Contracts) {
+			b, err := hexutil.Decode(contracts.Contracts[i])
+			if err != nil {
+				return contractsInUint248, nil, err
+			}
+			contractsBytes[i] = b
+			contractsInUint248[i] = sdk.ConstUint248(b)
+		} else {
+			contractsBytes[i] = []byte{0}
+			contractsInUint248[i] = sdk.ConstUint248([]byte{0})
+		}
+	}
+
+	contractHash, err := CalculateHash(contractsBytes[:])
+	if err != nil {
+		return contractsInUint248, nil, err
+	}
+	fmt.Printf("contracts hash: 0x%x\n", contractHash)
+	return contractsInUint248, contractHash, nil
 }
