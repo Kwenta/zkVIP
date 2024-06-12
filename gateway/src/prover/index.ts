@@ -316,7 +316,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     StartBlkNum: asUint248(utvf.start_blk_num.toString()),
     EndBlkNum: asUint248(utvf.end_blk_num.toString()),
     Contracts: contracts,
-    ContractsHash: sdk.asBytes32("0x056a18e7be78f176bd7ca8be5b923f9791abb1b05b2990713d7f476af17eeb4f")
+    ContractsHash: sdk.asBytes32("0x0f4609cd4bed42d65042468a77bd40822cec9a83414e4406c16135b9406ecc46")
   });
 
   const debugRequest = JSON.stringify({

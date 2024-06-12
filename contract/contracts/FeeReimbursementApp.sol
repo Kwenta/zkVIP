@@ -26,13 +26,18 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     uint24 public rewardTokenDecimals;
     IFeeRebateTierModule public feeRebateTierModule;
     address public claimer;
+    uint256 public contractsHash;
     mapping(bytes32 => uint16) public vkHashesToCircuitSize; // batch tier vk hashes => tier batch size
     mapping(address => ClaimPeriod) public accountClaimPeriod;
     mapping(address => uint248) public accountAccumulatedFee;
+
     event FeeRebateAccumulated(address account, uint248 feeRebate, uint248 volume30D, uint248 feeRebateWithRate,  uint64 startBlockNumber,uint64 endBlockNumber);
     event VkHashesUpdated(bytes32[] vkHashes, uint16[] sizes);
     event FeeReimbursed(address account, uint248 feeRebate);
     event BrevisProofUpdated(address);
+    event FeeRebateTireModuleUpdated(address);
+    event ClaimerUpdated(address);
+    event ContractsHashUpdated(uint256);
     
     constructor(address _brevisProof) BrevisApp(IBrevisProof(_brevisProof)) {}
 
@@ -47,7 +52,9 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         uint16 circuitSize = vkHashesToCircuitSize[_vkHash];
         require(circuitSize > 0, "vkHash not valid");
 
-        (address account, uint248 feeRebate, uint248 volume30D, uint64 startBlockNumber, uint64 endBlockNumber) = decodeOutput(_circuitOutput);
+        (address account, uint248 feeRebate, uint248 volume30D, uint64 startBlockNumber, uint64 endBlockNumber, uint256 hash) = decodeOutput(_circuitOutput);
+        require(contractsHash == hash, "invalid contracts hash");
+        
         uint64 percentage;
         uint248 feeRebateWithRate = feeRebate;
         if (feeRebate > 0) {
@@ -64,12 +71,13 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         emit FeeRebateAccumulated(account, feeRebate, volume30D, feeRebateWithRate, startBlockNumber, endBlockNumber);
     }
 
-    function decodeOutput(bytes calldata o) internal pure returns (address account, uint248 feeRebate, uint248 volume30D, uint64 startBlockNumber,uint64 endBlockNumber) {
+    function decodeOutput(bytes calldata o) internal pure returns (address account, uint248 feeRebate, uint248 volume30D, uint64 startBlockNumber,uint64 endBlockNumber, uint256 hash) {
         account = address(bytes20(o[0:20]));
         feeRebate = uint248(bytes31(o[20:51]));
         volume30D = uint248(bytes31(o[51:82]));
         startBlockNumber = uint64(bytes8(o[82:90]));
         endBlockNumber = uint64(bytes8(o[90:98]));
+        hash = uint256(bytes32(o[98:130]));
     }
 
     function _newClaimPeriod(uint64 startBlockNumber, uint64 endBlockNumber, address account) internal view returns (ClaimPeriod memory) {
@@ -110,10 +118,17 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
 
     function setFeeRebateTierModule(IFeeRebateTierModule _feeRebateTierModule) external onlyOwner {
         feeRebateTierModule = _feeRebateTierModule;
+        emit FeeRebateTireModuleUpdated(address(_feeRebateTierModule));
     }
 
     function setClaimer(address _claimer) external onlyOwner {
         claimer = _claimer;
+        emit ClaimerUpdated(_claimer);
+    }
+
+    function setContractsHash(uint256 _contractsHash) external onlyOwner {
+        contractsHash = _contractsHash;
+        emit ContractsHashUpdated(_contractsHash);
     }
 
     // After reimburse user's fee, call claim to reset accumulatedFee

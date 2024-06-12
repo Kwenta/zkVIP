@@ -178,6 +178,7 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     "brevisProof()": FunctionFragment;
     "claim(address)": FunctionFragment;
     "claimer()": FunctionFragment;
+    "contractsHash()": FunctionFragment;
     "feeRebateTierModule()": FunctionFragment;
     "owner()": FunctionFragment;
     "renounceOwnership()": FunctionFragment;
@@ -185,6 +186,7 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     "rewardTokenDecimals()": FunctionFragment;
     "setBrevisProof(address)": FunctionFragment;
     "setClaimer(address)": FunctionFragment;
+    "setContractsHash(uint256)": FunctionFragment;
     "setFeeRebateTierModule(address)": FunctionFragment;
     "setRewardToken(address,uint24)": FunctionFragment;
     "setVkHashes(bytes32[],uint16[])": FunctionFragment;
@@ -217,6 +219,10 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   encodeFunctionData(functionFragment: "claim", values: [string]): string;
   encodeFunctionData(functionFragment: "claimer", values?: undefined): string;
   encodeFunctionData(
+    functionFragment: "contractsHash",
+    values?: undefined
+  ): string;
+  encodeFunctionData(
     functionFragment: "feeRebateTierModule",
     values?: undefined
   ): string;
@@ -238,6 +244,10 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     values: [string]
   ): string;
   encodeFunctionData(functionFragment: "setClaimer", values: [string]): string;
+  encodeFunctionData(
+    functionFragment: "setContractsHash",
+    values: [BigNumberish]
+  ): string;
   encodeFunctionData(
     functionFragment: "setFeeRebateTierModule",
     values: [string]
@@ -297,6 +307,10 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
   decodeFunctionResult(functionFragment: "claim", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "claimer", data: BytesLike): Result;
   decodeFunctionResult(
+    functionFragment: "contractsHash",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
     functionFragment: "feeRebateTierModule",
     data: BytesLike
   ): Result;
@@ -318,6 +332,10 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setClaimer", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "setContractsHash",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(
     functionFragment: "setFeeRebateTierModule",
     data: BytesLike
@@ -346,14 +364,20 @@ export interface FeeReimbursementAppInterface extends utils.Interface {
 
   events: {
     "BrevisProofUpdated(address)": EventFragment;
+    "ClaimerUpdated(address)": EventFragment;
+    "ContractsHashUpdated(uint256)": EventFragment;
     "FeeRebateAccumulated(address,uint248,uint248,uint248,uint64,uint64)": EventFragment;
+    "FeeRebateTireModuleUpdated(address)": EventFragment;
     "FeeReimbursed(address,uint248)": EventFragment;
     "OwnershipTransferred(address,address)": EventFragment;
     "VkHashesUpdated(bytes32[],uint16[])": EventFragment;
   };
 
   getEvent(nameOrSignatureOrTopic: "BrevisProofUpdated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ClaimerUpdated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "ContractsHashUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "FeeRebateAccumulated"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "FeeRebateTireModuleUpdated"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "FeeReimbursed"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "OwnershipTransferred"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "VkHashesUpdated"): EventFragment;
@@ -363,6 +387,18 @@ export type BrevisProofUpdatedEvent = TypedEvent<[string], { arg0: string }>;
 
 export type BrevisProofUpdatedEventFilter =
   TypedEventFilter<BrevisProofUpdatedEvent>;
+
+export type ClaimerUpdatedEvent = TypedEvent<[string], { arg0: string }>;
+
+export type ClaimerUpdatedEventFilter = TypedEventFilter<ClaimerUpdatedEvent>;
+
+export type ContractsHashUpdatedEvent = TypedEvent<
+  [BigNumber],
+  { arg0: BigNumber }
+>;
+
+export type ContractsHashUpdatedEventFilter =
+  TypedEventFilter<ContractsHashUpdatedEvent>;
 
 export type FeeRebateAccumulatedEvent = TypedEvent<
   [string, BigNumber, BigNumber, BigNumber, BigNumber, BigNumber],
@@ -378,6 +414,14 @@ export type FeeRebateAccumulatedEvent = TypedEvent<
 
 export type FeeRebateAccumulatedEventFilter =
   TypedEventFilter<FeeRebateAccumulatedEvent>;
+
+export type FeeRebateTireModuleUpdatedEvent = TypedEvent<
+  [string],
+  { arg0: string }
+>;
+
+export type FeeRebateTireModuleUpdatedEventFilter =
+  TypedEventFilter<FeeRebateTireModuleUpdatedEvent>;
 
 export type FeeReimbursedEvent = TypedEvent<
   [string, BigNumber],
@@ -466,6 +510,8 @@ export interface FeeReimbursementApp extends BaseContract {
 
     claimer(overrides?: CallOverrides): Promise<[string]>;
 
+    contractsHash(overrides?: CallOverrides): Promise<[BigNumber]>;
+
     feeRebateTierModule(overrides?: CallOverrides): Promise<[string]>;
 
     owner(overrides?: CallOverrides): Promise<[string]>;
@@ -485,6 +531,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
     setClaimer(
       _claimer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<ContractTransaction>;
+
+    setContractsHash(
+      _contractsHash: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<ContractTransaction>;
 
@@ -570,6 +621,8 @@ export interface FeeReimbursementApp extends BaseContract {
 
   claimer(overrides?: CallOverrides): Promise<string>;
 
+  contractsHash(overrides?: CallOverrides): Promise<BigNumber>;
+
   feeRebateTierModule(overrides?: CallOverrides): Promise<string>;
 
   owner(overrides?: CallOverrides): Promise<string>;
@@ -589,6 +642,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
   setClaimer(
     _claimer: string,
+    overrides?: Overrides & { from?: string | Promise<string> }
+  ): Promise<ContractTransaction>;
+
+  setContractsHash(
+    _contractsHash: BigNumberish,
     overrides?: Overrides & { from?: string | Promise<string> }
   ): Promise<ContractTransaction>;
 
@@ -671,6 +729,8 @@ export interface FeeReimbursementApp extends BaseContract {
 
     claimer(overrides?: CallOverrides): Promise<string>;
 
+    contractsHash(overrides?: CallOverrides): Promise<BigNumber>;
+
     feeRebateTierModule(overrides?: CallOverrides): Promise<string>;
 
     owner(overrides?: CallOverrides): Promise<string>;
@@ -687,6 +747,11 @@ export interface FeeReimbursementApp extends BaseContract {
     ): Promise<void>;
 
     setClaimer(_claimer: string, overrides?: CallOverrides): Promise<void>;
+
+    setContractsHash(
+      _contractsHash: BigNumberish,
+      overrides?: CallOverrides
+    ): Promise<void>;
 
     setFeeRebateTierModule(
       _feeRebateTierModule: string,
@@ -737,6 +802,14 @@ export interface FeeReimbursementApp extends BaseContract {
     "BrevisProofUpdated(address)"(arg0?: null): BrevisProofUpdatedEventFilter;
     BrevisProofUpdated(arg0?: null): BrevisProofUpdatedEventFilter;
 
+    "ClaimerUpdated(address)"(arg0?: null): ClaimerUpdatedEventFilter;
+    ClaimerUpdated(arg0?: null): ClaimerUpdatedEventFilter;
+
+    "ContractsHashUpdated(uint256)"(
+      arg0?: null
+    ): ContractsHashUpdatedEventFilter;
+    ContractsHashUpdated(arg0?: null): ContractsHashUpdatedEventFilter;
+
     "FeeRebateAccumulated(address,uint248,uint248,uint248,uint64,uint64)"(
       account?: null,
       feeRebate?: null,
@@ -753,6 +826,13 @@ export interface FeeReimbursementApp extends BaseContract {
       startBlockNumber?: null,
       endBlockNumber?: null
     ): FeeRebateAccumulatedEventFilter;
+
+    "FeeRebateTireModuleUpdated(address)"(
+      arg0?: null
+    ): FeeRebateTireModuleUpdatedEventFilter;
+    FeeRebateTireModuleUpdated(
+      arg0?: null
+    ): FeeRebateTireModuleUpdatedEventFilter;
 
     "FeeReimbursed(address,uint248)"(
       account?: null,
@@ -809,6 +889,8 @@ export interface FeeReimbursementApp extends BaseContract {
 
     claimer(overrides?: CallOverrides): Promise<BigNumber>;
 
+    contractsHash(overrides?: CallOverrides): Promise<BigNumber>;
+
     feeRebateTierModule(overrides?: CallOverrides): Promise<BigNumber>;
 
     owner(overrides?: CallOverrides): Promise<BigNumber>;
@@ -828,6 +910,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
     setClaimer(
       _claimer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<BigNumber>;
+
+    setContractsHash(
+      _contractsHash: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<BigNumber>;
 
@@ -909,6 +996,8 @@ export interface FeeReimbursementApp extends BaseContract {
 
     claimer(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    contractsHash(overrides?: CallOverrides): Promise<PopulatedTransaction>;
+
     feeRebateTierModule(
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
@@ -932,6 +1021,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
     setClaimer(
       _claimer: string,
+      overrides?: Overrides & { from?: string | Promise<string> }
+    ): Promise<PopulatedTransaction>;
+
+    setContractsHash(
+      _contractsHash: BigNumberish,
       overrides?: Overrides & { from?: string | Promise<string> }
     ): Promise<PopulatedTransaction>;
 
