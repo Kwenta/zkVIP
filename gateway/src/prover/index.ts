@@ -119,7 +119,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 
   const receipts = await Promise.all(receiptPromises);
 
-  const validReceipts: Receipt[] = []
+  var validReceipts: Receipt[] = []
   for (let i = 0; i < receipts.length; i++) {
     const receipt = receipts[i];
     if (receipt === undefined) {
@@ -129,7 +129,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       throw new Error("receipts not ready"); 
     }
 
-    validReceipts.concat(devideReceiptIntoCircuitInputReceipts(receipt))
+    validReceipts = validReceipts.concat(devideReceiptIntoCircuitInputReceipts(receipt))
   }
 
   console.debug(`validReceipts.length: ${validReceipts.length}`)
@@ -484,7 +484,6 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
 }
 
 function devideReceiptIntoCircuitInputReceipts(receipt: Receipt) {
-  console.log("receipt", receipt)
   const result: Receipt[] = []
   const data = JSON.parse(receipt.data);
   // JSON.stringify(original)
@@ -513,9 +512,6 @@ function devideReceiptIntoCircuitInputReceipts(receipt: Receipt) {
       account: receipt.account,
     })
   }
-
-  console.log("result", result)
-
   return result
 }
 
