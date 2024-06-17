@@ -97,7 +97,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     }
   })
 
-  console.debug(`receiptIds.length: ${receiptIds.length}`)
   let receiptPromises = Array<Promise<Receipt | undefined>>();
   for (let i = 0; i < receiptIds.length; i++) {
     receiptPromises.push(
@@ -237,7 +236,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     if (isNaN(blkNumber)) {
       console.error("invalid receipt block number", data)
     }
-    console.log(`Add unclaimable receipt blk: ${data.block_num}`)
 
     proofReq.addReceipt(
       new ReceiptData({
@@ -348,7 +346,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     throw new Error("empty receipts"); 
   }
 
-  console.debug(`${debugRequest}`)
+  // console.debug(`${debugRequest}`)
 
   return {proofReq: proofReq, proverIndex: proverIndex};
 };

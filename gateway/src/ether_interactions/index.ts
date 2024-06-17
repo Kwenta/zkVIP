@@ -96,13 +96,6 @@ async function monitorBrevisRequest() {
 }
 
 async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
-  console.log(
-    brevisRequest.address,
-    utvf.brevis_query_hash,
-    utvf.id,
-    process.env.FEE_REIMBURSEMENT,
-  );
-
   const tx = await brevisRequest.sendRequest(
     utvf.brevis_query_hash,
     wallet.address ?? "",
