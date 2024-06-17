@@ -56,7 +56,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   let tradePromises = Array<Promise<Trade | undefined>>();
   for (let i = 0; i < tradeIds.length; i++) {
     tradePromises.push(
-      getTrade(tradeIds[i]).then((value) => {
+      getTrade(tradeIds[i], utvf.account).then((value) => {
         const r = value as Trade;
         if (r === undefined || r === null) {
           return undefined;
