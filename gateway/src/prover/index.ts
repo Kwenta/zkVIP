@@ -486,6 +486,8 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
 
     updateUserTradeVolumeFee(utvf);
   } catch (err) {
+    console.log("err: ", err)  
+
     utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED;
     updateUserTradeVolumeFee(utvf);
     console.error(err);
