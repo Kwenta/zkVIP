@@ -51,15 +51,21 @@ export const getAccountTradesMap = (
 };
 
 export const batchTradesWithSameTxAccount = (trades: Trade[]) => {
+  console.log(`trades: ${trades}, trades length: ${trades.length}`)
+
+
   let map = new Map<string, Trade[]>()
   trades.forEach(trade => {
     const userTrades = map.get(trade.executionTxhash)
     if (userTrades === undefined) {
-      map.set(trade.abstractAccount, [trade])
+      map.set(trade.executionTxhash, [trade])
     } else {
       userTrades.push(trade)
     }
   })
+
+  console.log(`map: ${map}, keys length: ${map.keys.length}`)
+
   const result :Trade[] = []
   for (let [_, trades] of map) {
     const trade = trades.reduce((t0, t1) => {
