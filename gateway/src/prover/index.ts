@@ -87,13 +87,8 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     }
   })
 
-
-  console.debug(`validTrades.length: ${validTrades.length}`)
-
-
   const receiptIds: string[] = []
   validTrades.forEach(trade => {
-    console.debug(`Trade: ${trade.order_fee_flow_tx_receipt_id}, ${trade.execution_tx_receipt_id}`)
     if (trade.order_fee_flow_tx_receipt_id.length > 0) {
       receiptIds.push(trade.order_fee_flow_tx_receipt_id)
     }
@@ -107,6 +102,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   for (let i = 0; i < receiptIds.length; i++) {
     receiptPromises.push(
       getReceipt(receiptIds[i]).then((value) => {
+        console.log("valiue", value)
         const r = value as Receipt;
 
         if (r === undefined || r === null) {
