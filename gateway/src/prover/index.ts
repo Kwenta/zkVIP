@@ -432,7 +432,6 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
 }
 
 async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
-  console.log("Upload utvfOld", utvfOld.id)
   const utvf = await getUserTradeVolumeFee(utvfOld.id)
   const v = utvf as UserTradeVolumeFee
   if (v === undefined || v === null) {
@@ -440,10 +439,12 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
   }
 
   if (utvf.status != PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
-    || v.update_time.getMinutes() <= new Date().getMinutes()
+    && v.update_time.getMinutes() > new Date().getMinutes() - 10
   ) {
     return 
   }
+
+    console.log("Upload utvfOld", utvfOld.id)
 
   utvf.status = PROOF_STATUS_PROOF_UPLOAD_SENT
   await updateUserTradeVolumeFee(utvf)
