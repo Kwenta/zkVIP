@@ -377,7 +377,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
 
     try {
       console.log("send prepare query request", (new Date()).toLocaleString())
-      console.log(`send prepare query request ${ r.proofReq}`)
+      console.log(`send prepare query request ${ r.proofReq.getReceipts()}`)
       const prepareQueryResponse = await brevis.prepareQuery(
         r.proofReq, 
         proofRes.circuit_info, 
