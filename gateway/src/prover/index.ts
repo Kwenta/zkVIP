@@ -102,9 +102,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   for (let i = 0; i < receiptIds.length; i++) {
     receiptPromises.push(
       getReceipt(receiptIds[i]).then((value) => {
-        console.log("valiue", value)
         const r = value as Receipt;
-        console.log("r", r)
 
         if (r === undefined || r === null) {
           return undefined;
@@ -486,6 +484,7 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
 }
 
 function devideReceiptIntoCircuitInputReceipts(receipt: Receipt) {
+  console.log("receipt", receipt)
   const result: Receipt[] = []
   const data = JSON.parse(receipt.data);
   // JSON.stringify(original)
