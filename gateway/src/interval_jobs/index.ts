@@ -43,7 +43,7 @@ export async function prepareNewDayTradeClaims() {
     tsEnd = 1717111000
 
     const result = await getAllTradesWithin30Day(ts30DAgo, tsEnd)
-    console.debug(`result: ${result}`)
+    console.debug(`result.trades.length: ${result.trades.length}`)
     if (result.error !== null) {
       throw result.error
     }
