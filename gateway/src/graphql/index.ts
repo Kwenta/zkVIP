@@ -26,6 +26,9 @@ export const getAllTradesWithin30Day = async (
       return finalResult
     }
 
+    console.debug(`result: ${result}`)
+
+
     if (result.trades.length == 0) {
       return finalResult
     }
