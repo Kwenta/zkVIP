@@ -444,12 +444,10 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
   
   console.log("dadadsa",  moment.utc(v.update_time).unix(), moment.utc(new Date()).unix())
   if (v.status != PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
-    && moment.utc(v.update_time).unix() > moment.utc(new Date()).unix()
+    && moment.utc(v.update_time).unix() > moment.utc(new Date()).unix() - 1200
   ) {
     return 
   }
-
-  console.log("Upload ======>", utvfOld.id)
 
   utvf.status = PROOF_STATUS_PROOF_UPLOAD_SENT
   await updateUserTradeVolumeFee(utvf)
