@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import {
   PROOF_STATUS_BREVIS_QUERY_ERROR,
   PROOF_STATUS_INIT,
+  PROOF_STATUS_PROOF_UPLOAD_SENT,
   PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
   STATUS_INIT,
 } from "../constants/index.ts";
@@ -252,6 +253,22 @@ async function findUserTradeVolumeFees(status: bigint): Promise<any> {
   });
 }
 
+async function findProofToUpload(): Promise<any> {
+  const a = new Date()
+  a.setMinutes(a.getMinutes() - 10)
+  return prisma.user_trade_volume_fee.findMany({
+    take: 10,
+    where: {
+      status: {
+        equals: PROOF_STATUS_PROOF_UPLOAD_SENT,
+      },
+      update_time: {
+        lte: a
+      }
+    },
+  });
+}
+
 async function findTxToBeSent(): Promise<any> {
   return prisma.user_trade_volume_fee.findMany({
     take: 1,
@@ -369,5 +386,6 @@ export {
   insertTrade,
   getTrade,
   updateTrade,
-  findNotReadyTrades
+  findNotReadyTrades,
+  findProofToUpload
 };

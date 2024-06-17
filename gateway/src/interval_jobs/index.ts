@@ -9,6 +9,7 @@ import {
   findNotReadyReceipts, 
   findNotReadyStorages, 
   findNotReadyTrades, 
+  findProofToUpload, 
   findTxToBeSent, 
   findUserExistingUTVF, 
   findUserExistingUTVFByDate, 
@@ -173,9 +174,13 @@ async function prepareUserSwapAmountProof() {
 async function uploadUserSwapAmountProof() {
   try {
     const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED);
+    const pendingProofUploads = await findProofToUpload()
     let promises = Array<Promise<void>>();
     for (let i = 0; i < utvfs.length; i++) {
       promises.push(uploadUserTradeVolumeFeeProof(utvfs[i]));
+    }
+    for (let i = 0; i < pendingProofUploads.length; i++) {
+      promises.push(uploadUserTradeVolumeFeeProof(pendingProofUploads[i]));
     }
     await Promise.all(promises);
   } catch (error) {
