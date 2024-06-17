@@ -22,6 +22,7 @@ import {
 } from "../constants/index.ts";
 import { BigNumber, Contract, ethers } from "ethers";
 import { ReceiptInfo } from "../rpc/index.ts";
+import moment from "moment";
 
 const {
   Brevis,
@@ -440,9 +441,10 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
 
   console.log("Upload utvfOld", utvfOld.id)
 
-  console.debug(`${v.update_time.getUTCMinutes()}, ${v.status}  ${new Date().getUTCMinutes() - 10}`)
+  
+  console.log("dadadsa",  moment.utc(v.update_time).unix(), moment.utc(new Date()).unix())
   if (v.status != PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
-    && v.update_time.getUTCMinutes() > new Date().getUTCMinutes() - 10
+    && moment.utc(v.update_time).unix() > moment.utc(new Date()).unix()
   ) {
     return 
   }
