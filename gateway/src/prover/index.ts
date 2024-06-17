@@ -512,7 +512,6 @@ function devideReceiptIntoCircuitInputReceipts(receipt: Receipt) {
       create_time: receipt.create_time,
       update_time: receipt.update_time,
       should_be_filtered_out: receipt.should_be_filtered_out,
-      reason: receipt.reason,
       account: receipt.account,
     })
   }
