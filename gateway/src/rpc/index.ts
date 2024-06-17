@@ -268,6 +268,7 @@ async function queryTrade(trade: any) {
         fee = fee.add(BigNumber.from(data.fields[i].value))
       }
     } else {
+      console.debug(`data: ${data.fields}`)
       for (var i = 0; i <= (data.fields.length / 4); i++) {
         if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
           console.debug(`tx: ${receipt.tx_hash}, Add size ${BigNumber.from(data.fields[i*4 + 1].value).abs().toString()}, Add price: ${BigNumber.from(data.fields[i*4 + 2].value)}`)
