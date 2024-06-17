@@ -440,9 +440,9 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
 
   console.log("Upload utvfOld", utvfOld.id)
 
-  console.debug(`${v.update_time.getMinutes()}, ${v.status}  ${new Date().getMinutes() - 10}`)
+  console.debug(`${v.update_time.getUTCMinutes()}, ${v.status}  ${new Date().getUTCMinutes() - 10}`)
   if (v.status != PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
-    && v.update_time.getMinutes() > new Date().getMinutes() - 10
+    && v.update_time.getUTCMinutes() > new Date().getUTCMinutes() - 10
   ) {
     return 
   }
