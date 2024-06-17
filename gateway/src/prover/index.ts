@@ -104,6 +104,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       getReceipt(receiptIds[i]).then((value) => {
         console.log("valiue", value)
         const r = value as Receipt;
+        console.log("r", r)
 
         if (r === undefined || r === null) {
           return undefined;
