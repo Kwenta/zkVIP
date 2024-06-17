@@ -45,6 +45,7 @@ async function updateReceipt(
 }
 
 async function getReceipt(id: string): Promise<any> {
+  console.debug(`find receipt: ${id}`)
   return prisma.receipt.findUnique({
     where: {
       id: id,
