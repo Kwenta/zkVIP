@@ -1,7 +1,8 @@
 import { BigNumber, ethers } from "ethers";
 import { DelayedOrderSubmittedEvent, isValidPositionModifiedContract, OrderFlowFeeImposedEvent, OrderFlowFeeImposedEventContractAddress, PositionModifiedEvent, STATUS_READY, TX_TYPE_EXECUTION, TX_TYPE_ORDER_FEE_FLOW } from "../constants/index.ts";
-import { updateReceipt, updateStorage } from "../db/index.ts";
+import { getReceipt, updateReceipt, updateStorage, updateTrade } from "../db/index.ts";
 import { sourceChainProvider } from "../ether_interactions/index.ts";
+import { Receipt } from "../server/type.ts";
 
 export type Log = {
   contract: string,
@@ -145,7 +146,6 @@ function getJSONForOrderFeeFlowTx(
   });
   const data = JSON.stringify(original)
 
-  // 
   return {data: data, logsFound: original.fields.length >= 4 && original.fields.length % 4 == 0 }
 }
 
@@ -224,7 +224,62 @@ function getJSONForExecutionTx(
   return {data: data, logsFound: original.fields.length >= 4 && original.fields.length % 4 == 0}
 }
 
+async function queryTrade(trade: any) {
+  const order_fee_flow_tx_receipt_id = trade.order_fee_flow_tx_receipt_id
+  const receiptPromises = Array<Promise<any>>();
+  if (order_fee_flow_tx_receipt_id.length > 0) {
+    receiptPromises.push(getReceipt(order_fee_flow_tx_receipt_id))
+  }
+
+  const execution_tx_receipt_id = trade.execution_tx_receipt_id
+  
+  if (execution_tx_receipt_id.length === 0) {
+    console.error(`empty execution_tx_receipt_id for trade ${trade.id}`)
+    return 
+  }
+
+  receiptPromises.push(getReceipt(execution_tx_receipt_id))
+
+  // updateTrade()
+
+  const receipts = await Promise.all(receiptPromises);
+
+  var volume = BigNumber.from(0)
+  var fee  = BigNumber.from(0)
+  for (var i = 0; i < receipts.length; i++) {
+    const receipt = receipts[i] as Receipt
+    if (receipt === undefined || receipt === null) {
+      console.debug(`invalid receipt ${receipt}`)
+      return 
+    }
+
+    if (Number(receipt.status) !== Number(STATUS_READY)) {
+      console.debug(`receipt ${receipt.tx_hash} not ready`)
+      return 
+    }
+    const data = JSON.parse(receipt.data);
+
+    if (Number(receipt.transaction_type) === TX_TYPE_ORDER_FEE_FLOW) {
+      for (var i = 1; i < data.fields.length; i+=2) {
+        fee = fee.add(BigNumber.from(data.fields[i].value))
+      }
+    } else {
+      for (var i = 0; i < (data.fields.length / 4); i++) {
+        volume = volume.add(BigNumber.from(data.fields[i*4 + 1].value).abs().mul(BigNumber.from(data.fields[i*4 + 2].value)).div(BigNumber.from("1000000000000000000")))
+        fee = fee.add(BigNumber.from(data.fields[i*4+3].value))
+      }
+    }
+  }
+
+  if (volume.eq(BigNumber.from(trade.volume)) && fee.eq(BigNumber.from(trade.fee))) {
+    await updateTrade(trade.id, STATUS_READY)
+  } else {
+    console.debug(`trade: ${trade.id} volume:${trade.volume}, ${volume.toString()}, fee: ${trade.fee}, ${fee.toString()},`)
+  }
+}
+
 export {
     querySingleReceipt,
     querySingleStorage,
+    queryTrade
 }

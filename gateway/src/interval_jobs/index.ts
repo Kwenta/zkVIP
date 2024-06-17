@@ -8,6 +8,7 @@ import {
 import {
   findNotReadyReceipts, 
   findNotReadyStorages, 
+  findNotReadyTrades, 
   findTxToBeSent, 
   findUserExistingUTVF, 
   findUserExistingUTVFByDate, 
@@ -20,7 +21,7 @@ import {
 import { getAllTradesWithin30Day, getAccountTradesMap, saveTrades } from "../graphql/index.ts";
 import { sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { QueryOrderTxsByAccount } from "../query/index.ts";
-import { querySingleReceipt, querySingleStorage } from "../rpc/index.ts";
+import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
 import { findDayStartTimestamp, findNextDay, getCurrentDay } from "../server/type.ts";
 import moment from "moment";
 import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
@@ -109,6 +110,20 @@ export async function getReceiptInfos() {
     let promises = Array<Promise<void>>();
     for (let i = 0; i < receipts.length; i++) {
       promises.push(querySingleReceipt(receipts[i]));
+    }
+
+    await Promise.all(promises);
+  } catch (error) {
+    console.error("failed to get receipt infos");
+  }
+}
+
+export async function prepareTrades() {
+  try {
+    const trades = await findNotReadyTrades();
+    let promises = Array<Promise<void>>();
+    for (let i = 0; i < trades.length; i++) {
+      promises.push(queryTrade(trades[i]));
     }
 
     await Promise.all(promises);

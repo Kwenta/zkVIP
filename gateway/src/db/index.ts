@@ -79,6 +79,20 @@ async function findNotReadyReceipts(): Promise<any> {
   });
 }
 
+async function findNotReadyTrades(): Promise<any> {
+  var now = new Date();
+  return prisma.trade.findMany({
+    take: 50,
+    where: {
+      status: STATUS_INIT,
+      update_time: {
+        lte: now,
+      },
+    },
+  });
+}
+
+
 async function insertStorage(account: string, key: string, blkNumber: bigint): Promise<any> {
   return prisma.storage.create({
     data: {
@@ -317,13 +331,15 @@ async function getTrade(
 
 async function updateTrade(
   id: string,
-  data: any,
+  status: bigint
 ): Promise<any> {
   return prisma.trade.updateMany({
     where: {
       id: id?.toLowerCase(),
     },
-    data: data,
+    data: {
+      status: status,
+    },
   })
 }
 
@@ -349,5 +365,6 @@ export {
   findTxToBeSent,
   insertTrade,
   getTrade,
-  updateTrade
+  updateTrade,
+  findNotReadyTrades
 };
