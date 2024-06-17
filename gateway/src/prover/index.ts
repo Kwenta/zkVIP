@@ -269,8 +269,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       console.error("invalid receipt block number", orderFeeFlowData)
     }
 
-    console.log(`Add claimable receipt 0 blk: ${orderFeeFlowData.block_num}`)
-
     proofReq.addReceipt(
       new ReceiptData({
         block_num: Number(orderFeeFlowData.block_num),

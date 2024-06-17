@@ -6,7 +6,6 @@ import (
 	"io"
 	"math/big"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/brevis-network/brevis-sdk/sdk"
@@ -182,9 +181,9 @@ type DebugInfo struct {
 }
 
 type DebugReceipt struct {
-	Data   string `json:"data"`
-	TxHash string `json:"tx_hash"`
-	Index  int    `json:"index"`
+	Data   ReceiptData `json:"data"`
+	TxHash string      `json:"tx_hash"`
+	Index  int         `json:"index"`
 }
 
 type ReceiptData struct {
@@ -211,8 +210,6 @@ func TestQ(t *testing.T) {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	// log.Infof("%s ", string(data))
 
 	debugInfo := DebugInfo{}
 	err = json.Unmarshal(data, &debugInfo)
@@ -263,14 +260,15 @@ func TestQ(t *testing.T) {
 }
 
 func GetDebugReceiptData(receipt DebugReceipt) ReceiptData {
-	data := strings.ReplaceAll(receipt.Data, "\\", "")
-	log.Infof("data %s", data)
-	result := ReceiptData{}
-	err := json.Unmarshal([]byte(data), &result)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	return result
+	// data := strings.ReplaceAll(receipt.Data, "\\", "")
+	// log.Infof("data %s", data)
+	// result := ReceiptData{}
+	// err := json.Unmarshal([]byte(data), &result)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// return result
+	return receipt.Data
 }
 
 func ConvertReceiptLogIntoSDKInput(data ReceiptData) sdk.ReceiptData {
