@@ -246,7 +246,7 @@ async function queryTrade(trade: any) {
   var fee  = BigNumber.from(0)
 
   if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
-    console.debug(` receipts.length: ${receipts.length}, ${execution_tx_receipt_id}, ${order_fee_flow_tx_receipt_id}`)
+    console.debug(`receipts.length: ${receipts.length}, ${execution_tx_receipt_id}, ${order_fee_flow_tx_receipt_id}`)
   } 
 
   for (var receiptIndex = 0; receiptIndex < receipts.length; receiptIndex++) {
@@ -270,8 +270,9 @@ async function queryTrade(trade: any) {
       for (let i = 0; i < data.fields.length / 4; i++) {
         if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
           console.debug(`tradeSize: ${data.fields[i*4 + 1].value}, lastPrice: ${data.fields[i*4 + 2].value}`)
-        } 
-        volume = volume.add(BigNumber.from(data.fields[i*4 + 1].value).abs().mul(BigNumber.from(data.fields[i*4 + 2].value)).div(BigNumber.from("1000000000000000000")))
+        }
+        
+        volume = volume.add(BigNumber.from(data.fields[i*4 + 1].value).fromTwos(256).abs().mul(BigNumber.from(data.fields[i*4 + 2].value)).div(BigNumber.from("1000000000000000000")))
         fee = fee.add(BigNumber.from(data.fields[i*4+3].value))
       }
     }
@@ -280,10 +281,7 @@ async function queryTrade(trade: any) {
   if (volume.eq(BigNumber.from(trade.volume)) && fee.eq(BigNumber.from(trade.fee))) {
     await updateTrade(trade.id, STATUS_READY)
   } else {
-    if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
      console.debug(`trade: ${trade.id} volume:${trade.volume}, ${volume.toString()}, fee: ${trade.fee}, ${fee.toString()},`)
-    }
-  
   }
 }
 

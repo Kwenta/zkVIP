@@ -58,7 +58,6 @@ setInterval(prepareNewDayTradeClaims, 60000);
 submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 1000);
 
-
 var deleteDay = 0
 // a()
 // setInterval(a, 30000)
