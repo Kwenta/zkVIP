@@ -132,8 +132,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     validReceipts = validReceipts.concat(devideReceiptIntoCircuitInputReceipts(receipt))
   }
 
-  console.debug(`validReceipts.length: ${validReceipts.length}`)
-
   validReceipts.sort((a,b) => {
     const dataA = JSON.parse(a.data);
     const blkNumberA= Number(dataA.block_num)
@@ -180,7 +178,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 
   var unclaimableTradeReceipts: Receipt[] = []
   unclaimableTrades.forEach(trade => {
-    unclaimableTradeReceipts.concat(validReceipts.filter(receipt => {
+    unclaimableTradeReceipts = unclaimableTradeReceipts.concat(validReceipts.filter(receipt => {
       return receipt.id === trade.execution_tx_receipt_id
     }))
   })
@@ -194,9 +192,9 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     return (Number(bn) >= startBlkNum) && ((Number(bn) <= endBlkNum))
   })
 
-  const claimableTradeOrderFeeFlowReceipts: Receipt[] = []
+  var claimableTradeOrderFeeFlowReceipts: Receipt[] = []
   claimableTrades.forEach(trade => {
-    claimableTradeOrderFeeFlowReceipts.concat(validReceipts.filter(receipt => {
+    claimableTradeOrderFeeFlowReceipts = claimableTradeOrderFeeFlowReceipts.concat(validReceipts.filter(receipt => {
       return receipt.id === trade.order_fee_flow_tx_receipt_id
     }))
   })
@@ -204,7 +202,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 
   var claimableTradeExecutionReceipts: Receipt[] = []
   claimableTrades.forEach(trade => {
-    claimableTradeExecutionReceipts.concat(validReceipts.filter(receipt => {
+    claimableTradeExecutionReceipts = claimableTradeExecutionReceipts.concat(validReceipts.filter(receipt => {
       return receipt.id === trade.execution_tx_receipt_id
     }))
   })
@@ -497,8 +495,6 @@ function devideReceiptIntoCircuitInputReceipts(receipt: Receipt) {
     original.fields.push(data.fields[i * 4 + 1])
     original.fields.push(data.fields[i * 4 + 2])
     original.fields.push(data.fields[i * 4 + 3])
-
-    console.log("original", JSON.stringify(original))
 
     result.push({
       id: receipt.id,
