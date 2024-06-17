@@ -466,6 +466,7 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
     );
    
     utvf.status = PROOF_STATUS_PROOF_UPLOADED;
+    utvf.proof = getProofRes.proof
 
     console.log("Proof uploaded: ", utvf.id, (new Date()).toLocaleString())
 
