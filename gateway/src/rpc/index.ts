@@ -269,7 +269,8 @@ async function queryTrade(trade: any) {
       }
     } else {
       console.debug(`data.fields.length: ${data.fields.length}`)
-      for (var i = 0; i < 1; i++) {
+      for (let i = 0; i < 1; i++) {
+        console.debug(`tx: ${receipt.tx_hash}, Add size ${BigNumber.from(data.fields[i*4 + 1].value).abs().toString()}, Add price: ${BigNumber.from(data.fields[i*4 + 2].value)}`)
         if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
           console.debug(`tx: ${receipt.tx_hash}, Add size ${BigNumber.from(data.fields[i*4 + 1].value).abs().toString()}, Add price: ${BigNumber.from(data.fields[i*4 + 2].value)}`)
           console.debug(`tx: ${receipt.tx_hash}, Add fee ${data.fields[i*4+3].value}`)
