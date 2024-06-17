@@ -245,9 +245,7 @@ async function queryTrade(trade: any) {
   var volume = BigNumber.from(0)
   var fee  = BigNumber.from(0)
 
-  if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
-    console.debug(`receipts.length: ${receipts.length}, ${execution_tx_receipt_id}, ${order_fee_flow_tx_receipt_id}`)
-  } 
+  var debugFee = ""
 
   for (var receiptIndex = 0; receiptIndex < receipts.length; receiptIndex++) {
     const receipt = receipts[receiptIndex] as Receipt
@@ -263,25 +261,31 @@ async function queryTrade(trade: any) {
     const data = JSON.parse(receipt.data);
 
     if (Number(receipt.transaction_type) === TX_TYPE_ORDER_FEE_FLOW) {
+      debugFee += `tx ${receipt.tx_hash} add order flow fee `
       for (var i = 1; i < data.fields.length; i+=2) {
         fee = fee.add(BigNumber.from(data.fields[i].value))
+
+        debugFee += ` fee: ${data.fields[i].value} `
       }
     } else {
+      debugFee += `tx ${receipt.tx_hash} add execution fee `
+
       for (let i = 0; i < data.fields.length / 4; i++) {
-        if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
-          console.debug(`tradeSize: ${data.fields[i*4 + 1].value}, lastPrice: ${data.fields[i*4 + 2].value}`)
-        }
-        
         volume = volume.add(BigNumber.from(data.fields[i*4 + 1].value).fromTwos(256).abs().mul(BigNumber.from(data.fields[i*4 + 2].value)).div(BigNumber.from("1000000000000000000")))
         fee = fee.add(BigNumber.from(data.fields[i*4+3].value))
+
+        debugFee += ` fee: ${data.fields[i*4+3].value} `
       }
     }
   }
 
-  if (volume.eq(BigNumber.from(trade.volume)) && fee.eq(BigNumber.from(trade.fee))) {
-    await updateTrade(trade.id, STATUS_READY)
+  if (!volume.eq(BigNumber.from(trade.volume))) {
+    console.debug(`trade: ${trade.id} volume not match: ${trade.volume}, ${volume.toString()}`)
+  } else if (!fee.eq(BigNumber.from(trade.fee))) {
+    console.debug(`trade: ${trade.id} fee not match: ${trade.fee}, ${fee.toString()}, ${receipts[0].tx_hash} . Debug info: ${debugFee}`)
   } else {
-     console.debug(`trade: ${trade.id} volume:${trade.volume}, ${volume.toString()}, fee: ${trade.fee}, ${fee.toString()},`)
+    await updateTrade(trade.id, STATUS_READY)
+
   }
 }
 
