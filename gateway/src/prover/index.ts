@@ -21,6 +21,7 @@ import {
   TX_TYPE_ORDER_FEE_FLOW,
 } from "../constants/index.ts";
 import { BigNumber, Contract, ethers } from "ethers";
+import { ReceiptInfo } from "../rpc/index.ts";
 
 const {
   Brevis,
@@ -123,7 +124,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       throw new Error("receipts not ready"); 
     }
 
-    validReceipts.push(receipt)
+    validReceipts.concat(devideReceiptIntoCircuitInputReceipts(receipt))
   }
 
   validReceipts.sort((a,b) => {
@@ -327,6 +328,10 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     end: utvf.end_blk_num.toString()
   })
 
+  if (debugReceipts.length === 0) {
+    throw new Error("empty receipts"); 
+  }
+
   console.debug(`${debugRequest}`)
 
   return {proofReq: proofReq, proverIndex: proverIndex};
@@ -456,6 +461,36 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
     updateUserTradeVolumeFee(utvf);
     console.error(err);
   }
+}
+
+function devideReceiptIntoCircuitInputReceipts(receipt: Receipt) {
+  const result: Receipt[] = []
+  const data = JSON.parse(receipt.data);
+  // JSON.stringify(original)
+  for (let i = 0; i < data.fields.length / 4; i++) {
+    let original: ReceiptInfo = {
+      block_num: data.block_num,
+      tx_hash: data.tx_hash,
+      fields: [],
+    };
+    original.fields.push(data.fields[i * 4])
+    original.fields.push(data.fields[i * 4 + 1])
+    original.fields.push(data.fields[i * 4 + 2])
+    original.fields.push(data.fields[i * 4 + 3])
+    result.push({
+      id: receipt.id,
+      tx_hash: receipt.tx_hash,
+      transaction_type: receipt.transaction_type,
+      status: receipt.status,
+      data: JSON.stringify(original),
+      create_time: receipt.create_time,
+      update_time: receipt.update_time,
+      should_be_filtered_out: receipt.should_be_filtered_out,
+      reason: receipt.reason,
+      account: receipt.account,
+    })
+  }
+  return result
 }
 
 export {

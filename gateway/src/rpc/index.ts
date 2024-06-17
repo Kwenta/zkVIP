@@ -3,7 +3,7 @@ import { DelayedOrderSubmittedEvent, isValidPositionModifiedContract, OrderFlowF
 import { updateReceipt, updateStorage } from "../db/index.ts";
 import { sourceChainProvider } from "../ether_interactions/index.ts";
 
-type Log = {
+export type Log = {
   contract: string,
   log_index: number,
   event_id: string,
@@ -11,7 +11,7 @@ type Log = {
   field_index: number,
   value: string,
 } 
-type ReceiptInfo = {
+export type ReceiptInfo = {
   block_num: number,
   tx_hash: string,
   fields: Log[],
