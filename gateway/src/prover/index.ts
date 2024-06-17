@@ -488,7 +488,7 @@ function devideReceiptIntoCircuitInputReceipts(receipt: Receipt) {
   const result: Receipt[] = []
   const data = JSON.parse(receipt.data);
   // JSON.stringify(original)
-  for (let i = 0; i < data.fields.length / 4; i++) {
+  for (var i = 0; i < data.fields.length / 4; i++) {
     let original: ReceiptInfo = {
       block_num: data.block_num,
       tx_hash: data.tx_hash,
@@ -498,6 +498,9 @@ function devideReceiptIntoCircuitInputReceipts(receipt: Receipt) {
     original.fields.push(data.fields[i * 4 + 1])
     original.fields.push(data.fields[i * 4 + 2])
     original.fields.push(data.fields[i * 4 + 3])
+
+    console.log("original", JSON.stringify(original))
+
     result.push({
       id: receipt.id,
       tx_hash: receipt.tx_hash,
@@ -510,6 +513,9 @@ function devideReceiptIntoCircuitInputReceipts(receipt: Receipt) {
       account: receipt.account,
     })
   }
+
+  console.log("result", result)
+
   return result
 }
 
