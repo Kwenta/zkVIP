@@ -451,6 +451,8 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
       return 
     }
     const getProofRes = await provers[r.proverIndex].getProof(utvf.prover_id)
+
+    console.log("getProofRes", getProofRes)
     if (getProofRes.has_err) {
       console.error(getProofRes.err.msg);
       utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
