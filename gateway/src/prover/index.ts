@@ -174,23 +174,54 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     })
   }
 
+  var unclaimableTradeReceipts: Receipt[] = []
+  unclaimableTrades.forEach(trade => {
+    unclaimableTradeReceipts.concat(validReceipts.filter(receipt => {
+      return receipt.id === trade.execution_tx_receipt_id
+    }))
+  })
+
+  if (unclaimableTradeReceipts.length > 4400) {
+    unclaimableTradeReceipts = unclaimableTradeReceipts.slice(0,4400)
+  }
+
   const claimableTrades = validTrades.filter(trade => {
     const bn = trade?.execution_tx_block_number ?? 0
     return (Number(bn) >= startBlkNum) && ((Number(bn) <= endBlkNum))
   })
 
+  const claimableTradeOrderFeeFlowReceipts: Receipt[] = []
+  claimableTrades.forEach(trade => {
+    claimableTradeOrderFeeFlowReceipts.concat(validReceipts.filter(receipt => {
+      return receipt.id === trade.order_fee_flow_tx_receipt_id
+    }))
+  })
+  claimableTradeOrderFeeFlowReceipts.sort(sortByBlk)
+
+  var claimableTradeExecutionReceipts: Receipt[] = []
+  claimableTrades.forEach(trade => {
+    claimableTradeExecutionReceipts.concat(validReceipts.filter(receipt => {
+      return receipt.id === trade.execution_tx_receipt_id
+    }))
+  })
+  claimableTradeExecutionReceipts.sort(sortByBlk)
+
   var proverIndex = -1
-  var claimableReceiptIndex = 0
-  if (unclaimableTrades.length <= 216 && claimableTrades.length <= 20) {
+  var offRIndex = 0 // OrderFeeFlowReceipt index
+  var exeRIndex = 0 // ExecutionReceipt index
+  if (unclaimableTrades.length <= 216 && claimableTradeOrderFeeFlowReceipts.length <= 20) {
     proverIndex = 0
-    claimableReceiptIndex = 216
-  } else if (unclaimableTrades.length <= 412 && claimableTrades.length <= 50) {
+    offRIndex = 216
+    exeRIndex = 236
+  } else if (unclaimableTrades.length <= 412 && claimableTradeOrderFeeFlowReceipts.length <= 50) {
     proverIndex = 1
-    claimableReceiptIndex = 412
-  } else if (unclaimableTrades.length <= 4400 && claimableTrades.length <=300) {
+    offRIndex = 412
+    exeRIndex = 462
+  } else if (unclaimableTrades.length <= 4400 && claimableTradeOrderFeeFlowReceipts.length <=300) {
     proverIndex = 2
-    claimableReceiptIndex = 4400
-  } else if (claimableTrades.length > 300) {
+    offRIndex = 4400
+    exeRIndex = 4700
+  } else if (claimableTradeOrderFeeFlowReceipts.length > 300) {
     console.error("unsupport no claimable trades")
   } else {
     console.error(`claimable trades out of range: ${claimableTrades.length}`)
@@ -198,13 +229,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 
   const debugReceipts: DebugReceipt[] = []
   var unClaimableReceiptIndex = 0
-  unclaimableTrades.forEach(trade => {
-    const receipt = validReceipts.find(value => {
-      return value.id === trade.execution_tx_receipt_id
-    })
-    if (receipt === undefined) {
-      return;
-    }
+  unclaimableTradeReceipts.forEach(receipt => {
     const data = JSON.parse(receipt.data);
     const blkNumber= Number(data.block_num)
     if (isNaN(blkNumber)) {
@@ -223,24 +248,20 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
           new sdk.Field(data.fields[3]), 
         ],
       }),
-      unClaimableReceiptIndex++
+      unClaimableReceiptIndex
     );
 
     debugReceipts.push({
       data: data,
       tx_hash: receipt.tx_hash,
-      index: unClaimableReceiptIndex - 1
+      index: unClaimableReceiptIndex 
     })
+
+    unClaimableReceiptIndex++
   })
 
-  claimableTrades.forEach(trade => {
-    const orderFeeFlowTxReceipt = validReceipts.find(value => {
-      return value.id === trade.order_fee_flow_tx_receipt_id
-    })
-    if (orderFeeFlowTxReceipt === undefined) {
-      return;
-    }
-    const orderFeeFlowData = JSON.parse(orderFeeFlowTxReceipt.data);
+  claimableTradeOrderFeeFlowReceipts.forEach(receipt => {
+    const orderFeeFlowData = JSON.parse(receipt.data);
     const blkNumber= Number(orderFeeFlowData.block_num)
     if (isNaN(blkNumber)) {
       console.error("invalid receipt block number", orderFeeFlowData)
@@ -251,7 +272,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     proofReq.addReceipt(
       new ReceiptData({
         block_num: Number(orderFeeFlowData.block_num),
-        tx_hash: orderFeeFlowTxReceipt.tx_hash,
+        tx_hash: receipt.tx_hash,
         fields: [
           new sdk.Field(orderFeeFlowData.fields[0]),
           new sdk.Field(orderFeeFlowData.fields[1]),
@@ -259,50 +280,43 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
           new sdk.Field(orderFeeFlowData.fields[3]), 
         ],
       }),
-      claimableReceiptIndex++
+      offRIndex
     );
     debugReceipts.push({
       data: orderFeeFlowData,
-      tx_hash: orderFeeFlowTxReceipt.tx_hash,
-      index: claimableReceiptIndex - 1
+      tx_hash: receipt.tx_hash,
+      index: offRIndex
     })
+    offRIndex++
+  })
 
-    const executionTxReceipt = validReceipts.find(value => {
-      return value.id === trade.execution_tx_receipt_id
-    })
-    if (executionTxReceipt === undefined) {
-      return;
+  claimableTradeExecutionReceipts.forEach(receipt => {
+    const data = JSON.parse(receipt.data);
+    const blkNumber= Number(data.block_num)
+    if (isNaN(blkNumber)) {
+      console.error("invalid receipt block number", data)
     }
-    const executionTxReceiptData = JSON.parse(executionTxReceipt.data);
-    const executionTxReceiptBlk= Number(executionTxReceiptData.block_num)
-    if (isNaN(executionTxReceiptBlk)) {
-      console.error(`invalid receipt id ${executionTxReceipt.id} block number ${executionTxReceipt.data}`)
-    }
-
-    console.log(`Add claimable receipt 1 blk: ${executionTxReceiptData.block_num}`)
 
     proofReq.addReceipt(
       new ReceiptData({
-        block_num: Number(executionTxReceiptData.block_num),
-        tx_hash: executionTxReceipt.tx_hash,
+        block_num: Number(data.block_num),
+        tx_hash: receipt.tx_hash,
         fields: [
-          new sdk.Field(executionTxReceiptData.fields[0]),
-          new sdk.Field(executionTxReceiptData.fields[1]),
-          new sdk.Field(executionTxReceiptData.fields[2]),
-          new sdk.Field(executionTxReceiptData.fields[3]), 
+          new sdk.Field(data.fields[0]),
+          new sdk.Field(data.fields[1]),
+          new sdk.Field(data.fields[2]),
+          new sdk.Field(data.fields[3]), 
         ],
       }),
-      claimableReceiptIndex++
+      exeRIndex
     );
-
     debugReceipts.push({
-      data: executionTxReceiptData,
-      tx_hash: executionTxReceipt.tx_hash,
-      index: claimableReceiptIndex -  1
+      data: data,
+      tx_hash: receipt.tx_hash,
+      index: exeRIndex
     })
-
+    exeRIndex++
   })
-
   const account = BigNumber.from(utvf.account).toHexString()
   
   const contracts = PositionModifiedContracts.map(value => {
@@ -314,7 +328,6 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     contracts.push(asUint248("0x0"))
   }
 
-  isValidPositionModifiedContract
   proofReq.setCustomInput({
     Account: asUint248(account),
     StartBlkNum: asUint248(utvf.start_blk_num.toString()),
@@ -494,6 +507,22 @@ function devideReceiptIntoCircuitInputReceipts(receipt: Receipt) {
     })
   }
   return result
+}
+
+function sortByBlk(a: Receipt, b: Receipt) {
+    const dataA = JSON.parse(a.data);
+    const blkNumberA= Number(dataA.block_num)
+
+    const dataB = JSON.parse(b.data);
+    const blkNumberB= Number(dataB.block_num)
+    
+    if (blkNumberA < blkNumberB) {
+      return -1
+    } else if (blkNumberA == blkNumberB && Number(dataA.transaction_type) < Number(dataB.transaction_type)) {
+      return -1
+    } else {
+      return 1
+    } 
 }
 
 export {
