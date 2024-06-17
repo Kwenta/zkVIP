@@ -441,8 +441,6 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
 
   console.log("Upload utvfOld", utvfOld.id)
 
-  
-  console.log("dadadsa",  moment.utc(v.update_time).unix(), moment.utc(new Date()).unix())
   if (v.status != PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
     && moment.utc(v.update_time).unix() > moment.utc(new Date()).unix() - 1200
   ) {
@@ -486,8 +484,6 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
 
     updateUserTradeVolumeFee(utvf);
   } catch (err) {
-    console.log("err: ", err)  
-
     utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED;
     updateUserTradeVolumeFee(utvf);
     console.error(err);
