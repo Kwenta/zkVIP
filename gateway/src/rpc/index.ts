@@ -261,14 +261,18 @@ async function queryTrade(trade: any) {
 
     if (Number(receipt.transaction_type) === TX_TYPE_ORDER_FEE_FLOW) {
       for (var i = 1; i < data.fields.length; i+=2) {
-        console.debug(`Add fee ${data.fields[i].value}`)
+        if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
+          console.debug(`tx: ${receipt.tx_hash}, Add fee ${data.fields[i].value}`)
+        }
+        
         fee = fee.add(BigNumber.from(data.fields[i].value))
       }
     } else {
       for (var i = 0; i < (data.fields.length / 4); i++) {
-        console.debug(`Add size ${BigNumber.from(data.fields[i*4 + 1].value).abs().toString()},
-        Add price: ${BigNumber.from(data.fields[i*4 + 2].value)}`)
-
+        if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
+          console.debug(`tx: ${receipt.tx_hash}, Add size ${BigNumber.from(data.fields[i*4 + 1].value).abs().toString()}, Add price: ${BigNumber.from(data.fields[i*4 + 2].value)}`)
+          console.debug(`tx: ${receipt.tx_hash}, Add fee ${data.fields[i*4+3].value}`)
+        } 
         volume = volume.add(BigNumber.from(data.fields[i*4 + 1].value).abs().mul(BigNumber.from(data.fields[i*4 + 2].value)).div(BigNumber.from("1000000000000000000")))
         fee = fee.add(BigNumber.from(data.fields[i*4+3].value))
       }
