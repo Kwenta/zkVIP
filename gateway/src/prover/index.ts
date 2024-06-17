@@ -37,7 +37,7 @@ const {
 const provers = [
   new Prover("222.74.153.228:53248"),
   new Prover("222.74.153.228:53249"),
-  new Prover("222.74.153.228:53250")
+  new Prover("222.74.153.228:53351")
 ]
 
 type DebugReceipt = {
