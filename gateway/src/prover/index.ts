@@ -58,11 +58,14 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   for (let i = 0; i < tradeIds.length; i++) {
     tradePromises.push(
       getTrade(tradeIds[i], utvf.account).then((value) => {
-        const r = value as Trade;
-        if (r === undefined || r === null) {
+        const t = value as Trade;
+        if (t === undefined || t === null) {
           return undefined;
+        }
+        if (t.status !== STATUS_READY) {
+          throw new Error(`trade ${t.id} not ready`); 
         } else {
-          return r;
+          return t;
         }
       })
     );

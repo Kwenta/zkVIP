@@ -29,6 +29,7 @@ async function querySingleReceipt(receipt: any) {
           console.debug("tx receipt not found", receipt.id, receipt.tx_hash);
           return;
         }
+
         if (Number(receipt.transaction_type) === TX_TYPE_ORDER_FEE_FLOW) {
           const result = getJSONForOrderFeeFlowTx(receipt.account, transactionReceipt)
           if (result.logsFound) {
@@ -36,6 +37,7 @@ async function querySingleReceipt(receipt: any) {
               receipt.id,
               STATUS_READY,
               result.data,
+              transactionReceipt.logs.length > 128
             );
           }
         } else if (Number(receipt.transaction_type) === TX_TYPE_EXECUTION) {
@@ -45,6 +47,7 @@ async function querySingleReceipt(receipt: any) {
               receipt.id,
               STATUS_READY,
               result.data,
+              transactionReceipt.logs.length > 128
             );
           } 
         } else {

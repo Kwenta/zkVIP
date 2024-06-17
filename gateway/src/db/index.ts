@@ -29,6 +29,7 @@ async function updateReceipt(
   id: string,
   status: bigint,
   data: string,
+  should_be_filtered_out: boolean,
 ): Promise<any> {
   return prisma.receipt.update({
     where: {
@@ -37,6 +38,7 @@ async function updateReceipt(
     data: {
       status: status,
       update_time: new Date(),
+      should_be_filtered_out: should_be_filtered_out,
       data: data,
     },
   });
