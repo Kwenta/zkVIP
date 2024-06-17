@@ -470,13 +470,15 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
       await updateUserTradeVolumeFee(utvf)
       return;
     }
+    console.debug("Proof get", getProofRes.proof)
 
     await brevis.submitProof(
       utvf.brevis_query_hash,
       Number(utvf.dst_chain_id),
       getProofRes.proof
     );
-   
+    console.debug("Proof uploaded")
+
     utvf.status = PROOF_STATUS_PROOF_UPLOADED;
     utvf.proof = getProofRes.proof
 
