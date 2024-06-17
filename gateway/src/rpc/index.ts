@@ -244,6 +244,11 @@ async function queryTrade(trade: any) {
 
   var volume = BigNumber.from(0)
   var fee  = BigNumber.from(0)
+
+  if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
+    console.debug(` receipts.length: ${receipts.length}, ${execution_tx_receipt_id}, ${order_fee_flow_tx_receipt_id}`)
+  } 
+
   for (var i = 0; i < receipts.length; i++) {
     const receipt = receipts[i] as Receipt
     if (receipt === undefined || receipt === null) {
