@@ -339,6 +339,7 @@ async function updateTrade(
     },
     data: {
       status: status,
+      update_time: new Date(),
     },
   })
 }

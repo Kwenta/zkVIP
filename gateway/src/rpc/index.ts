@@ -240,8 +240,6 @@ async function queryTrade(trade: any) {
 
   receiptPromises.push(getReceipt(execution_tx_receipt_id))
 
-  // updateTrade()
-
   const receipts = await Promise.all(receiptPromises);
 
   var volume = BigNumber.from(0)
@@ -268,9 +266,11 @@ async function queryTrade(trade: any) {
         fee = fee.add(BigNumber.from(data.fields[i].value))
       }
     } else {
-      console.debug(`data.fields.length: ${data.fields.length}`)
-      for (let i = 0; i < 1; i++) {
-        console.debug(`tx: ${receipt.tx_hash}, Add size ${BigNumber.from(data.fields[i*4 + 1].value).abs().toString()}, Add price: ${BigNumber.from(data.fields[i*4 + 2].value)}`)
+      if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
+        console.debug(`data.fields.length: ${data.fields.length}`)
+      } 
+      
+      for (let i = 0; i < data.fields.length / 4; i++) {
         if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
           console.debug(`tx: ${receipt.tx_hash}, Add size ${BigNumber.from(data.fields[i*4 + 1].value).abs().toString()}, Add price: ${BigNumber.from(data.fields[i*4 + 2].value)}`)
           console.debug(`tx: ${receipt.tx_hash}, Add fee ${data.fields[i*4+3].value}`)
@@ -285,8 +285,7 @@ async function queryTrade(trade: any) {
     await updateTrade(trade.id, STATUS_READY)
   } else {
     if (trade.id === "0012e46a-084b-4307-988c-9b3d8f01a8c3") {
-
-    console.debug(`trade: ${trade.id} volume:${trade.volume}, ${volume.toString()}, fee: ${trade.fee}, ${fee.toString()},`)
+     console.debug(`trade: ${trade.id} volume:${trade.volume}, ${volume.toString()}, fee: ${trade.fee}, ${fee.toString()},`)
     }
   
   }
