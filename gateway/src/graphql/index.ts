@@ -166,9 +166,6 @@ const postGraphQL = async (
   skip: number,
   first: number,
 ) =>   {
-
-  tsStart = 1716938200
-  tsEnd = 1717111000
   const abstractAccount = "0x2b5020804E38541E1be53902f526793892c96464"
   try {
     const response = await fetch(GraphRpc, {
