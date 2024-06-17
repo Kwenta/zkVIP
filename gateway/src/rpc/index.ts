@@ -249,8 +249,8 @@ async function queryTrade(trade: any) {
     console.debug(` receipts.length: ${receipts.length}, ${execution_tx_receipt_id}, ${order_fee_flow_tx_receipt_id}`)
   } 
 
-  for (var i = 0; i < receipts.length; i++) {
-    const receipt = receipts[i] as Receipt
+  for (var receiptIndex = 0; receiptIndex < receipts.length; receiptIndex++) {
+    const receipt = receipts[receiptIndex] as Receipt
     if (receipt === undefined || receipt === null) {
       console.debug(`invalid receipt ${receipt}`)
       return 
