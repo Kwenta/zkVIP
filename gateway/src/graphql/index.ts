@@ -62,7 +62,7 @@ export const batchTradesWithSameTxAccount = (trades: Trade[]) => {
   })
 
   const result :Trade[] = []
-  for (let [key, trades] of map) {
+  for (let [_, trades] of map) {
     const trade = trades.reduce((t0, t1) => {
       var orderFeeFlowTxhash = t0.orderFeeFlowTxhash
       if (orderFeeFlowTxhash.length === 0) {
@@ -80,8 +80,6 @@ export const batchTradesWithSameTxAccount = (trades: Trade[]) => {
       }
     })
     
-    console.log(`key: ${key}, trade.executionTxhash: ${trade.executionTxhash}, trade.orderFeeFlowTxhash: ${trade.orderFeeFlowTxhash}`)
-
     result.push(trade)
   }
 
