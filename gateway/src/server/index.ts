@@ -58,11 +58,6 @@ setInterval(prepareNewDayTradeClaims, 60000);
 submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 1000);
 
-findUserExistingUTVFByDate("0x26d7b548d1dcd88ba3b5b684a11c02d5b9ea4f72", BigInt(20240617)).then(a => {
-  console.debug("dsada", a)
-})
-
-
 var deleteDay = 0
 // a()
 // setInterval(a, 30000)

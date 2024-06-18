@@ -348,8 +348,12 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   }
 
   // console.debug(`${debugRequest}`)
+  if (debugReceipts.length === 0) {
+    return {proofReq: proofReq, proverIndex: -1}
+  }
+  const lastReceiptIndex = debugReceipts[debugReceipts.length-1].index
   if (
-    (debugReceipts.length > 256 && proverIndex == 0) || (debugReceipts.length > 512 && proverIndex == 1)
+    (lastReceiptIndex > 256 && proverIndex == 0) || (lastReceiptIndex > 512 && proverIndex == 1)
   )  {
     console.debug(`Invalid debug request ${utvf.id}, provdeIndex: ${proverIndex}, debugReceipts.length: ${debugReceipts.length}, ${debugRequest}`)
     return {proofReq: proofReq, proverIndex: -1}

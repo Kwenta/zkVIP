@@ -261,12 +261,10 @@ async function queryTrade(trade: any) {
   for (var receiptIndex = 0; receiptIndex < receipts.length; receiptIndex++) {
     const receipt = receipts[receiptIndex] as Receipt
     if (receipt === undefined || receipt === null) {
-      console.debug(`invalid receipt ${receipt}`)
       return 
     }
 
     if (Number(receipt.status) !== Number(STATUS_READY)) {
-      console.debug(`receipt ${receipt.tx_hash} not ready`)
       return 
     }
     const data = JSON.parse(receipt.data);
