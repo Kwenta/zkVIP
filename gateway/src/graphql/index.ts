@@ -51,9 +51,6 @@ export const getAccountTradesMap = (
 };
 
 export const batchTradesWithSameTxAccount = (trades: Trade[]) => {
-  console.log(`trades: ${trades}, trades length: ${trades.length}`)
-
-
   let map = new Map<string, Trade[]>()
   trades.forEach(trade => {
     const userTrades = map.get(trade.executionTxhash)
@@ -66,8 +63,6 @@ export const batchTradesWithSameTxAccount = (trades: Trade[]) => {
 
   const result :Trade[] = []
   for (let [key, trades] of map) {
-    console.log(`key: ${key}, trades length: ${trades.length}`)
-
     const trade = trades.reduce((t0, t1) => {
       var orderFeeFlowTxhash = t0.orderFeeFlowTxhash
       if (orderFeeFlowTxhash.length === 0) {
@@ -174,7 +169,6 @@ const postGraphQL = async (
   skip: number,
   first: number,
 ) =>   {
-  const abstractAccount = "0x2b5020804E38541E1be53902f526793892c96464"
   try {
     const response = await fetch(GraphRpc, {
       method: "POST",
@@ -184,7 +178,7 @@ const postGraphQL = async (
       },
       body: JSON.stringify({
         query: `{
-            futuresTrades(orderBy: timestamp, orderDirection: asc, skip: ${skip}, first: ${first}, where: {timestamp_gte:"${tsStart}", timestamp_lte: "${tsEnd}", abstractAccount: "${abstractAccount}",}) 
+            futuresTrades(orderBy: timestamp, orderDirection: asc, skip: ${skip}, first: ${first}, where: {timestamp_gte:"${tsStart}", timestamp_lte: "${tsEnd}",}) 
           {
             blockNumber,
             account,

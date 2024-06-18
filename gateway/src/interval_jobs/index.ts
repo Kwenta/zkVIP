@@ -40,10 +40,6 @@ export async function prepareNewDayTradeClaims() {
     var tsStart = yesterdayStart.utc().unix()
     var tsEnd = yesterdayStart.utc().add(1, "d").unix() - 1
     var ts30DAgo = yesterdayStart.utc().subtract(29, "d").unix()
-
-    ts30DAgo = 1716938200
-    tsStart = 1717024600
-    tsEnd = 1717111000
     
     const result = await getAllTradesWithin30Day(ts30DAgo, tsEnd)
     if (result.error !== null) {

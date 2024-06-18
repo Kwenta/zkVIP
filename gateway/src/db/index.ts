@@ -179,7 +179,6 @@ async function insertUserTradeVolumeFee(
 }
 
 async function updateUserTradeVolumeFee(utvf: any): Promise<any> {
-  console.log("update utvf", utvf)
   return prisma.user_trade_volume_fee.update({
     where: {
       id: utvf.id,

@@ -98,7 +98,6 @@ async function a() {
         claimableLength: claimableTrades.length,
         unclaimableLength: trades.length-claimableTrades.length,
       })
-      // console.log(`account ${account} claimable trades: ${claimableTrades.length} and unclaimable trades ${trades.length-claimableTrades.length}`)
     }
   
     tradesInfos.sort((a,b) => {
