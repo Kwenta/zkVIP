@@ -65,6 +65,8 @@ export async function prepareNewDayTradeClaims() {
       if (utvf != undefined && utvf != null && utvf && Number(utvf.status) > 1)  {
         // no need to update trade infos
         continue;
+      } else if (utvf != undefined && utvf != null && utvf && Number(utvf.status) == 1) {
+        // no need to insert account trade infos
       } else {
         const src_chain_id = BigInt(process.env.SRC_CHAIN_ID ?? 10);
         const dst_chain_id = BigInt(process.env.DST_CHAIN_ID ?? 10);
