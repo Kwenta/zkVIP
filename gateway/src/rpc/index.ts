@@ -30,6 +30,14 @@ async function querySingleReceipt(receipt: any) {
           return;
         }
 
+        var shouldBeFilteredOut = transactionReceipt.logs.length > 128
+
+        transactionReceipt.logs.forEach(log => {
+          if (log.data.length >= 1000) {
+            shouldBeFilteredOut = true
+          }
+        })
+
         if (Number(receipt.transaction_type) === TX_TYPE_ORDER_FEE_FLOW) {
           const result = getJSONForOrderFeeFlowTx(receipt.account, transactionReceipt)
           if (result.logsFound) {
@@ -37,7 +45,7 @@ async function querySingleReceipt(receipt: any) {
               receipt.id,
               STATUS_READY,
               result.data,
-              transactionReceipt.logs.length > 128
+              shouldBeFilteredOut
             );
           }
         } else if (Number(receipt.transaction_type) === TX_TYPE_EXECUTION) {
@@ -47,7 +55,7 @@ async function querySingleReceipt(receipt: any) {
               receipt.id,
               STATUS_READY,
               result.data,
-              transactionReceipt.logs.length > 128
+              shouldBeFilteredOut
             );
           } 
         } else {

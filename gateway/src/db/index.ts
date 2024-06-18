@@ -202,6 +202,17 @@ async function updateUserTradeVolumeFee(utvf: any): Promise<any> {
   });
 }
 
+async function updateUserTradeVolumeFeeRequestSent(id: any, request_sent: any): Promise<any> {
+  return prisma.user_trade_volume_fee.update({
+    where: {
+      id: id,
+    },
+    data: {
+      request_sent: request_sent,
+    },
+  });
+}
+
 async function getUserTradeVolumeFee(id: string): Promise<any> {
   return prisma.user_trade_volume_fee.findUnique({
     where: {
@@ -387,5 +398,6 @@ export {
   getTrade,
   updateTrade,
   findNotReadyTrades,
-  findProofToUpload
+  findProofToUpload,
+  updateUserTradeVolumeFeeRequestSent
 };

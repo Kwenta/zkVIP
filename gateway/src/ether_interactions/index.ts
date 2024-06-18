@@ -6,6 +6,7 @@ import {
   findUserExistingUTVF,
   updateBrevisRequestStatus,
   updateUserTradeVolumeFee,
+  updateUserTradeVolumeFeeRequestSent,
 } from "../db/index.ts";
 import {
   PROOF_STATUS_ONCHAIN_VERIFIED,
@@ -104,16 +105,17 @@ async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
       value: 0,
     }
   );
-  utvf.request_sent = true
-  updateUserTradeVolumeFee(utvf)
+  updateUserTradeVolumeFeeRequestSent(utvf.id, true)
 
-  const receipt = await tx.wait();
-  if (receipt.status == 1) {
-    utvf.request_sent = true
-    updateUserTradeVolumeFee(utvf)
-  } else {
-    utvf.request_sent = false
-    updateUserTradeVolumeFee(utvf)
+  try {
+    const receipt = await tx.wait();
+    if (receipt.status == 1) {
+      updateUserTradeVolumeFeeRequestSent(utvf.id, true)
+    } else {
+      updateUserTradeVolumeFeeRequestSent(utvf.id, false)
+    }
+  } catch {
+    updateUserTradeVolumeFeeRequestSent(utvf.id, false)
   }
 }
 
