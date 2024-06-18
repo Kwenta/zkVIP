@@ -208,25 +208,45 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   })
   claimableTradeExecutionReceipts.sort(sortByBlk)
 
+  if (claimableTradeOrderFeeFlowReceipts.length !== claimableTradeExecutionReceipts.length) {
+    claimableTrades.forEach(trade => {
+      const orderFeeFlowR = validReceipts.filter(receipt => {
+        return receipt.id === trade.order_fee_flow_tx_receipt_id
+      })
+
+      const exR = validReceipts.filter(receipt => {
+        return receipt.id === trade.execution_tx_receipt_id
+      })
+
+      if (orderFeeFlowR.length !== exR.length) {
+        console.debug(`OR,ER not match: ${trade.id}, ${orderFeeFlowR.length}, ${exR.length}`)
+      }
+    })
+  }
+
   var proverIndex = -1
   var offRIndex = 0 // OrderFeeFlowReceipt index
   var exeRIndex = 0 // ExecutionReceipt index
-  if (unclaimableTradeReceipts.length <= 216 && claimableTradeOrderFeeFlowReceipts.length <= 20) {
+  if (unclaimableTradeReceipts.length <= 216 
+      && claimableTradeOrderFeeFlowReceipts.length <= 20
+      && claimableTradeExecutionReceipts.length <= 20) {
     proverIndex = 0
     offRIndex = 216
     exeRIndex = 236
-  } else if (unclaimableTradeReceipts.length <= 412 && claimableTradeOrderFeeFlowReceipts.length <= 50) {
+  } else if (unclaimableTradeReceipts.length <= 412 
+    && claimableTradeOrderFeeFlowReceipts.length <= 50
+    && claimableTradeExecutionReceipts.length <= 50) {
     proverIndex = 1
     offRIndex = 412
     exeRIndex = 462
-  } else if (unclaimableTradeReceipts.length <= 4400 && claimableTradeOrderFeeFlowReceipts.length <=300) {
+  } else if (unclaimableTradeReceipts.length <= 4400 
+    && claimableTradeOrderFeeFlowReceipts.length <=300
+    && claimableTradeExecutionReceipts.length <= 300) {
     proverIndex = 2
     offRIndex = 4400
     exeRIndex = 4700
-  } else if (claimableTradeOrderFeeFlowReceipts.length > 300) {
-    console.error("unsupport no claimable trades")
   } else {
-    console.error(`claimable trades out of range: ${claimableTrades.length}`)
+    console.error(`${utvf.id}: ${utvf.account}, ${utvf.ymd}, claimable trades out of range: unclaimableTradeReceipts.length  ${unclaimableTradeReceipts.length}; claimableTradeOrderFeeFlowReceipts.length ${claimableTradeOrderFeeFlowReceipts.length}; claimableTradeExecutionReceipts.length ${claimableTradeExecutionReceipts.length}`)
   }
 
   const debugReceipts: DebugReceipt[] = []
