@@ -181,7 +181,10 @@ async function insertUserTradeVolumeFee(
 async function updateUserTradeVolumeFee(utvf: any): Promise<any> {
   return prisma.user_trade_volume_fee.update({
     where: {
-      id: utvf.id,
+      account_ymd: {
+        account: utvf.account?.toLowerCase(),
+        ymd: utvf.ymd,
+      }
     },
     data: {
       volume: utvf.volume,
@@ -203,7 +206,7 @@ async function updateUserTradeVolumeFee(utvf: any): Promise<any> {
 }
 
 async function updateUserTradeVolumeFeeRequestSent(id: any, request_sent: any): Promise<any> {
-  return prisma.user_trade_volume_fee.update({
+  return prisma.user_trade_volume_fee.updateMany({
     where: {
       id: id,
     },
@@ -213,10 +216,16 @@ async function updateUserTradeVolumeFeeRequestSent(id: any, request_sent: any): 
   });
 }
 
-async function getUserTradeVolumeFee(id: string): Promise<any> {
+async function getUserTradeVolumeFee(  
+  account: string,
+  ymd: bigint
+): Promise<any> {
   return prisma.user_trade_volume_fee.findUnique({
     where: {
-      id: id,
+      account_ymd: {
+        account: account?.toLowerCase(),
+        ymd: ymd,
+      }
     },
   });
 }
@@ -243,12 +252,12 @@ async function findUserExistingUTVFByDate(
   account: string,
   ymd: bigint,
 ): Promise<any> {
-  return prisma.user_trade_volume_fee.findFirst({
+  return prisma.user_trade_volume_fee.findUnique({
     where: {
-      account: account?.toLowerCase(),
-      ymd: {
-        equals: ymd,
-      },
+      account_ymd: {
+        account: account?.toLowerCase(),
+        ymd: ymd,
+      }
     },
   });
 }
