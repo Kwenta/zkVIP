@@ -44,7 +44,7 @@ app.use((req, res, next) => {
 getReceiptInfos().then();
 setInterval(getReceiptInfos, 1000);
 prepareUserTradeVolumeFees().then();
-setInterval(prepareUserTradeVolumeFees, 2000);
+setInterval(prepareUserTradeVolumeFees, 10000);
 
 prepareTrades().then();
 setInterval(prepareTrades, 1000);
