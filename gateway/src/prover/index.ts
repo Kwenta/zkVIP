@@ -392,7 +392,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
   await updateUserTradeVolumeFee(utvf)
   try {
     const r = await buildUserTradeVolumeFeeProofReq(utvf);
-    console.log("User Circuit Proof Request Sent: ", utvf.id, (new Date()).toLocaleString())
+    console.log("User Circuit Proof Request Sent: ", r.proverIndex, utvf.id, (new Date()).toLocaleString())
     if (r.proverIndex < 0) {
       console.log("Cannot proceed cause prover index is invalid", utvf.id, (new Date()).toLocaleString())
       return 
