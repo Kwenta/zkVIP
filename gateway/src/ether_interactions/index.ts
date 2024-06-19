@@ -105,17 +105,13 @@ async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
       value: 0,
     }
   );
-  updateUserTradeVolumeFeeRequestSent(utvf.id, true)
+  updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
 
   try {
     const receipt = await tx.wait();
-    if (receipt.status == 1) {
-      updateUserTradeVolumeFeeRequestSent(utvf.id, true)
-    } else {
-      updateUserTradeVolumeFeeRequestSent(utvf.id, false)
-    }
+    updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, receipt.status == 1)
   } catch {
-    updateUserTradeVolumeFeeRequestSent(utvf.id, false)
+    updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, false)
   }
 }
 

@@ -205,10 +205,13 @@ async function updateUserTradeVolumeFee(utvf: any): Promise<any> {
   });
 }
 
-async function updateUserTradeVolumeFeeRequestSent(id: any, request_sent: any): Promise<any> {
-  return prisma.user_trade_volume_fee.updateMany({
+async function updateUserTradeVolumeFeeRequestSent(account: string, ymd: bigint, request_sent: any): Promise<any> {
+  return prisma.user_trade_volume_fee.update({
     where: {
-      id: id,
+      account_ymd: {
+        account: account?.toLowerCase(),
+        ymd: ymd,
+      },
     },
     data: {
       request_sent: request_sent,
