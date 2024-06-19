@@ -69,7 +69,8 @@ model trade {
   create_time                  DateTime @default(now()) @db.Timestamptz(6)
   update_time                  DateTime @default(now()) @db.Timestamptz(6)
   status                       BigInt   @default(0)
-  id                           String   @id
   account                      String   @default("")
   fee                          String   @default("")
+
+  @@id([execution_tx_receipt_id, account])
 }
