@@ -9,6 +9,11 @@ type PostGraphQLRes = {
   error: Error | null
 }
 
+type AccountTrades = {
+  trades: Trade[],
+  account: string,
+}
+
 export const getAllTradesWithin30Day = async (
   ts30Ago: number,
   tsClaimDayEnd: number
@@ -35,7 +40,7 @@ export const getAllTradesWithin30Day = async (
   }
 };
 
-export const getAccountTradesMap = (
+export const getAccountTradesList = (
   trades: Trade[]
 )  => {
   let map = new Map<string, Trade[]>()
@@ -47,7 +52,24 @@ export const getAccountTradesMap = (
       userTrades.push(trade)
     }
   })
-  return map
+
+  const accountTradesList: AccountTrades[] = []
+  for (let [account, trades] of map) { 
+    accountTradesList.push({
+      account: account,
+      trades: trades,
+    })
+  }   
+
+  accountTradesList.sort((a,b) => {
+    if (a.trades.length < b.trades.length) {
+      return -1
+    } else {
+      return 1
+    }
+  })
+
+  return accountTradesList
 };
 
 export const batchTradesWithSameTxAccount = (trades: Trade[]) => {

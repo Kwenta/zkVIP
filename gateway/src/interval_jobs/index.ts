@@ -19,7 +19,7 @@ import {
   insertUserTradeVolumeFee,
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
-import { getAllTradesWithin30Day, getAccountTradesMap, saveTrades } from "../graphql/index.ts";
+import { getAllTradesWithin30Day, getAccountTradesList, saveTrades } from "../graphql/index.ts";
 import { sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { QueryOrderTxsByAccount } from "../query/index.ts";
 import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
@@ -46,8 +46,10 @@ export async function prepareNewDayTradeClaims() {
       throw result.error
     }
 
-    const accountTradesMap = getAccountTradesMap(result.trades)
-    for (let [account, trades] of accountTradesMap) {      
+    const accountTradesList = getAccountTradesList(result.trades)
+    for (var i = 0; i < accountTradesList.length; i++) {
+      const trades = accountTradesList[i].trades
+      const account = accountTradesList[i].account
       if (trades.length === 0) {
         continue
       }

@@ -28,7 +28,7 @@ import {
 import { validTimeNumber, UserTradeVolumeFee, findNextDay, findDayStartTimestamp, findDayEndTimestamp } from "./type.ts";
 import { BigNumber } from "ethers";
 import moment from "moment";
-import { getAccountTradesMap, getAllTradesWithin30Day } from "../graphql/index.ts";
+import { getAccountTradesList, getAllTradesWithin30Day } from "../graphql/index.ts";
 import { error } from "console";
 
 const app = express();
@@ -71,15 +71,16 @@ async function a() {
   const ts30DAgo = yesterdayStart.utc().subtract(29, "d").unix()
 
   getAllTradesWithin30Day(ts30DAgo, tsEnd).then(result => {
-    const accountTradesMap = getAccountTradesMap(result.trades)
+    const accountTradesList = getAccountTradesList(result.trades)
   
     type TradesInfo = {
       tradeLength: number,
       unclaimableLength: number,
       claimableLength: number,
     }
-    const tradesInfos: TradesInfo[] = []
-    for (let [account, trades] of accountTradesMap) {      
+    const tradesInfos: TradesInfo[] = []      
+    for (var i = 0; i < accountTradesList.length; i++) {
+      const trades = accountTradesList[i].trades
       if (trades.length === 0) {
         tradesInfos.push({
           tradeLength: 0,
