@@ -277,7 +277,7 @@ async function findUserTradeVolumeFees(status: bigint): Promise<any> {
 
 async function findProofToUpload(): Promise<any> {
   const a = new Date()
-  a.setMinutes(a.getMinutes() - 10)
+  a.setMinutes(a.getMinutes() - 3)
   return prisma.user_trade_volume_fee.findMany({
     take: 10,
     where: {
