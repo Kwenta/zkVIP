@@ -159,8 +159,7 @@ async function insertUserTradeVolumeFee(
   ymd: bigint,
 ): Promise<any> {
   console.log(
-    `Insert user trade volume fee: src_chain_id: ${src_chain_id}, dst_chain_id: ${dst_chain_id}, 
-      account: ${account}, owner: ${owner}, ymd: ${ymd}`
+    `Insert user trade volume fee: src_chain_id: ${src_chain_id}, dst_chain_id: ${dst_chain_id}, account: ${account}, owner: ${owner}, ymd: ${ymd}`
   )
   return prisma.user_trade_volume_fee.create({
     data: {
