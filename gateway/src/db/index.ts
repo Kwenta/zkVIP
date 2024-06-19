@@ -344,7 +344,6 @@ async function insertTrade(
 ): Promise<any> {
   return prisma.trade.create({
     data: {
-      id: uuidv4(),
       order_fee_flow_tx_receipt_id: order_fee_flow_tx_receipt_id,
       execution_tx_receipt_id: execution_tx_receipt_id,
       execution_tx_block_number: BigInt(trade.blockNumber),
@@ -362,21 +361,27 @@ async function getTrade(
   execution_tx_receipt_id: string,
   account: string,
 ): Promise<any> {
-  return prisma.trade.findFirst({
+  return prisma.trade.findUnique({
     where: {
-      account: account,
-      execution_tx_receipt_id: execution_tx_receipt_id,
+      execution_tx_receipt_id_account: {
+        account: account,
+        execution_tx_receipt_id: execution_tx_receipt_id,
+      }
     }
   })
 }
 
 async function updateTrade(
-  id: string,
+  execution_tx_receipt_id: string,
+  account: string,
   status: bigint
 ): Promise<any> {
-  return prisma.trade.updateMany({
+  return prisma.trade.update({
     where: {
-      id: id?.toLowerCase(),
+      execution_tx_receipt_id_account: {
+        account: account,
+        execution_tx_receipt_id: execution_tx_receipt_id,
+      }
     },
     data: {
       status: status,

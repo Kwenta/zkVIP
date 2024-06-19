@@ -290,13 +290,10 @@ async function queryTrade(trade: any) {
 
   if (!volume.eq(BigNumber.from(trade.volume))) {
     console.error(`trade: ${trade.id} volume not match: ${trade.volume}, ${volume.toString()}`)
-    await updateTrade(trade.id, STATUS_READY)
   } else if (!fee.eq(BigNumber.from(trade.fee))) {
     console.error(`trade: ${trade.id} fee not match: ${trade.fee}, ${fee.toString()}, ${receipts[0].tx_hash} . Debug info: ${debugFee}`)
-    await updateTrade(trade.id, STATUS_READY)
-  } else {
-    await updateTrade(trade.id, STATUS_READY)
   }
+  await updateTrade(trade.execution_tx_receipt_id, trade.account, STATUS_READY)
 }
 
 export {
