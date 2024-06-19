@@ -8,6 +8,8 @@ import {
 import {
   findNotReadyReceipts, 
   findNotReadyStorages, 
+  findNotReadyTrades, 
+  findProofToUpload, 
   findTxToBeSent, 
   findUserExistingUTVF, 
   findUserExistingUTVFByDate, 
@@ -20,7 +22,7 @@ import {
 import { getAllTradesWithin30Day, getAccountTradesMap, saveTrades } from "../graphql/index.ts";
 import { sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { QueryOrderTxsByAccount } from "../query/index.ts";
-import { querySingleReceipt, querySingleStorage } from "../rpc/index.ts";
+import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
 import { findDayStartTimestamp, findNextDay, getCurrentDay } from "../server/type.ts";
 import moment from "moment";
 import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
@@ -35,10 +37,10 @@ export async function prepareNewDayTradeClaims() {
     }
 
     const yesterdayStart = moment.utc(yesterday.toString(), "YYYYMMDD", true)
-    const tsStart = yesterdayStart.utc().unix()
-    const tsEnd = yesterdayStart.utc().add(1, "d").unix() - 1
-    const ts30DAgo = yesterdayStart.utc().subtract(29, "d").unix()
-
+    var tsStart = yesterdayStart.utc().unix()
+    var tsEnd = yesterdayStart.utc().add(1, "d").unix() - 1
+    var ts30DAgo = yesterdayStart.utc().subtract(29, "d").unix()
+    
     const result = await getAllTradesWithin30Day(ts30DAgo, tsEnd)
     if (result.error !== null) {
       throw result.error
@@ -63,6 +65,8 @@ export async function prepareNewDayTradeClaims() {
       if (utvf != undefined && utvf != null && utvf && Number(utvf.status) > 1)  {
         // no need to update trade infos
         continue;
+      } else if (utvf != undefined && utvf != null && utvf && Number(utvf.status) == 1) {
+        // no need to insert account trade infos
       } else {
         const src_chain_id = BigInt(process.env.SRC_CHAIN_ID ?? 10);
         const dst_chain_id = BigInt(process.env.DST_CHAIN_ID ?? 10);
@@ -113,6 +117,20 @@ export async function getReceiptInfos() {
   }
 }
 
+export async function prepareTrades() {
+  try {
+    const trades = await findNotReadyTrades();
+    let promises = Array<Promise<void>>();
+    for (let i = 0; i < trades.length; i++) {
+      promises.push(queryTrade(trades[i]));
+    }
+
+    await Promise.all(promises);
+  } catch (error) {
+    console.error("failed to get receipt infos");
+  }
+}
+
 export async function getStorageInfos() {
   try {
     const storages = await findNotReadyStorages();
@@ -154,9 +172,13 @@ async function prepareUserSwapAmountProof() {
 async function uploadUserSwapAmountProof() {
   try {
     const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED);
+    const pendingProofUploads = await findProofToUpload()
     let promises = Array<Promise<void>>();
     for (let i = 0; i < utvfs.length; i++) {
       promises.push(uploadUserTradeVolumeFeeProof(utvfs[i]));
+    }
+    for (let i = 0; i < pendingProofUploads.length; i++) {
+      promises.push(uploadUserTradeVolumeFeeProof(pendingProofUploads[i]));
     }
     await Promise.all(promises);
   } catch (error) {
@@ -173,6 +195,6 @@ export async function submitUserSwapAmountTx() {
     }
     await Promise.all(promises);
   } catch (error) {
-    console.error("failed to submit tx", error);
+    // console.error("failed to submit tx", error);
   }
 }

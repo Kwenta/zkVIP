@@ -6,6 +6,7 @@ import {
   findUserExistingUTVF,
   updateBrevisRequestStatus,
   updateUserTradeVolumeFee,
+  updateUserTradeVolumeFeeRequestSent,
 } from "../db/index.ts";
 import {
   PROOF_STATUS_ONCHAIN_VERIFIED,
@@ -96,13 +97,6 @@ async function monitorBrevisRequest() {
 }
 
 async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
-  console.log(
-    brevisRequest.address,
-    utvf.brevis_query_hash,
-    utvf.id,
-    process.env.FEE_REIMBURSEMENT,
-  );
-
   const tx = await brevisRequest.sendRequest(
     utvf.brevis_query_hash,
     wallet.address ?? "",
@@ -111,16 +105,13 @@ async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
       value: 0,
     }
   );
-  utvf.request_sent = true
-  updateUserTradeVolumeFee(utvf)
+  updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
 
-  const receipt = await tx.wait();
-  if (receipt.status == 1) {
-    utvf.request_sent = true
-    updateUserTradeVolumeFee(utvf)
-  } else {
-    utvf.request_sent = false
-    updateUserTradeVolumeFee(utvf)
+  try {
+    const receipt = await tx.wait();
+    updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, receipt.status == 1)
+  } catch {
+    updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, false)
   }
 }
 

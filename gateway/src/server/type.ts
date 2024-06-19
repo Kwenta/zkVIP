@@ -32,7 +32,6 @@ type Receipt = {
   create_time: Date;
   update_time: Date;
   should_be_filtered_out: boolean;
-  reason: string;
   account: string;
   transaction_type: bigint,
 };

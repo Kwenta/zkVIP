@@ -1,6 +1,6 @@
 import { error } from "console";
 import { GraphRpc, Trade } from "./common.ts";
-import { getReceiptByHash, getTrade, insertReceipt, insertTrade, updateTrade } from "../db/index.ts";
+import { getReceiptByHash, getTrade, insertReceipt, insertTrade } from "../db/index.ts";
 import { TX_TYPE_EXECUTION, TX_TYPE_ORDER_FEE_FLOW } from "../constants/index.ts";
 import { BigNumber } from "ethers";
 
@@ -55,11 +55,12 @@ export const batchTradesWithSameTxAccount = (trades: Trade[]) => {
   trades.forEach(trade => {
     const userTrades = map.get(trade.executionTxhash)
     if (userTrades === undefined) {
-      map.set(trade.abstractAccount, [trade])
+      map.set(trade.executionTxhash, [trade])
     } else {
       userTrades.push(trade)
     }
   })
+
   const result :Trade[] = []
   for (let [_, trades] of map) {
     const trade = trades.reduce((t0, t1) => {
@@ -78,7 +79,7 @@ export const batchTradesWithSameTxAccount = (trades: Trade[]) => {
         feesPaid: BigNumber.from(t0.feesPaid).add(t1.feesPaid).toString()
       }
     })
-      
+    
     result.push(trade)
   }
 
@@ -175,7 +176,7 @@ const postGraphQL = async (
       },
       body: JSON.stringify({
         query: `{
-            futuresTrades(orderBy: timestamp, orderDirection: asc, skip: ${skip}, first: ${first}, where: {timestamp_gte:"${tsStart}", timestamp_lte: "${tsEnd}"}) 
+            futuresTrades(orderBy: timestamp, orderDirection: asc, skip: ${skip}, first: ${first}, where: {timestamp_gte:"${tsStart}", timestamp_lte: "${tsEnd}",}) 
           {
             blockNumber,
             account,

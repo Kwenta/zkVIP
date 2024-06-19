@@ -8,21 +8,22 @@ datasource db {
 }
 
 model receipt {
-  id               String    @id
-  tx_hash          String?
-  status           BigInt?
-  data             String?
-  create_time      DateTime? @db.Timestamptz(6)
-  update_time      DateTime? @db.Timestamptz(6)
-  account          String?
-  transaction_type BigInt    @default(0)
+  id                     String    @id
+  tx_hash                String?
+  status                 BigInt?
+  data                   String?
+  create_time            DateTime? @db.Timestamptz(6)
+  update_time            DateTime? @db.Timestamptz(6)
+  account                String?
+  transaction_type       BigInt    @default(0)
+  should_be_filtered_out Boolean   @default(false)
 }
 
 model user_trade_volume_fee {
-  id                String    @id
+  id                String
   src_chain_id      BigInt?
   dst_chain_id      BigInt?
-  account           String?
+  account           String
   volume            String?
   fee               String?
   trade_ids         String?
@@ -40,6 +41,8 @@ model user_trade_volume_fee {
   start_blk_num     BigInt    @default(0)
   end_blk_num       BigInt    @default(0)
   owner_address     String    @default("")
+
+  @@id([account, ymd])
 }
 
 model storage {

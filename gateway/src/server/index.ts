@@ -1,5 +1,5 @@
 import express from "express";
-import { findUserExistingUTVF, getUserTradeVolumeFee, insertUserTradeVolumeFee } from "../db/index.ts";
+import { findUserExistingUTVF, findUserExistingUTVFByDate, getUserTradeVolumeFee, insertUserTradeVolumeFee } from "../db/index.ts";
 import {
   PROOF_STATUS_ONCHAIN_VERIFIED,
   
@@ -17,6 +17,7 @@ import {
   getReceiptInfos,
   getStorageInfos,
   prepareNewDayTradeClaims,
+  prepareTrades,
   prepareUserTradeVolumeFees,
   submitUserSwapAmountTx,
 } from "../interval_jobs/index.ts";
@@ -43,7 +44,10 @@ app.use((req, res, next) => {
 getReceiptInfos().then();
 setInterval(getReceiptInfos, 1000);
 prepareUserTradeVolumeFees().then();
-setInterval(prepareUserTradeVolumeFees, 2000);
+setInterval(prepareUserTradeVolumeFees, 10000);
+
+prepareTrades().then();
+setInterval(prepareTrades, 1000);
 
 monitorFeeAccumulated();
 monitorBrevisRequest();
@@ -53,7 +57,6 @@ setInterval(prepareNewDayTradeClaims, 60000);
 
 submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 1000);
-
 
 var deleteDay = 0
 // a()
@@ -95,7 +98,6 @@ async function a() {
         claimableLength: claimableTrades.length,
         unclaimableLength: trades.length-claimableTrades.length,
       })
-      // console.log(`account ${account} claimable trades: ${claimableTrades.length} and unclaimable trades ${trades.length-claimableTrades.length}`)
     }
   
     tradesInfos.sort((a,b) => {

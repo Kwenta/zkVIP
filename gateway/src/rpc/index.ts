@@ -1,9 +1,10 @@
 import { BigNumber, ethers } from "ethers";
 import { DelayedOrderSubmittedEvent, isValidPositionModifiedContract, OrderFlowFeeImposedEvent, OrderFlowFeeImposedEventContractAddress, PositionModifiedEvent, STATUS_READY, TX_TYPE_EXECUTION, TX_TYPE_ORDER_FEE_FLOW } from "../constants/index.ts";
-import { updateReceipt, updateStorage } from "../db/index.ts";
+import { getReceipt, updateReceipt, updateStorage, updateTrade } from "../db/index.ts";
 import { sourceChainProvider } from "../ether_interactions/index.ts";
+import { Receipt } from "../server/type.ts";
 
-type Log = {
+export type Log = {
   contract: string,
   log_index: number,
   event_id: string,
@@ -11,7 +12,7 @@ type Log = {
   field_index: number,
   value: string,
 } 
-type ReceiptInfo = {
+export type ReceiptInfo = {
   block_num: number,
   tx_hash: string,
   fields: Log[],
@@ -28,6 +29,15 @@ async function querySingleReceipt(receipt: any) {
           console.debug("tx receipt not found", receipt.id, receipt.tx_hash);
           return;
         }
+
+        var shouldBeFilteredOut = transactionReceipt.logs.length > 128
+
+        transactionReceipt.logs.forEach(log => {
+          if (log.data.length >= 1000) {
+            shouldBeFilteredOut = true
+          }
+        })
+
         if (Number(receipt.transaction_type) === TX_TYPE_ORDER_FEE_FLOW) {
           const result = getJSONForOrderFeeFlowTx(receipt.account, transactionReceipt)
           if (result.logsFound) {
@@ -35,6 +45,7 @@ async function querySingleReceipt(receipt: any) {
               receipt.id,
               STATUS_READY,
               result.data,
+              shouldBeFilteredOut
             );
           }
         } else if (Number(receipt.transaction_type) === TX_TYPE_EXECUTION) {
@@ -44,6 +55,7 @@ async function querySingleReceipt(receipt: any) {
               receipt.id,
               STATUS_READY,
               result.data,
+              shouldBeFilteredOut
             );
           } 
         } else {
@@ -145,7 +157,6 @@ function getJSONForOrderFeeFlowTx(
   });
   const data = JSON.stringify(original)
 
-  // 
   return {data: data, logsFound: original.fields.length >= 4 && original.fields.length % 4 == 0 }
 }
 
@@ -224,7 +235,72 @@ function getJSONForExecutionTx(
   return {data: data, logsFound: original.fields.length >= 4 && original.fields.length % 4 == 0}
 }
 
+async function queryTrade(trade: any) {
+  const order_fee_flow_tx_receipt_id = trade.order_fee_flow_tx_receipt_id
+  const receiptPromises = Array<Promise<any>>();
+  if (order_fee_flow_tx_receipt_id.length > 0) {
+    receiptPromises.push(getReceipt(order_fee_flow_tx_receipt_id))
+  }
+
+  const execution_tx_receipt_id = trade.execution_tx_receipt_id
+  
+  if (execution_tx_receipt_id.length === 0) {
+    console.error(`empty execution_tx_receipt_id for trade ${trade.id}`)
+    return 
+  }
+
+  receiptPromises.push(getReceipt(execution_tx_receipt_id))
+
+  const receipts = await Promise.all(receiptPromises);
+
+  var volume = BigNumber.from(0)
+  var fee  = BigNumber.from(0)
+
+  var debugFee = ""
+
+  for (var receiptIndex = 0; receiptIndex < receipts.length; receiptIndex++) {
+    const receipt = receipts[receiptIndex] as Receipt
+    if (receipt === undefined || receipt === null) {
+      return 
+    }
+
+    if (Number(receipt.status) !== Number(STATUS_READY)) {
+      return 
+    }
+    const data = JSON.parse(receipt.data);
+
+    if (Number(receipt.transaction_type) === TX_TYPE_ORDER_FEE_FLOW) {
+      debugFee += `tx ${receipt.tx_hash} add order flow fee `
+      for (var i = 1; i < data.fields.length; i+=2) {
+        fee = fee.add(BigNumber.from(data.fields[i].value))
+
+        debugFee += ` fee: ${data.fields[i].value} `
+      }
+    } else {
+      debugFee += `tx ${receipt.tx_hash} add execution fee `
+
+      for (let i = 0; i < data.fields.length / 4; i++) {
+        volume = volume.add(BigNumber.from(data.fields[i*4 + 1].value).fromTwos(256).abs().mul(BigNumber.from(data.fields[i*4 + 2].value)).div(BigNumber.from("1000000000000000000")))
+        fee = fee.add(BigNumber.from(data.fields[i*4+3].value))
+
+        debugFee += ` fee: ${data.fields[i*4+3].value} `
+      }
+    }
+  }
+
+  if (!volume.eq(BigNumber.from(trade.volume))) {
+    console.error(`trade: ${trade.id} volume not match: ${trade.volume}, ${volume.toString()}`)
+    await updateTrade(trade.id, STATUS_READY)
+  } else if (!fee.eq(BigNumber.from(trade.fee))) {
+    console.error(`trade: ${trade.id} fee not match: ${trade.fee}, ${fee.toString()}, ${receipts[0].tx_hash} . Debug info: ${debugFee}`)
+    await updateTrade(trade.id, STATUS_READY)
+  } else {
+    await updateTrade(trade.id, STATUS_READY)
+  }
+}
+
 export {
     querySingleReceipt,
     querySingleStorage,
+    queryTrade
 }

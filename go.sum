@@ -119,6 +119,8 @@ github.com/brevis-network/brevis-sdk v0.0.0-20240611040125-92138fdd7a64 h1:HE/LL
 github.com/brevis-network/brevis-sdk v0.0.0-20240611040125-92138fdd7a64/go.mod h1:vo/l0O5xqXffsTK00zTi9Jc9t6slbgluVYo/dIl8Cd0=
 github.com/brevis-network/brevis-sdk v0.0.0-20240611070311-8b84acddde13 h1:FdYUBOkJbGB9NVu7D6qfxJ14HdWn8alpvDWliFkrFZo=
 github.com/brevis-network/brevis-sdk v0.0.0-20240611070311-8b84acddde13/go.mod h1:vo/l0O5xqXffsTK00zTi9Jc9t6slbgluVYo/dIl8Cd0=
+github.com/brevis-network/brevis-sdk v0.0.0-20240619023958-51a7e2d4de75 h1:7UMp6kpAMcHdkJf7JgXapzeTYX5Yr8dCHT8aRtdv09Q=
+github.com/brevis-network/brevis-sdk v0.0.0-20240619023958-51a7e2d4de75/go.mod h1:vo/l0O5xqXffsTK00zTi9Jc9t6slbgluVYo/dIl8Cd0=
 github.com/brevis-network/zk-utils v0.0.0-20240223081048-7daf41d41dee h1:Cdwp9DUDjTdALs7M0px0y36Y1XqR1hUe2Sud3BP+EYc=
 github.com/brevis-network/zk-utils v0.0.0-20240223081048-7daf41d41dee/go.mod h1:qdDGBm7848xJ08PKSsFnpmUD7qw7yZXo1qMO5HUkr7E=
 github.com/btcsuite/btcd/btcec/v2 v2.2.0/go.mod h1:U7MHm051Al6XmscBQ0BoNydpOTsFAn707034b5nY8zU=
