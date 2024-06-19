@@ -106,13 +106,7 @@ async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
     }
   );
   updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
-
-  try {
-    const receipt = await tx.wait();
-    updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, receipt.status == 1)
-  } catch {
-    updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, false)
-  }
+  console.log(`tx: ${tx.hash} sent for ${utvf.account}, ${utvf.ymd}`)
 }
 
 
