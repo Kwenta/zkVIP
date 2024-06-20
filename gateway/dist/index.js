@@ -565,7 +565,6 @@ var insertOrFindTrade = async (execution_tx_receipt_id, order_fee_flow_tx_receip
     );
   }
   if (trade === void 0 || trade === null) {
-    console.error(`failed to insert trade for order_fee_flow_tx_receipt_id: ${order_fee_flow_tx_receipt_id}, execution_tx_receipt_id: ${execution_tx_receipt_id}, trade: ${tradeInfo}`);
     return "";
   }
   return trade.execution_tx_receipt_id;
@@ -3789,7 +3788,7 @@ async function queryTrade(trade) {
   }
   const execution_tx_receipt_id = trade.execution_tx_receipt_id;
   if (execution_tx_receipt_id.length === 0) {
-    console.error(`empty execution_tx_receipt_id for trade ${trade.id}`);
+    console.error(`empty execution_tx_receipt_id for trade ${trade.account}-${trade.execution_tx_receipt_id}`);
     return;
   }
   receiptPromises.push(getReceipt(execution_tx_receipt_id));
@@ -3822,9 +3821,9 @@ async function queryTrade(trade) {
     }
   }
   if (!volume.eq(import_ethers13.BigNumber.from(trade.volume))) {
-    console.error(`trade: ${trade.id} volume not match: ${trade.volume}, ${volume.toString()}`);
+    console.error(`trade: ${trade.account}-${trade.execution_tx_receipt_id} volume not match: ${trade.volume}, ${volume.toString()}`);
   } else if (!fee.eq(import_ethers13.BigNumber.from(trade.fee))) {
-    console.error(`trade: ${trade.id} fee not match: ${trade.fee}, ${fee.toString()}, ${receipts[0].tx_hash} . Debug info: ${debugFee}`);
+    console.error(`trade: ${trade.account}-${trade.execution_tx_receipt_id} fee not match: ${trade.fee}, ${fee.toString()}, ${receipts[0].tx_hash} . Debug info: ${debugFee}`);
   }
   await updateTrade(trade.execution_tx_receipt_id, trade.account, STATUS_READY);
 }
