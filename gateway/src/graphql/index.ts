@@ -167,7 +167,6 @@ const insertOrFindTrade = async(
       )
   }
   if (trade === undefined || trade === null) {
-    console.error(`failed to insert trade for order_fee_flow_tx_receipt_id: ${order_fee_flow_tx_receipt_id}, execution_tx_receipt_id: ${execution_tx_receipt_id}, trade: ${tradeInfo}`)
     return ""  
   }
 
