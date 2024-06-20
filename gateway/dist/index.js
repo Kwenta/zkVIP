@@ -541,7 +541,12 @@ var saveTrades = async (trades, account) => {
   }
   const results = await Promise.all(promises);
   return results.reduce(
-    (accumulator, currentValue) => accumulator + "," + currentValue
+    (accumulator, currentValue) => {
+      if (currentValue.length === 0) {
+        return accumulator
+      } 
+      return accumulator + "," + currentValue
+    }
   );
 };
 var insertOrFindTrade = async (execution_tx_receipt_id, order_fee_flow_tx_receipt_id, tradeInfo) => {
@@ -554,7 +559,8 @@ var insertOrFindTrade = async (execution_tx_receipt_id, order_fee_flow_tx_receip
     );
   }
   if (trade === void 0 || trade === null) {
-    throw new Error(`failed to insert trade for order_fee_flow_tx_receipt_id: ${order_fee_flow_tx_receipt_id}, execution_tx_receipt_id: ${execution_tx_receipt_id}, trade: ${tradeInfo}`);
+    console.error(`failed to insert trade for order_fee_flow_tx_receipt_id: ${order_fee_flow_tx_receipt_id}, execution_tx_receipt_id: ${execution_tx_receipt_id}, trade: ${tradeInfo}`)
+    return ""
   }
   return trade.execution_tx_receipt_id;
 };

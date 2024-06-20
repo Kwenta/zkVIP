@@ -354,6 +354,8 @@ async function insertTrade(
       create_time: new Date(),
       update_time: new Date(), 
     }
+  }).catch((reason) => {
+    return undefined;
   })
 }
 
