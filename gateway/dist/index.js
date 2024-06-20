@@ -399,7 +399,6 @@ async function getDailyTrack(year_month_day) {
 async function insertTrade(trade, order_fee_flow_tx_receipt_id, execution_tx_receipt_id) {
   return prisma.trade.create({
     data: {
-      id: (0, import_uuid.v4)(),
       order_fee_flow_tx_receipt_id,
       execution_tx_receipt_id,
       execution_tx_block_number: BigInt(trade.blockNumber),
@@ -410,20 +409,27 @@ async function insertTrade(trade, order_fee_flow_tx_receipt_id, execution_tx_rec
       create_time: /* @__PURE__ */ new Date(),
       update_time: /* @__PURE__ */ new Date()
     }
+  }).catch((reason) => {
+    return void 0;
   });
 }
 async function getTrade(execution_tx_receipt_id, account) {
-  return prisma.trade.findFirst({
+  return prisma.trade.findUnique({
     where: {
-      account,
-      execution_tx_receipt_id
+      execution_tx_receipt_id_account: {
+        account,
+        execution_tx_receipt_id
+      }
     }
   });
 }
-async function updateTrade(id, status) {
-  return prisma.trade.updateMany({
+async function updateTrade(execution_tx_receipt_id, account, status) {
+  return prisma.trade.update({
     where: {
-      id: id?.toLowerCase()
+      execution_tx_receipt_id_account: {
+        account,
+        execution_tx_receipt_id
+      }
     },
     data: {
       status,
@@ -543,9 +549,9 @@ var saveTrades = async (trades, account) => {
   return results.reduce(
     (accumulator, currentValue) => {
       if (currentValue.length === 0) {
-        return accumulator
-      } 
-      return accumulator + "," + currentValue
+        return accumulator;
+      }
+      return accumulator + "," + currentValue;
     }
   );
 };
@@ -559,8 +565,8 @@ var insertOrFindTrade = async (execution_tx_receipt_id, order_fee_flow_tx_receip
     );
   }
   if (trade === void 0 || trade === null) {
-    console.error(`failed to insert trade for order_fee_flow_tx_receipt_id: ${order_fee_flow_tx_receipt_id}, execution_tx_receipt_id: ${execution_tx_receipt_id}, trade: ${tradeInfo}`)
-    return ""
+    console.error(`failed to insert trade for order_fee_flow_tx_receipt_id: ${order_fee_flow_tx_receipt_id}, execution_tx_receipt_id: ${execution_tx_receipt_id}, trade: ${tradeInfo}`);
+    return "";
   }
   return trade.execution_tx_receipt_id;
 };
@@ -803,7 +809,7 @@ var buildUserTradeVolumeFeeProofReq = async (utvf) => {
         return receipt.id === trade.execution_tx_receipt_id;
       });
       if (orderFeeFlowR.length !== exR.length) {
-        console.debug(`OR,ER not match: ${trade.id}, ${orderFeeFlowR.length}, ${exR.length}`);
+        console.debug(`OR,ER not match for: ${trade.account}-${trade.execution_tx_receipt_id}, ${orderFeeFlowR.length}, ${exR.length}`);
       }
     });
   }
@@ -949,7 +955,7 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld) {
   await updateUserTradeVolumeFee(utvf);
   try {
     const r = await buildUserTradeVolumeFeeProofReq(utvf);
-    console.log("User Circuit Proof Request Sent: ", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
+    console.log("User Circuit Proof Request Sent: ", r.proverIndex, utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
     if (r.proverIndex < 0) {
       console.log("Cannot proceed cause prover index is invalid", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
       return;
@@ -3817,13 +3823,10 @@ async function queryTrade(trade) {
   }
   if (!volume.eq(import_ethers13.BigNumber.from(trade.volume))) {
     console.error(`trade: ${trade.id} volume not match: ${trade.volume}, ${volume.toString()}`);
-    await updateTrade(trade.id, STATUS_READY);
   } else if (!fee.eq(import_ethers13.BigNumber.from(trade.fee))) {
     console.error(`trade: ${trade.id} fee not match: ${trade.fee}, ${fee.toString()}, ${receipts[0].tx_hash} . Debug info: ${debugFee}`);
-    await updateTrade(trade.id, STATUS_READY);
-  } else {
-    await updateTrade(trade.id, STATUS_READY);
   }
+  await updateTrade(trade.execution_tx_receipt_id, trade.account, STATUS_READY);
 }
 
 // src/interval_jobs/index.ts

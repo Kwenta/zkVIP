@@ -219,7 +219,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       })
 
       if (orderFeeFlowR.length !== exR.length) {
-        console.debug(`OR,ER not match: ${trade.id}, ${orderFeeFlowR.length}, ${exR.length}`)
+        console.debug(`OR,ER not match for: ${trade.account}-${trade.execution_tx_receipt_id}, ${orderFeeFlowR.length}, ${exR.length}`)
       }
     })
   }

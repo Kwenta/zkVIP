@@ -143,7 +143,12 @@ export const saveTrades = async (
 
   const results = await Promise.all(promises);
   return results.reduce(
-    (accumulator, currentValue) => accumulator + "," + currentValue
+    (accumulator, currentValue) => {
+      if (currentValue.length === 0) {
+        return accumulator
+      } 
+      return accumulator + "," + currentValue
+    }
   );
 }
 
@@ -162,7 +167,8 @@ const insertOrFindTrade = async(
       )
   }
   if (trade === undefined || trade === null) {
-    throw new Error(`failed to insert trade for order_fee_flow_tx_receipt_id: ${order_fee_flow_tx_receipt_id}, execution_tx_receipt_id: ${execution_tx_receipt_id}, trade: ${tradeInfo}`)
+    console.error(`failed to insert trade for order_fee_flow_tx_receipt_id: ${order_fee_flow_tx_receipt_id}, execution_tx_receipt_id: ${execution_tx_receipt_id}, trade: ${tradeInfo}`)
+    return ""  
   }
 
   return trade.execution_tx_receipt_id
