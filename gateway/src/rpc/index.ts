@@ -245,7 +245,7 @@ async function queryTrade(trade: any) {
   const execution_tx_receipt_id = trade.execution_tx_receipt_id
   
   if (execution_tx_receipt_id.length === 0) {
-    console.error(`empty execution_tx_receipt_id for trade ${trade.id}`)
+    console.error(`empty execution_tx_receipt_id for trade ${trade.account}-${trade.execution_tx_receipt_id}`)
     return 
   }
 
@@ -289,9 +289,9 @@ async function queryTrade(trade: any) {
   }
 
   if (!volume.eq(BigNumber.from(trade.volume))) {
-    console.error(`trade: ${trade.id} volume not match: ${trade.volume}, ${volume.toString()}`)
+    console.error(`trade: ${trade.account}-${trade.execution_tx_receipt_id} volume not match: ${trade.volume}, ${volume.toString()}`)
   } else if (!fee.eq(BigNumber.from(trade.fee))) {
-    console.error(`trade: ${trade.id} fee not match: ${trade.fee}, ${fee.toString()}, ${receipts[0].tx_hash} . Debug info: ${debugFee}`)
+    console.error(`trade: ${trade.account}-${trade.execution_tx_receipt_id} fee not match: ${trade.fee}, ${fee.toString()}, ${receipts[0].tx_hash} . Debug info: ${debugFee}`)
   }
   await updateTrade(trade.execution_tx_receipt_id, trade.account, STATUS_READY)
 }
