@@ -266,7 +266,7 @@ async function findUserExistingUTVFByDate(
 
 async function findUserTradeVolumeFees(status: bigint): Promise<any> {
   return prisma.user_trade_volume_fee.findMany({
-    take: 10,
+    take: 1,
     where: {
       status: {
         equals: status,

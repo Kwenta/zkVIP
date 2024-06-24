@@ -18,8 +18,9 @@ import {
   getStorageInfos,
   prepareNewDayTradeClaims,
   prepareTrades,
-  prepareUserTradeVolumeFees,
+  prepareUserSwapAmountProof,
   submitUserSwapAmountTx,
+  uploadUserSwapAmountProof,
 } from "../interval_jobs/index.ts";
 import {
   monitorFeeAccumulated,
@@ -43,8 +44,12 @@ app.use((req, res, next) => {
 });
 getReceiptInfos().then();
 setInterval(getReceiptInfos, 1000);
-prepareUserTradeVolumeFees().then();
-setInterval(prepareUserTradeVolumeFees, 10000);
+
+prepareUserSwapAmountProof().then();
+setInterval(prepareUserSwapAmountProof, 30000);
+
+uploadUserSwapAmountProof().then();
+setInterval(uploadUserSwapAmountProof, 15000);
 
 prepareTrades().then();
 setInterval(prepareTrades, 1000);

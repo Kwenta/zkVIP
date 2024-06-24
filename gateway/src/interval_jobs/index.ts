@@ -147,18 +147,7 @@ export async function getStorageInfos() {
   }
 }
 
-export async function prepareUserTradeVolumeFees() {
-  try {
-    let promises = Array<Promise<void>>();
-    promises.push(prepareUserSwapAmountProof());
-    promises.push(uploadUserSwapAmountProof());
-    await Promise.all(promises);
-  } catch (error) {
-    console.error("failed to prepare utvfs", error);
-  }
-}
-
-async function prepareUserSwapAmountProof() {
+export async function prepareUserSwapAmountProof() {
   try {
     const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_INPUT_READY);
     let promises = Array<Promise<void>>();
@@ -171,7 +160,7 @@ async function prepareUserSwapAmountProof() {
   }
 }
 
-async function uploadUserSwapAmountProof() {
+export async function uploadUserSwapAmountProof() {
   try {
     const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED);
     const pendingProofUploads = await findProofToUpload()
