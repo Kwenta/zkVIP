@@ -197,6 +197,6 @@ export async function submitUserSwapAmountTx() {
     }
     await Promise.all(promises);
   } catch (error) {
-    // console.error("failed to submit tx", error);
+
   }
 }
