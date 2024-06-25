@@ -6,6 +6,7 @@ import {
   PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
 } from "../constants/index.ts";
 import {
+  findBrevisRequestSentUTVFS,
   findNotReadyReceipts, 
   findNotReadyStorages, 
   findNotReadyTrades, 
@@ -162,7 +163,7 @@ export async function prepareUserSwapAmountProof() {
 
 export async function uploadUserSwapAmountProof() {
   try {
-    const utvfs = await findUserTradeVolumeFees(PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED);
+    const utvfs = await findBrevisRequestSentUTVFS();
     const pendingProofUploads = await findProofToUpload()
     let promises = Array<Promise<void>>();
     for (let i = 0; i < utvfs.length; i++) {
