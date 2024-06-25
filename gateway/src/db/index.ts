@@ -290,7 +290,7 @@ async function findProofToUpload(): Promise<any> {
     },
     orderBy: [
       {
-        update_time: 'asc',
+        update_time: 'desc',
       }
     ]
   });
