@@ -288,6 +288,11 @@ async function findProofToUpload(): Promise<any> {
         lte: a
       }
     },
+    orderBy: [
+      {
+        update_time: 'asc',
+      }
+    ]
   });
 }
 
