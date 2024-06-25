@@ -272,6 +272,11 @@ async function findUserTradeVolumeFees(status: bigint): Promise<any> {
         equals: status,
       },
     },
+    orderBy: [
+      {
+        update_time: 'asc',
+      }
+    ]
   });
 }
 
