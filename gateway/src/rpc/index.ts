@@ -261,6 +261,7 @@ async function queryTrade(trade: any) {
   var fee  = BigNumber.from(0)
 
   var debugFee = ""
+  var debugVolume = ""
 
   for (var receiptIndex = 0; receiptIndex < receipts.length; receiptIndex++) {
     const receipt = receipts[receiptIndex] as Receipt
@@ -274,15 +275,15 @@ async function queryTrade(trade: any) {
     const data = JSON.parse(receipt.data);
 
     if (Number(receipt.transaction_type) === TX_TYPE_ORDER_FEE_FLOW) {
-      debugFee += `tx ${receipt.tx_hash} add order flow fee `
+      debugFee += ` order fee flow tx ${receipt.tx_hash} `
       for (var i = 1; i < data.fields.length; i+=2) {
         fee = fee.add(BigNumber.from(data.fields[i].value))
 
         debugFee += ` fee: ${data.fields[i].value} `
       }
     } else {
-      debugFee += `tx ${receipt.tx_hash} add execution fee `
-
+      debugFee += ` execution tx ${receipt.tx_hash} `
+      debugVolume += ` execution tx ${receipt.tx_hash} `
       for (let i = 0; i < data.fields.length / 4; i++) {
         volume = volume.add(BigNumber.from(data.fields[i*4 + 1].value).fromTwos(256).abs().mul(BigNumber.from(data.fields[i*4 + 2].value)).div(BigNumber.from("1000000000000000000")))
         fee = fee.add(BigNumber.from(data.fields[i*4+3].value))
@@ -293,9 +294,9 @@ async function queryTrade(trade: any) {
   }
 
   if (!volume.eq(BigNumber.from(trade.volume))) {
-    console.error(`trade: ${trade.account}-${trade.execution_tx_receipt_id} volume not match: ${trade.volume}, ${volume.toString()}`)
+    console.debug(`trade volume-not-match: account ${trade.account}. expected: ${trade.volume}. Debug-info: ${debugVolume}`)
   } else if (!fee.eq(BigNumber.from(trade.fee))) {
-    console.error(`trade: ${trade.account}-${trade.execution_tx_receipt_id} fee not match: ${trade.fee}, ${fee.toString()}, ${receipts[0].tx_hash} . Debug info: ${debugFee}`)
+    console.debug(`trade fee-not-match: account ${trade.account}. Debug info: ${debugFee}`)
   }
   await updateTrade(trade.execution_tx_receipt_id, trade.account, STATUS_READY)
 }

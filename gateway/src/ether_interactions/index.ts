@@ -99,25 +99,26 @@ async function monitorBrevisRequest() {
 
 async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
   console.log(`submit tx for ${utvf.account}-${utvf.ymd}`)
-  brevisRequest.sendRequest(
-      utvf.brevis_query_hash,
-      wallet.address ?? "",
-      process.env.FEE_REIMBURSEMENT ?? "",
-      {
-        value: 0,
-      }
-  ).then(tx => {
-     updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
-     console.log(`tx: ${tx.hash} sent for ${utvf.account}, ${utvf.ymd}`)
-  }).catch(error => {
-    const msg = `${error}`
-    if (msg.includes("execution reverted: request already in queue")) {
-      updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
-      console.log(`tx has been sent for ${utvf.account}, ${utvf.ymd}`)
-    } else {
-      console.error(`failed to submit tx: ${msg}`);
-    }
-  })
+  updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
+  // brevisRequest.sendRequest(
+  //     utvf.brevis_query_hash,
+  //     wallet.address ?? "",
+  //     process.env.FEE_REIMBURSEMENT ?? "",
+  //     {
+  //       value: 0,
+  //     }
+  // ).then(tx => {
+  //    updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
+  //    console.log(`tx: ${tx.hash} sent for ${utvf.account}, ${utvf.ymd}`)
+  // }).catch(error => {
+  //   const msg = `${error}`
+  //   if (msg.includes("execution reverted: request already in queue")) {
+  //     updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
+  //     console.log(`tx has been sent for ${utvf.account}, ${utvf.ymd}`)
+  //   } else {
+  //     console.error(`failed to submit tx: ${msg}`);
+  //   }
+  // })
 }
 
 

@@ -31,7 +31,8 @@ import { FeeReimbursementApp } from '../../../contract/typechain/FeeReimbursemen
 
 export async function prepareNewDayTradeClaims() {
   try {
-    const yesterday = Number((moment.utc(new Date()).subtract(1, "d")).format('YYYYMMDD'))
+    // const yesterday = Number((moment.utc(new Date()).subtract(1, "d")).format('YYYYMMDD'))
+    const yesterday = 20240621
     var track = await getDailyTrack(BigInt(yesterday));
     if (track != undefined && track != null && track) {
       return;

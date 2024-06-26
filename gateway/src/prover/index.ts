@@ -218,8 +218,8 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
         return receipt.id === trade.execution_tx_receipt_id
       })
 
-      if (orderFeeFlowR.length !== exR.length) {
-        console.debug(`OR,ER not match for: ${trade.account}-${trade.execution_tx_receipt_id}, ${orderFeeFlowR.length}, ${exR.length}`)
+      if (orderFeeFlowR.length > exR.length) {
+        console.debug(`Claimable trade's execution receipts are less than order fee flow receipts: ${trade.account}-${trade.execution_tx_receipt_id}`)
       }
     })
   }
