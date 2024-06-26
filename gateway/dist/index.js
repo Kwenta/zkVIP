@@ -180,7 +180,7 @@ async function insertReceipt(tx_hash, account, transaction_type) {
     data: {
       id: (0, import_uuid.v4)(),
       tx_hash: tx_hash?.toLowerCase(),
-      account,
+      account: account?.toLowerCase(),
       status: STATUS_INIT,
       create_time: /* @__PURE__ */ new Date(),
       update_time: /* @__PURE__ */ new Date(),
@@ -417,12 +417,13 @@ async function getDailyTrack(year_month_day) {
   });
 }
 async function insertTrade(trade, order_fee_flow_tx_receipt_id, execution_tx_receipt_id) {
+  console.log(`Insert trade: execution_tx_receipt_id: ${execution_tx_receipt_id}, account: ${trade.abstractAccount}`);
   return prisma.trade.create({
     data: {
       order_fee_flow_tx_receipt_id,
       execution_tx_receipt_id,
       execution_tx_block_number: BigInt(trade.blockNumber),
-      account: trade.abstractAccount,
+      account: trade.abstractAccount.toLowerCase(),
       volume: trade.volume,
       fee: trade.feesPaid,
       status: STATUS_INIT,
@@ -430,7 +431,7 @@ async function insertTrade(trade, order_fee_flow_tx_receipt_id, execution_tx_rec
       update_time: /* @__PURE__ */ new Date()
     }
   }).catch((reason) => {
-    console.debug(`cannot insert trade ${reason}`);
+    console.debug(`Failed to insert trade: execution_tx_receipt_id: ${execution_tx_receipt_id}, account: ${trade.abstractAccount}`);
     return void 0;
   });
 }
@@ -449,7 +450,7 @@ async function updateTrade(execution_tx_receipt_id, account, status) {
     where: {
       execution_tx_receipt_id_account: {
         execution_tx_receipt_id,
-        account
+        account: account.toLowerCase()
       }
     },
     data: {
