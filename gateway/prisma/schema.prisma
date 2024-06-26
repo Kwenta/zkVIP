@@ -8,7 +8,6 @@ datasource db {
 }
 
 model receipt {
-  id                     String
   tx_hash                String
   status                 BigInt?  @default(0)
   data                   String?
@@ -64,15 +63,15 @@ model daily_track {
 }
 
 model trade {
-  order_fee_flow_tx_receipt_id String   @default("")
-  execution_tx_receipt_id      String   @default("")
-  execution_tx_block_number    BigInt   @default(0)
-  volume                       String   @default("")
-  create_time                  DateTime @default(now()) @db.Timestamptz(6)
-  update_time                  DateTime @default(now()) @db.Timestamptz(6)
-  status                       BigInt   @default(0)
-  account                      String   @default("")
-  fee                          String   @default("")
+  order_fee_flow_tx_hash    String   @default("")
+  execution_tx_hash         String   @default("")
+  execution_tx_block_number BigInt   @default(0)
+  volume                    String   @default("")
+  create_time               DateTime @default(now()) @db.Timestamptz(6)
+  update_time               DateTime @default(now()) @db.Timestamptz(6)
+  status                    BigInt   @default(0)
+  account                   String   @default("")
+  fee                       String   @default("")
 
-  @@id([execution_tx_receipt_id, account])
+  @@id([account, execution_tx_hash])
 }
