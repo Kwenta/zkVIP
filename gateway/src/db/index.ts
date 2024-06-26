@@ -18,7 +18,7 @@ async function insertReceipt(tx_hash: string, account: string, transaction_type:
     data: {
       id: uuidv4(),
       tx_hash: tx_hash?.toLowerCase(),
-      account: account,
+      account: account?.toLowerCase(),
       status: STATUS_INIT,
       create_time: new Date(),
       update_time: new Date(),
@@ -371,7 +371,7 @@ async function insertTrade(
       order_fee_flow_tx_receipt_id: order_fee_flow_tx_receipt_id,
       execution_tx_receipt_id: execution_tx_receipt_id,
       execution_tx_block_number: BigInt(trade.blockNumber),
-      account: trade.abstractAccount,
+      account: trade.abstractAccount.toLowerCase(),
       volume: trade.volume,
       fee: trade.feesPaid,
       status: STATUS_INIT,
@@ -408,7 +408,7 @@ async function updateTrade(
     where: {
       execution_tx_receipt_id_account: {
         execution_tx_receipt_id: execution_tx_receipt_id,
-        account: account,
+        account: account.toLowerCase(),
       }
     },
     data: {
