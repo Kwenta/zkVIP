@@ -365,6 +365,7 @@ async function insertTrade(
   order_fee_flow_tx_receipt_id: string,
   execution_tx_receipt_id: string,
 ): Promise<any> {
+  console.log(`Insert trade: execution_tx_receipt_id: ${execution_tx_receipt_id}, account: ${trade.abstractAccount}`)
   return prisma.trade.create({
     data: {
       order_fee_flow_tx_receipt_id: order_fee_flow_tx_receipt_id,
