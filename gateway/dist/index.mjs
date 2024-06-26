@@ -153,6 +153,7 @@ import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 var prisma = new PrismaClient();
 async function insertReceipt(tx_hash, account, transaction_type) {
+  console.log(`Insert receipt: tx: ${tx_hash}, account: ${account}, transaction_type: ${transaction_type}`);
   return prisma.receipt.create({
     data: {
       id: uuidv4(),
@@ -165,10 +166,14 @@ async function insertReceipt(tx_hash, account, transaction_type) {
     }
   });
 }
-async function updateReceipt(id, status, data, should_be_filtered_out) {
+async function updateReceipt(tx_hash, account, transaction_type, status, data, should_be_filtered_out) {
   return prisma.receipt.update({
     where: {
-      id
+      tx_hash_account_transaction_type: {
+        tx_hash: tx_hash?.toLowerCase(),
+        account: account?.toLowerCase(),
+        transaction_type
+      }
     },
     data: {
       status,
@@ -179,19 +184,19 @@ async function updateReceipt(id, status, data, should_be_filtered_out) {
   });
 }
 async function getReceipt(id) {
-  return prisma.receipt.findUnique({
+  return prisma.receipt.findFirst({
     where: {
       id
     }
   });
 }
 async function getReceiptByHash(tx_hash, account, transaction_type) {
-  return prisma.receipt.findFirst({
+  return prisma.receipt.findUnique({
     where: {
-      tx_hash: tx_hash?.toLowerCase(),
-      account: account?.toLowerCase(),
-      transaction_type: {
-        equals: transaction_type
+      tx_hash_account_transaction_type: {
+        tx_hash: tx_hash?.toLowerCase(),
+        account: account?.toLowerCase(),
+        transaction_type
       }
     }
   });
@@ -403,6 +408,7 @@ async function insertTrade(trade, order_fee_flow_tx_receipt_id, execution_tx_rec
       update_time: /* @__PURE__ */ new Date()
     }
   }).catch((reason) => {
+    console.debug(`cannot insert trade ${reason}`);
     return void 0;
   });
 }
@@ -3655,7 +3661,9 @@ async function querySingleReceipt(receipt) {
       const result = getJSONForOrderFeeFlowTx(receipt.account, transactionReceipt);
       if (result.logsFound) {
         updateReceipt(
-          receipt.id,
+          receipt.tx_hash,
+          receipt.account,
+          receipt.transaction_type,
           STATUS_READY,
           result.data,
           shouldBeFilteredOut
@@ -3665,7 +3673,9 @@ async function querySingleReceipt(receipt) {
       const result = getJSONForExecutionTx(receipt.account, transactionReceipt);
       if (result.logsFound) {
         updateReceipt(
-          receipt.id,
+          receipt.tx_hash,
+          receipt.account,
+          receipt.transaction_type,
           STATUS_READY,
           result.data,
           shouldBeFilteredOut

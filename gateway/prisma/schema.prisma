@@ -8,7 +8,6 @@ datasource db {
 }
 
 model receipt {
-  id                     String
   tx_hash                String
   status                 BigInt?  @default(0)
   data                   String?
@@ -17,6 +16,7 @@ model receipt {
   account                String
   transaction_type       BigInt   @default(0)
   should_be_filtered_out Boolean  @default(false)
+  id                     String
 
   @@id([tx_hash, account, transaction_type])
 }
@@ -64,15 +64,15 @@ model daily_track {
 }
 
 model trade {
-  order_fee_flow_tx_receipt_id String   @default("")
-  execution_tx_receipt_id      String   @default("")
   execution_tx_block_number    BigInt   @default(0)
   volume                       String   @default("")
   create_time                  DateTime @default(now()) @db.Timestamptz(6)
   update_time                  DateTime @default(now()) @db.Timestamptz(6)
   status                       BigInt   @default(0)
-  account                      String   @default("")
+  account                      String   @unique @default("")
   fee                          String   @default("")
+  execution_tx_receipt_id      String   @default("")
+  order_fee_flow_tx_receipt_id String   @default("")
 
-  @@id([execution_tx_receipt_id, account])
+  @@id([account, execution_tx_receipt_id])
 }
