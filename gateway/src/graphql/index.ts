@@ -122,7 +122,6 @@ export const saveTrades = async (
     var orderFlowTxId = ""
 
     if (trade.executionTxhash.length > 0) {
-      console.log(`Insert Find ${trade.executionTxhash}, ${account},  ${TX_TYPE_EXECUTION}`)
       executionTxId = await insertOrFindReceipt(trade.executionTxhash, account, TX_TYPE_EXECUTION)
     } else {
       console.log(`invalid trade with empty executionTxhash ${trade}`)
@@ -130,7 +129,6 @@ export const saveTrades = async (
     }
 
     if (trade.orderFeeFlowTxhash.length > 0) {
-      console.log(`Insert Find ${trade.orderFeeFlowTxhash}, ${account},  ${TX_TYPE_ORDER_FEE_FLOW}`)
       orderFlowTxId = await insertOrFindReceipt(trade.orderFeeFlowTxhash, account, TX_TYPE_ORDER_FEE_FLOW)
     } else {
       orderFlowTxId = ''
@@ -182,7 +180,6 @@ const insertOrFindReceipt = async(
 ) => {
   let receipt = await getReceiptByHash(txHash, account, BigInt(txType))
   if (receipt === undefined || receipt === null) {
-    console.debug(`Insert receipt ${txHash}, ${account}, ${BigInt(txType)}`)
     receipt = await insertReceipt(txHash, account, BigInt(txType))
   }
   if (receipt === undefined || receipt === null) {
