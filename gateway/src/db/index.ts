@@ -379,7 +379,8 @@ async function insertTrade(
       update_time: new Date(), 
     }
   }).catch((reason: any) => {
-    console.debug(`cannot insert trade ${reason}`)
+    console.debug(`Failed to insert trade: execution_tx_receipt_id: ${execution_tx_receipt_id}, account: ${trade.abstractAccount}`)
+    // console.debug(`cannot insert trade ${reason}`)
     return undefined;
   })
 }
