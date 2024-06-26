@@ -74,5 +74,5 @@ model trade {
   execution_tx_receipt_id      String   @default("")
   order_fee_flow_tx_receipt_id String   @default("")
 
-  @@id([account, execution_tx_receipt_id])
+  @@id([execution_tx_receipt_id, account])
 }
