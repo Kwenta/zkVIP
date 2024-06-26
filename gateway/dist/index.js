@@ -208,16 +208,17 @@ async function getReceipt(id) {
   });
 }
 async function getReceiptByHash(tx_hash, account, transaction_type) {
-  return prisma.receipt.findFirst({
+  return prisma.receipt.findUnique({
     where: {
-      tx_hash: tx_hash?.toLowerCase(),
-      account: account?.toLowerCase(),
-      transaction_type: {
-        equals: transaction_type
+      tx_hash_account_transaction_type: {
+        tx_hash: tx_hash?.toLowerCase(),
+        account: account?.toLowerCase(),
+        transaction_type: transaction_type,
       }
     }
-  });
+  })
 }
+
 async function findNotReadyReceipts() {
   var now = /* @__PURE__ */ new Date();
   return prisma.receipt.findMany({

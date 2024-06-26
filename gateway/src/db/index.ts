@@ -27,14 +27,20 @@ async function insertReceipt(tx_hash: string, account: string, transaction_type:
 }
 
 async function updateReceipt(
-  id: string,
+  tx_hash: string,
+  account: string,
+  transaction_type: bigint,
   status: bigint,
   data: string,
   should_be_filtered_out: boolean,
 ): Promise<any> {
   return prisma.receipt.update({
     where: {
-      id: id,
+      tx_hash_account_transaction_type: {
+        tx_hash: tx_hash?.toLowerCase(),
+        account: account?.toLowerCase(),
+        transaction_type: transaction_type,
+      }
     },
     data: {
       status: status,
@@ -46,7 +52,7 @@ async function updateReceipt(
 }
 
 async function getReceipt(id: string): Promise<any> {
-  return prisma.receipt.findUnique({
+  return prisma.receipt.findFirst({
     where: {
       id: id,
     },
@@ -58,12 +64,12 @@ async function getReceiptByHash(
   account: string,
   transaction_type: bigint,
 ): Promise<any> {
-  return prisma.receipt.findFirst({
+  return prisma.receipt.findUnique({
     where: {
-      tx_hash: tx_hash?.toLowerCase(),
-      account: account?.toLowerCase(),
-      transaction_type: {
-        equals: transaction_type,
+      tx_hash_account_transaction_type: {
+        tx_hash: tx_hash?.toLowerCase(),
+        account: account?.toLowerCase(),
+        transaction_type: transaction_type,
       }
     }
   })

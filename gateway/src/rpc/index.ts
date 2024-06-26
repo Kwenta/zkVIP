@@ -42,7 +42,9 @@ async function querySingleReceipt(receipt: any) {
           const result = getJSONForOrderFeeFlowTx(receipt.account, transactionReceipt)
           if (result.logsFound) {
             updateReceipt(
-              receipt.id,
+              receipt.tx_hash,
+              receipt.account,
+              receipt.transaction_type,
               STATUS_READY,
               result.data,
               shouldBeFilteredOut
@@ -52,7 +54,9 @@ async function querySingleReceipt(receipt: any) {
           const result = getJSONForExecutionTx(receipt.account, transactionReceipt)
           if (result.logsFound) {
             updateReceipt(
-              receipt.id,
+              receipt.tx_hash,
+              receipt.account,
+              receipt.transaction_type,
               STATUS_READY,
               result.data,
               shouldBeFilteredOut
