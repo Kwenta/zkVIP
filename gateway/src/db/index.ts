@@ -389,9 +389,9 @@ async function getTrade(
 ): Promise<any> {
   return prisma.trade.findUnique({
     where: {
-      account_execution_tx_receipt_id: {
-        account: account,
+      execution_tx_receipt_id_account: {
         execution_tx_receipt_id: execution_tx_receipt_id,
+        account: account,
       }
     }
   })
@@ -404,9 +404,9 @@ async function updateTrade(
 ): Promise<any> {
   return prisma.trade.update({
     where: {
-      account_execution_tx_receipt_id: {
-        account: account,
+      execution_tx_receipt_id_account: {
         execution_tx_receipt_id: execution_tx_receipt_id,
+        account: account,
       }
     },
     data: {

@@ -415,9 +415,9 @@ async function insertTrade(trade, order_fee_flow_tx_receipt_id, execution_tx_rec
 async function getTrade(execution_tx_receipt_id, account) {
   return prisma.trade.findUnique({
     where: {
-      account_execution_tx_receipt_id: {
-        account,
-        execution_tx_receipt_id
+      execution_tx_receipt_id_account: {
+        execution_tx_receipt_id,
+        account
       }
     }
   });
@@ -425,9 +425,9 @@ async function getTrade(execution_tx_receipt_id, account) {
 async function updateTrade(execution_tx_receipt_id, account, status) {
   return prisma.trade.update({
     where: {
-      account_execution_tx_receipt_id: {
-        account,
-        execution_tx_receipt_id
+      execution_tx_receipt_id_account: {
+        execution_tx_receipt_id,
+        account
       }
     },
     data: {
