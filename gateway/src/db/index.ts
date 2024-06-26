@@ -13,6 +13,7 @@ const prisma = new PrismaClient();
 
 // transaction_type: OrderFeeFlowTx is 1, ExecutionTx is 2
 async function insertReceipt(tx_hash: string, account: string, transaction_type: bigint): Promise<any> {
+  console.log(`Insert receipt: tx: ${tx_hash}, account: ${account}, transaction_type: ${transaction_type}`)
   return prisma.receipt.create({
     data: {
       id: uuidv4(),
@@ -376,7 +377,8 @@ async function insertTrade(
       create_time: new Date(),
       update_time: new Date(), 
     }
-  }).catch((reason) => {
+  }).catch((reason: any) => {
+    console.debug(`cannot insert trade ${reason}`)
     return undefined;
   })
 }
