@@ -48,6 +48,8 @@ export async function prepareNewDayTradeClaims() {
       throw result.error
     }
 
+    console.log(`${yesterday}, trades count: ${result.trades.length}`)
+
     const accountTradesList = getAccountTradesList(result.trades)
     for (var i = 0; i < accountTradesList.length; i++) {
       const trades = accountTradesList[i].trades
