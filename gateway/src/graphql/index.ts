@@ -203,7 +203,7 @@ const postGraphQL = async (
       },
       body: JSON.stringify({
         query: `{
-            futuresTrades(orderBy: timestamp, orderDirection: asc, skip: ${skip}, first: ${first}, where: {timestamp_gte:"${tsStart}", timestamp_lte: "${tsEnd}",}) 
+          futuresTrades(orderBy: timestamp, orderDirection: asc, skip: ${skip}, first: ${first}, where: {timestamp_gte:"${tsStart}", timestamp_lte: "${tsEnd}", orderType_not: Liquidation, accountType: smart_margin, trackingCode: "0x4b57454e54410000000000000000000000000000000000000000000000000000"}) 
           {
             blockNumber,
             account,
