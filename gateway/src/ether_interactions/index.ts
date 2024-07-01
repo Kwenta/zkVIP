@@ -77,7 +77,7 @@ async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
   console.log(`submit tx for ${utvf.account}-${utvf.ymd}`)
   updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
   brevisRequest.sendRequest(
-      "0x0434057557ddde3698c4a1e304f4b22b5ad6a74ff8c4f68995889100feed56fa",
+      utvf.brevis_query_hash,
       wallet.address ?? "",
       process.env.FEE_REIMBURSEMENT ?? "",
       {
