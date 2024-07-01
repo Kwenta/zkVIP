@@ -116,7 +116,7 @@ export async function getReceiptInfos() {
 
     await Promise.all(promises);
   } catch (error) {
-    console.error("failed to get receipt infos");
+    console.error("failed to get receipt infos", error);
   }
 }
 

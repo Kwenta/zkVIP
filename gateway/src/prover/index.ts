@@ -336,7 +336,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     })
     exeRIndex++
   })
-  const account = BigInt(utvf.account).toString(16)
+  const account = "0x" + BigInt(utvf.account).toString(16)
   
   const contracts = PositionModifiedContracts.map(value => {
     return asUint248(value)
