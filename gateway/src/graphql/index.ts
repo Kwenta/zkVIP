@@ -2,7 +2,6 @@ import { error } from "console";
 import { GraphRpc, Trade } from "./common.ts";
 import { getReceiptByHash, getTrade, insertReceipt, insertTrade } from "../db/index.ts";
 import { TX_TYPE_EXECUTION, TX_TYPE_ORDER_FEE_FLOW } from "../constants/index.ts";
-import { BigNumber } from "ethers";
 
 type PostGraphQLRes = {
   trades: Trade[],
@@ -97,8 +96,8 @@ export const batchTradesWithSameTxAccount = (trades: Trade[]) => {
         timestamp: t0.timestamp,
         orderFeeFlowTxhash: orderFeeFlowTxhash,
         executionTxhash: t0.executionTxhash,
-        volume: BigNumber.from(t0.volume).add(t1.volume).toString(),
-        feesPaid: BigNumber.from(t0.feesPaid).add(t1.feesPaid).toString()
+        volume: (BigInt(t0.volume) + BigInt(t1.volume)).toString(),
+        feesPaid: (BigInt(t0.feesPaid) + BigInt(t1.feesPaid)).toString()
       }
     })
     
@@ -231,7 +230,11 @@ const postGraphQL = async (
       }
       const trades: Trade[] =[]
       responseJson?.data?.futuresTrades?.forEach((element: any) => {
-        const volume = BigNumber.from(element.size).abs().mul(BigNumber.from(element.price)).div(BigNumber.from('1000000000000000000'))
+        var size = BigInt(element.size)
+        if (size < 0) {
+          size = -size;
+        }
+        const volume = size * BigInt(element.price) / (BigInt('1000000000000000000'))
         trades.push({
           blockNumber: element.blockNumber,
           account: element.account,

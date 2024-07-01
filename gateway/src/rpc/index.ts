@@ -1,4 +1,4 @@
-import { BigNumber, ethers } from "ethers";
+import { ethers } from "ethers";
 import { DelayedOrderSubmittedEvent, isValidPositionModifiedContract, OrderFlowFeeImposedEvent, OrderFlowFeeImposedEventContractAddress, PositionModifiedEvent, STATUS_READY, TX_TYPE_EXECUTION, TX_TYPE_ORDER_FEE_FLOW } from "../constants/index.ts";
 import { getReceipt, updateReceipt, updateStorage, updateTrade } from "../db/index.ts";
 import { sourceChainProvider } from "../ether_interactions/index.ts";
@@ -69,7 +69,7 @@ async function querySingleReceipt(receipt: any) {
 }
 
 async function querySingleStorage(storage: any) {
-  return sourceChainProvider.getStorageAt(storage.account, storage.key, Number(storage.blk_number)).then((value) => {
+  return sourceChainProvider.getStorage(storage.account, storage.key, Number(storage.blk_number)).then((value) => {
     if (value == null || value == void 0) {
       console.debug("storage not found", storage.id, storage.tx_hash);
       return;
@@ -90,11 +90,11 @@ async function querySingleStorage(storage: any) {
 
 function getJSONForOrderFeeFlowTx(
   account: string,
-  transactionReceipt: ethers.providers.TransactionReceipt
+  transactionReceipt: ethers.TransactionReceipt
 ) {
   let original: ReceiptInfo = {
     block_num: transactionReceipt.blockNumber,
-    tx_hash: transactionReceipt.transactionHash,
+    tx_hash: transactionReceipt.hash,
     fields: [],
   };
 
@@ -114,7 +114,7 @@ function getJSONForOrderFeeFlowTx(
     if (
       logAddress === OrderFlowFeeImposedEventContractAddress &&
       topic0.toLowerCase() === OrderFlowFeeImposedEvent &&
-      BigNumber.from(log.topics[1]).eq(BigNumber.from(account))
+      log.topics[1].toLowerCase() === account.toLowerCase()
     ) {
       // OrderFlowFeeImposed account
       original.fields.push({
@@ -137,7 +137,7 @@ function getJSONForOrderFeeFlowTx(
     } else  if (
       isValidPositionModifiedContract(logAddress) &&
       topic0.toLowerCase() === DelayedOrderSubmittedEvent &&
-      BigNumber.from(log.topics[1]).eq(BigNumber.from(account))
+      log.topics[1].toLowerCase() === account.toLowerCase()
     ) {
       // DelayedOrderSubmittedEvent account
       original.fields.push({
@@ -166,11 +166,11 @@ function getJSONForOrderFeeFlowTx(
 
 function getJSONForExecutionTx(  
   account: string,
-  transactionReceipt: ethers.providers.TransactionReceipt
+  transactionReceipt: ethers.TransactionReceipt
 ) {
   let original: ReceiptInfo = {
     block_num: transactionReceipt.blockNumber,
-    tx_hash: transactionReceipt.transactionHash,
+    tx_hash: transactionReceipt.hash,
     fields: [],
   };
 
@@ -190,7 +190,7 @@ function getJSONForExecutionTx(
     if (
       isValidPositionModifiedContract(logAddress)
       && topic0.toLowerCase() === PositionModifiedEvent && 
-      BigNumber.from(log.topics[2]).eq(BigNumber.from(account))
+      log.topics[2].toLowerCase() === account.toLowerCase()
     ) {
       // account
       original.fields.push({
@@ -257,8 +257,8 @@ async function queryTrade(trade: any) {
 
   const receipts = await Promise.all(receiptPromises);
 
-  var volume = BigNumber.from(0)
-  var fee  = BigNumber.from(0)
+  var volume = BigInt(0)
+  var fee  = BigInt(0)
 
   var debugFee = ""
   var debugVolume = ""
@@ -277,7 +277,7 @@ async function queryTrade(trade: any) {
     if (Number(receipt.transaction_type) === TX_TYPE_ORDER_FEE_FLOW) {
       debugFee += ` order fee flow tx ${receipt.tx_hash} `
       for (var i = 1; i < data.fields.length; i+=2) {
-        fee = fee.add(BigNumber.from(data.fields[i].value))
+        fee = fee + BigInt(data.fields[i].value)
 
         debugFee += ` fee: ${data.fields[i].value} `
       }
@@ -285,17 +285,21 @@ async function queryTrade(trade: any) {
       debugFee += ` execution tx ${receipt.tx_hash} `
       debugVolume += ` execution tx ${receipt.tx_hash} `
       for (let i = 0; i < data.fields.length / 4; i++) {
-        volume = volume.add(BigNumber.from(data.fields[i*4 + 1].value).fromTwos(256).abs().mul(BigNumber.from(data.fields[i*4 + 2].value)).div(BigNumber.from("1000000000000000000")))
-        fee = fee.add(BigNumber.from(data.fields[i*4+3].value))
+        var size = BigInt.asIntN(256, BigInt("0x"+data.fields[i*4 + 1]));
+        if (size < 0) {
+          size = -size;
+        }
+        volume = volume + size * BigInt("0x"+data.fields[i*4 + 2].value) / BigInt("1000000000000000000")
+        fee = fee + BigInt(data.fields[i*4+3].value)
 
         debugFee += ` fee: ${data.fields[i*4+3].value} `
       }
     }
   }
 
-  if (!volume.eq(BigNumber.from(trade.volume))) {
+  if (volume !== BigInt(trade.volume)) {
     console.debug(`trade volume-not-match: account ${trade.account}. expected: ${trade.volume}. Debug-info: ${debugVolume}`)
-  } else if (!fee.eq(BigNumber.from(trade.fee))) {
+  } else if (fee !== BigInt(trade.fee)) {
     console.debug(`trade fee-not-match: account ${trade.account}. Debug info: ${debugFee}`)
   }
   await updateTrade(trade.execution_tx_receipt_id, trade.account, STATUS_READY)

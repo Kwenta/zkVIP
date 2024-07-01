@@ -24,10 +24,8 @@ import {
 } from "../interval_jobs/index.ts";
 import {
   monitorFeeAccumulated,
-  monitorBrevisRequest,
 } from "../ether_interactions/index.ts";
 import { validTimeNumber, UserTradeVolumeFee, findNextDay, findDayStartTimestamp, findDayEndTimestamp } from "./type.ts";
-import { BigNumber } from "ethers";
 import moment from "moment";
 import { getAccountTradesList, getAllTradesWithin30Day } from "../graphql/index.ts";
 import { error } from "console";
@@ -55,7 +53,6 @@ prepareTrades().then();
 setInterval(prepareTrades, 1000);
 
 monitorFeeAccumulated();
-monitorBrevisRequest();
 
 prepareNewDayTradeClaims();
 setInterval(prepareNewDayTradeClaims, 60000);

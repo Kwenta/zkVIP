@@ -1,6 +1,6 @@
-import '@nomiclabs/hardhat-ethers';
 import '@nomicfoundation/hardhat-verify';
-import '@nomiclabs/hardhat-waffle';
+import '@nomicfoundation/hardhat-ethers';
+import '@nomicfoundation/hardhat-toolbox';
 import '@typechain/hardhat';
 import 'hardhat-contract-sizer';
 import 'hardhat-deploy';
@@ -94,7 +94,7 @@ const config: HardhatUserConfig = {
   },
   typechain: {
     outDir: 'typechain',
-    target: 'ethers-v5'
+    target: 'ethers-v6'
   },
   etherscan: {
     apiKey: {

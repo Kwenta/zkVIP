@@ -1,4 +1,3 @@
-import { BigNumber } from "ethers";
 import {
   PROOF_STATUS_INELIGIBLE_ACCOUNT_ID,
   PROOF_STATUS_INIT,
@@ -22,12 +21,10 @@ import {
 } from "../db/index.ts";
 import { getAllTradesWithin30Day, getAccountTradesList, saveTrades } from "../graphql/index.ts";
 import { sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
-import { QueryOrderTxsByAccount } from "../query/index.ts";
 import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
 import { findDayStartTimestamp, findNextDay, getCurrentDay } from "../server/type.ts";
 import moment from "moment";
 import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
-import { FeeReimbursementApp } from '../../../contract/typechain/FeeReimbursementApp';
 
 export async function prepareNewDayTradeClaims() {
   try {
@@ -90,8 +87,9 @@ export async function prepareNewDayTradeClaims() {
     
       // Make sure start block number is bigger than claim period in contract
       var startBlockNumber = claimableTrades[0].blockNumber
-      if (claimPeriod[1].gt(BigNumber.from(startBlockNumber))) {
-        startBlockNumber = claimPeriod[1].toNumber() + 1
+
+      if (claimPeriod[1] > BigInt(startBlockNumber)) {
+        startBlockNumber = Number(claimPeriod[1]) + 1
       }
 
       utvf.start_blk_num = BigInt(startBlockNumber)

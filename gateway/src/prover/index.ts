@@ -20,7 +20,7 @@ import {
   TX_TYPE_EXECUTION,
   TX_TYPE_ORDER_FEE_FLOW,
 } from "../constants/index.ts";
-import { BigNumber, Contract, ethers } from "ethers";
+import { Contract, ethers } from "ethers";
 import { ReceiptInfo } from "../rpc/index.ts";
 import moment from "moment";
 
@@ -156,7 +156,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   if (unclaimableTrades.length > 4400) {
     // Sort unclaimableTrades by volume desc
     unclaimableTrades.sort((a, b) => {
-      if (BigNumber.from(a.volume).gt(BigNumber.from(b.volume))) {
+      if (BigInt(a.volume) > BigInt(b.volume)) {
         return -1 
       } else {
         return 1
@@ -336,7 +336,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     })
     exeRIndex++
   })
-  const account = BigNumber.from(utvf.account).toHexString()
+  const account = BigInt(utvf.account).toString(16)
   
   const contracts = PositionModifiedContracts.map(value => {
     return asUint248(value)
