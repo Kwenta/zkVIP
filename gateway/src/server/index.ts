@@ -24,6 +24,7 @@ import {
 } from "../interval_jobs/index.ts";
 import {
   monitorFeeAccumulated,
+  submitBrevisRequestTx,
 } from "../ether_interactions/index.ts";
 import { validTimeNumber, UserTradeVolumeFee, findNextDay, findDayStartTimestamp, findDayEndTimestamp } from "./type.ts";
 import moment from "moment";
@@ -35,30 +36,35 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
-  next();
-});
-getReceiptInfos().then();
-setInterval(getReceiptInfos, 1000);
+// app.use((req, res, next) => {
+//   res.header("Access-Control-Allow-Origin", "*");
+//   res.header("Access-Control-Allow-Headers", "Content-Type");
+//   next();
+// });
+// getReceiptInfos().then();
+// setInterval(getReceiptInfos, 1000);
 
-prepareUserSwapAmountProof().then();
-setInterval(prepareUserSwapAmountProof, 30000);
+// prepareUserSwapAmountProof().then();
+// setInterval(prepareUserSwapAmountProof, 30000);
 
-uploadUserSwapAmountProof().then();
-setInterval(uploadUserSwapAmountProof, 15000);
+// uploadUserSwapAmountProof().then();
+// setInterval(uploadUserSwapAmountProof, 15000);
 
-prepareTrades().then();
-setInterval(prepareTrades, 1000);
+// prepareTrades().then();
+// setInterval(prepareTrades, 1000);
 
-monitorFeeAccumulated();
+// monitorFeeAccumulated();
 
-prepareNewDayTradeClaims();
-setInterval(prepareNewDayTradeClaims, 60000);
+// prepareNewDayTradeClaims();
+// setInterval(prepareNewDayTradeClaims, 60000);
 
-submitUserSwapAmountTx();
-setInterval(submitUserSwapAmountTx, 2000);
+// submitUserSwapAmountTx();
+// setInterval(submitUserSwapAmountTx, 2000);
+
+findUserExistingUTVF("0x38c90521b52b09063b3ddd0dcc138e5a181c727b", BigInt(121811422), BigInt(121811422)).then(v => {
+  return submitBrevisRequestTx(v)
+}).then()
+
 
 var deleteDay = 0
 // a()
