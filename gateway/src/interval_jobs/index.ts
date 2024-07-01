@@ -28,7 +28,7 @@ import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/
 
 export async function prepareNewDayTradeClaims() {
   try {
-    const yesterday = Number((moment.utc(new Date()).subtract(1, "d")).format('YYYYMMDD'))
+    const yesterday = Number((moment.utc(new Date()).add(1, "h").subtract(1, "d")).format('YYYYMMDD'))
     var track = await getDailyTrack(BigInt(yesterday));
     if (track != undefined && track != null && track) {
       return;
