@@ -77,14 +77,10 @@ async function getReceiptByHash(
 }
 
 async function findNotReadyReceipts(): Promise<any> {
-  var now = new Date();
   return prisma.receipt.findMany({
     take: 50,
     where: {
       status: STATUS_INIT,
-      update_time: {
-        lte: now,
-      },
     },
   });
 }
