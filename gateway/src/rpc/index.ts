@@ -25,7 +25,6 @@ async function querySingleReceipt(receipt: any) {
         console.log(error, error);
       })
       .then((transactionReceipt) => {
-        console.log(`${receipt.tx_hash}  ${transactionReceipt?.hash}`)
         if (transactionReceipt == null || transactionReceipt == undefined) {
           console.debug("tx receipt not found", receipt.id, receipt.tx_hash);
           return;
@@ -183,7 +182,6 @@ function getJSONForExecutionTx(
     if (log.topics.length < 3) {
       return 
     }
-    console.log(`${transactionReceipt.hash}-${i}-log: ${log.address}, ${ log.topics[0]}, ${log.topics[2]}`)
     let logAddress = log.address.toLowerCase()
     let topic0 = log.topics[0].toLowerCase();
     

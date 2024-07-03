@@ -78,7 +78,7 @@ async function getReceiptByHash(
 
 async function findNotReadyReceipts(): Promise<any> {
   return prisma.receipt.findMany({
-    take: 5,
+    take: 50,
     where: {
       status: STATUS_INIT,
     },
