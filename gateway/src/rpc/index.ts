@@ -50,6 +50,8 @@ async function querySingleReceipt(receipt: any) {
               result.data,
               shouldBeFilteredOut
             );
+          } else {
+            console.debug(`${receipt.tx_hash} is not a order fee flow tx`)
           }
         } else if (Number(receipt.transaction_type) === TX_TYPE_EXECUTION) {
           const result = getJSONForExecutionTx(receipt.account, transactionReceipt)
@@ -62,7 +64,9 @@ async function querySingleReceipt(receipt: any) {
               result.data,
               shouldBeFilteredOut
             );
-          } 
+          } else {
+            console.debug(`${receipt.tx_hash} is not a execution tx`)
+          }
         } else {
           console.error("unexpected transaction type")
         }
