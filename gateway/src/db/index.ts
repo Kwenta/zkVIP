@@ -86,14 +86,10 @@ async function findNotReadyReceipts(): Promise<any> {
 }
 
 async function findNotReadyTrades(): Promise<any> {
-  var now = new Date();
   return prisma.trade.findMany({
     take: 50,
     where: {
       status: STATUS_INIT,
-      update_time: {
-        lte: now,
-      },
     },
   });
 }
