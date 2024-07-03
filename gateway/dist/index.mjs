@@ -694,6 +694,7 @@ var buildUserTradeVolumeFeeProofReq = async (utvf) => {
       })
     );
   }
+  console.debug(`Prover Get receipt promises.length: ${receiptPromises.length}`);
   const receipts = await Promise.all(receiptPromises);
   var validReceipts = [];
   for (let i = 0; i < receipts.length; i++) {
@@ -3948,6 +3949,7 @@ async function queryTrade(trade) {
     return;
   }
   receiptPromises.push(getReceipt(execution_tx_receipt_id));
+  console.debug(`Get receipt promises.length: ${receiptPromises.length}`);
   const receipts = await Promise.all(receiptPromises);
   var volume = BigInt(0);
   var fee = BigInt(0);

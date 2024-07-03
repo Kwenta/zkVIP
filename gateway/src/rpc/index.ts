@@ -258,6 +258,8 @@ async function queryTrade(trade: any) {
 
   receiptPromises.push(getReceipt(execution_tx_receipt_id))
 
+  console.debug(`Get receipt promises.length: ${receiptPromises.length}`)
+
   const receipts = await Promise.all(receiptPromises);
 
   var volume = BigInt(0)

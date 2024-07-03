@@ -117,6 +117,8 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     );
   }
 
+  console.debug(`Prover Get receipt promises.length: ${receiptPromises.length}`)
+
   const receipts = await Promise.all(receiptPromises);
 
   var validReceipts: Receipt[] = []
