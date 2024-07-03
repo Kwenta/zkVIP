@@ -109,6 +109,7 @@ export async function prepareNewDayTradeClaims() {
 export async function getReceiptInfos() {
   try {
     const receipts = await findNotReadyReceipts();
+    console.log(`Not ready receipts: ${receipts.length}`)
     let promises = Array<Promise<void>>();
     for (let i = 0; i < receipts.length; i++) {
       promises.push(querySingleReceipt(receipts[i]));
