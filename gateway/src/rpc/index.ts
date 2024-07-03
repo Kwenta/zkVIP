@@ -195,7 +195,7 @@ function getJSONForExecutionTx(
     if (
       isValidPositionModifiedContract(logAddress)
       && topic0.toLowerCase() === PositionModifiedEvent && 
-      log.topics[2].toLowerCase() === account.toLowerCase()
+      BigInt(log.topics[2].toLowerCase()) === BigInt(account.toLowerCase())
     ) {
       // account
       original.fields.push({
