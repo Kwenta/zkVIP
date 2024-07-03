@@ -288,11 +288,11 @@ async function queryTrade(trade: any) {
       debugFee += ` execution tx ${receipt.tx_hash} `
       debugVolume += ` execution tx ${receipt.tx_hash} `
       for (let i = 0; i < data.fields.length / 4; i++) {
-        var size = BigInt.asIntN(256, BigInt("0x"+data.fields[i*4 + 1]));
+        var size = BigInt.asIntN(256, BigInt(data.fields[i*4 + 1].value));
         if (size < 0) {
           size = -size;
         }
-        volume = volume + size * BigInt("0x"+data.fields[i*4 + 2].value) / BigInt("1000000000000000000")
+        volume = volume + size * BigInt(data.fields[i*4 + 2].value) / BigInt("1000000000000000000")
         fee = fee + BigInt(data.fields[i*4+3].value)
 
         debugFee += ` fee: ${data.fields[i*4+3].value} `
