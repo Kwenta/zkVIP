@@ -180,7 +180,7 @@ function getJSONForExecutionTx(
   };
 
   transactionReceipt.logs.forEach((log, i) => {
-    console.log(`${transactionReceipt.hash}-${i}log: ${log}`)
+    console.log(`${transactionReceipt.hash}-${i}log: ${log.address.toLowerCase()}, ${ log.topics[0].toLowerCase()}, ${log.topics[2].toLowerCase()}`)
     if (log.topics.length < 3) {
       return 
     }
