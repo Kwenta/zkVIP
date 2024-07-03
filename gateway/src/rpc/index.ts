@@ -119,7 +119,7 @@ function getJSONForOrderFeeFlowTx(
     if (
       logAddress === OrderFlowFeeImposedEventContractAddress &&
       topic0.toLowerCase() === OrderFlowFeeImposedEvent &&
-      log.topics[1].toLowerCase() === account.toLowerCase()
+      BigInt(log.topics[1].toLowerCase()) === BigInt(account.toLowerCase())
     ) {
       // OrderFlowFeeImposed account
       original.fields.push({
@@ -142,7 +142,7 @@ function getJSONForOrderFeeFlowTx(
     } else  if (
       isValidPositionModifiedContract(logAddress) &&
       topic0.toLowerCase() === DelayedOrderSubmittedEvent &&
-      log.topics[1].toLowerCase() === account.toLowerCase()
+      BigInt(log.topics[1].toLowerCase()) === BigInt(account.toLowerCase())
     ) {
       // DelayedOrderSubmittedEvent account
       original.fields.push({
