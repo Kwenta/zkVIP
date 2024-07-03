@@ -25,6 +25,7 @@ async function querySingleReceipt(receipt: any) {
         console.log(error, error);
       })
       .then((transactionReceipt) => {
+        console.log(`${receipt.tx_hash}  ${transactionReceipt?.hash}`)
         if (transactionReceipt == null || transactionReceipt == undefined) {
           console.debug("tx receipt not found", receipt.id, receipt.tx_hash);
           return;
