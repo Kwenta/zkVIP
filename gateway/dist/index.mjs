@@ -7,9 +7,6 @@ var __export = (target, all) => {
 // src/server/index.ts
 import express from "express";
 
-// src/interval_jobs/index.ts
-import { BigNumber as BigNumber5 } from "ethers";
-
 // ../markets.json
 var contracts = [
   "0x001b7876f567f0b3a639332ed1e363839c6d85e2",
@@ -202,26 +199,18 @@ async function getReceiptByHash(tx_hash, account, transaction_type) {
   });
 }
 async function findNotReadyReceipts() {
-  var now = /* @__PURE__ */ new Date();
   return prisma.receipt.findMany({
     take: 50,
     where: {
-      status: STATUS_INIT,
-      update_time: {
-        lte: now
-      }
+      status: STATUS_INIT
     }
   });
 }
 async function findNotReadyTrades() {
-  var now = /* @__PURE__ */ new Date();
   return prisma.trade.findMany({
     take: 50,
     where: {
-      status: STATUS_INIT,
-      update_time: {
-        lte: now
-      }
+      status: STATUS_INIT
     }
   });
 }
@@ -293,19 +282,6 @@ async function getUserTradeVolumeFee(account, ymd) {
     }
   });
 }
-async function findUserExistingUTVF(account, start_blk_num, end_blk_num) {
-  return prisma.user_trade_volume_fee.findFirst({
-    where: {
-      account: account?.toLowerCase(),
-      start_blk_num: {
-        equals: start_blk_num
-      },
-      end_blk_num: {
-        equals: end_blk_num
-      }
-    }
-  });
-}
 async function findUserExistingUTVFByDate(account, ymd) {
   return prisma.user_trade_volume_fee.findUnique({
     where: {
@@ -367,16 +343,6 @@ async function findTxToBeSent() {
       request_sent: {
         equals: false
       }
-    }
-  });
-}
-async function updateBrevisRequestStatus(brevis_query_hash) {
-  return prisma.user_trade_volume_fee.updateMany({
-    where: {
-      brevis_query_hash: brevis_query_hash?.toLowerCase()
-    },
-    data: {
-      request_sent: true
     }
   });
 }
@@ -442,7 +408,6 @@ async function updateTrade(execution_tx_receipt_id, account, status) {
 var GraphRpc = "https://subgraph.satsuma-prod.com/616cc2144c5c/kwenta/optimism-perps/version/0.0.22/api";
 
 // src/graphql/index.ts
-import { BigNumber } from "ethers";
 var getAllTradesWithin30Day = async (ts30Ago, tsClaimDayEnd) => {
   var first = 1e4;
   var skip = 0;
@@ -513,8 +478,8 @@ var batchTradesWithSameTxAccount = (trades) => {
         timestamp: t0.timestamp,
         orderFeeFlowTxhash,
         executionTxhash: t0.executionTxhash,
-        volume: BigNumber.from(t0.volume).add(t1.volume).toString(),
-        feesPaid: BigNumber.from(t0.feesPaid).add(t1.feesPaid).toString()
+        volume: (BigInt(t0.volume) + BigInt(t1.volume)).toString(),
+        feesPaid: (BigInt(t0.feesPaid) + BigInt(t1.feesPaid)).toString()
       };
     });
     result.push(trade);
@@ -589,7 +554,7 @@ var postGraphQL = async (tsStart, tsEnd, skip, first) => {
       },
       body: JSON.stringify({
         query: `{
-            futuresTrades(orderBy: timestamp, orderDirection: asc, skip: ${skip}, first: ${first}, where: {timestamp_gte:"${tsStart}", timestamp_lte: "${tsEnd}",}) 
+          futuresTrades(orderBy: timestamp, orderDirection: asc, skip: ${skip}, first: ${first}, where: {timestamp_gte:"${tsStart}", timestamp_lte: "${tsEnd}", orderType_not: Liquidation, accountType: smart_margin, trackingCode: "0x4b57454e54410000000000000000000000000000000000000000000000000000"}) 
           {
             blockNumber,
             account,
@@ -616,7 +581,11 @@ var postGraphQL = async (tsStart, tsEnd, skip, first) => {
       }
       const trades = [];
       responseJson?.data?.futuresTrades?.forEach((element) => {
-        const volume = BigNumber.from(element.size).abs().mul(BigNumber.from(element.price)).div(BigNumber.from("1000000000000000000"));
+        var size = BigInt(element.size);
+        if (size < 0) {
+          size = -size;
+        }
+        const volume = size * BigInt(element.price) / BigInt("1000000000000000000");
         trades.push({
           blockNumber: element.blockNumber,
           account: element.account,
@@ -647,7 +616,6 @@ var postGraphQL = async (tsStart, tsEnd, skip, first) => {
 
 // src/prover/index.ts
 import * as sdk from "brevis-sdk-typescript";
-import { BigNumber as BigNumber2 } from "ethers";
 import moment from "moment";
 var {
   Brevis,
@@ -757,7 +725,7 @@ var buildUserTradeVolumeFeeProofReq = async (utvf) => {
   });
   if (unclaimableTrades.length > 4400) {
     unclaimableTrades.sort((a, b) => {
-      if (BigNumber2.from(a.volume).gt(BigNumber2.from(b.volume))) {
+      if (BigInt(a.volume) > BigInt(b.volume)) {
         return -1;
       } else {
         return 1;
@@ -807,8 +775,8 @@ var buildUserTradeVolumeFeeProofReq = async (utvf) => {
       const exR = validReceipts.filter((receipt) => {
         return receipt.id === trade.execution_tx_receipt_id;
       });
-      if (orderFeeFlowR.length !== exR.length) {
-        console.debug(`OR,ER not match for: ${trade.account}-${trade.execution_tx_receipt_id}, ${orderFeeFlowR.length}, ${exR.length}`);
+      if (orderFeeFlowR.length > exR.length) {
+        console.debug(`Claimable trade's execution receipts are less than order fee flow receipts: ${trade.account}-${trade.execution_tx_receipt_id}`);
       }
     });
   }
@@ -910,7 +878,7 @@ var buildUserTradeVolumeFeeProofReq = async (utvf) => {
     });
     exeRIndex++;
   });
-  const account = BigNumber2.from(utvf.account).toHexString();
+  const account = "0x" + BigInt(utvf.account).toString(16);
   const contracts2 = PositionModifiedContracts.map((value) => {
     return asUint248(value);
   });
@@ -1095,11 +1063,8 @@ function sortByBlk(a, b) {
   }
 }
 
-// src/rpc/index.ts
-import { BigNumber as BigNumber4 } from "ethers";
-
 // src/ether_interactions/index.ts
-import { ethers as ethers2 } from "ethers";
+import { ethers } from "ethers";
 
 // ../contract/typechain/index.ts
 var typechain_exports = {};
@@ -1111,11 +1076,39 @@ __export(typechain_exports, {
   IFeeRebateTierModule__factory: () => IFeeRebateTierModule__factory,
   MockFeeModule__factory: () => MockFeeModule__factory,
   Ownable__factory: () => Ownable__factory,
-  Tx__factory: () => Tx__factory
+  Tx__factory: () => Tx__factory,
+  factories: () => factories_exports
 });
 
-// ../contract/typechain/factories/Ownable__factory.ts
-import { Contract as Contract2, utils } from "ethers";
+// ../contract/typechain/factories/index.ts
+var factories_exports = {};
+__export(factories_exports, {
+  brevisContracts: () => brevis_contracts_exports,
+  contracts: () => contracts_exports3,
+  openzeppelin: () => openzeppelin_exports
+});
+
+// ../contract/typechain/factories/@openzeppelin/index.ts
+var openzeppelin_exports = {};
+__export(openzeppelin_exports, {
+  contracts: () => contracts_exports
+});
+
+// ../contract/typechain/factories/@openzeppelin/contracts/index.ts
+var contracts_exports = {};
+__export(contracts_exports, {
+  access: () => access_exports,
+  token: () => token_exports
+});
+
+// ../contract/typechain/factories/@openzeppelin/contracts/access/index.ts
+var access_exports = {};
+__export(access_exports, {
+  Ownable__factory: () => Ownable__factory
+});
+
+// ../contract/typechain/factories/@openzeppelin/contracts/access/Ownable__factory.ts
+import { Contract, Interface } from "ethers";
 var _abi = [
   {
     anonymous: false,
@@ -1172,16 +1165,28 @@ var _abi = [
 ];
 var Ownable__factory = class {
   static createInterface() {
-    return new utils.Interface(_abi);
+    return new Interface(_abi);
   }
-  static connect(address, signerOrProvider) {
-    return new Contract2(address, _abi, signerOrProvider);
+  static connect(address, runner) {
+    return new Contract(address, _abi, runner);
   }
 };
 Ownable__factory.abi = _abi;
 
-// ../contract/typechain/factories/IERC20__factory.ts
-import { Contract as Contract3, utils as utils2 } from "ethers";
+// ../contract/typechain/factories/@openzeppelin/contracts/token/index.ts
+var token_exports = {};
+__export(token_exports, {
+  erc20: () => ERC20_exports
+});
+
+// ../contract/typechain/factories/@openzeppelin/contracts/token/ERC20/index.ts
+var ERC20_exports = {};
+__export(ERC20_exports, {
+  IERC20__factory: () => IERC20__factory
+});
+
+// ../contract/typechain/factories/@openzeppelin/contracts/token/ERC20/IERC20__factory.ts
+import { Contract as Contract2, Interface as Interface2 } from "ethers";
 var _abi2 = [
   {
     anonymous: false,
@@ -1369,16 +1374,48 @@ var _abi2 = [
 ];
 var IERC20__factory = class {
   static createInterface() {
-    return new utils2.Interface(_abi2);
+    return new Interface2(_abi2);
   }
-  static connect(address, signerOrProvider) {
-    return new Contract3(address, _abi2, signerOrProvider);
+  static connect(address, runner) {
+    return new Contract2(address, _abi2, runner);
   }
 };
 IERC20__factory.abi = _abi2;
 
-// ../contract/typechain/factories/BrevisApp__factory.ts
-import { Contract as Contract4, utils as utils3 } from "ethers";
+// ../contract/typechain/factories/brevis-contracts/index.ts
+var brevis_contracts_exports = {};
+__export(brevis_contracts_exports, {
+  contracts: () => contracts_exports2
+});
+
+// ../contract/typechain/factories/brevis-contracts/contracts/index.ts
+var contracts_exports2 = {};
+__export(contracts_exports2, {
+  sdk: () => sdk_exports
+});
+
+// ../contract/typechain/factories/brevis-contracts/contracts/sdk/index.ts
+var sdk_exports = {};
+__export(sdk_exports, {
+  apps: () => apps_exports,
+  interfaceA: () => interface_exports,
+  lib: () => lib_exports
+});
+
+// ../contract/typechain/factories/brevis-contracts/contracts/sdk/apps/index.ts
+var apps_exports = {};
+__export(apps_exports, {
+  framework: () => framework_exports
+});
+
+// ../contract/typechain/factories/brevis-contracts/contracts/sdk/apps/framework/index.ts
+var framework_exports = {};
+__export(framework_exports, {
+  BrevisApp__factory: () => BrevisApp__factory
+});
+
+// ../contract/typechain/factories/brevis-contracts/contracts/sdk/apps/framework/BrevisApp__factory.ts
+import { Contract as Contract3, Interface as Interface3 } from "ethers";
 var _abi3 = [
   {
     inputs: [
@@ -1690,16 +1727,22 @@ var _abi3 = [
 ];
 var BrevisApp__factory = class {
   static createInterface() {
-    return new utils3.Interface(_abi3);
+    return new Interface3(_abi3);
   }
-  static connect(address, signerOrProvider) {
-    return new Contract4(address, _abi3, signerOrProvider);
+  static connect(address, runner) {
+    return new Contract3(address, _abi3, runner);
   }
 };
 BrevisApp__factory.abi = _abi3;
 
-// ../contract/typechain/factories/IBrevisProof__factory.ts
-import { Contract as Contract5, utils as utils4 } from "ethers";
+// ../contract/typechain/factories/brevis-contracts/contracts/sdk/interface/index.ts
+var interface_exports = {};
+__export(interface_exports, {
+  IBrevisProof__factory: () => IBrevisProof__factory
+});
+
+// ../contract/typechain/factories/brevis-contracts/contracts/sdk/interface/IBrevisProof__factory.ts
+import { Contract as Contract4, Interface as Interface4 } from "ethers";
 var _abi4 = [
   {
     inputs: [
@@ -2105,16 +2148,32 @@ var _abi4 = [
 ];
 var IBrevisProof__factory = class {
   static createInterface() {
-    return new utils4.Interface(_abi4);
+    return new Interface4(_abi4);
   }
-  static connect(address, signerOrProvider) {
-    return new Contract5(address, _abi4, signerOrProvider);
+  static connect(address, runner) {
+    return new Contract4(address, _abi4, runner);
   }
 };
 IBrevisProof__factory.abi = _abi4;
 
-// ../contract/typechain/factories/Tx__factory.ts
-import { utils as utils5, Contract as Contract6, ContractFactory } from "ethers";
+// ../contract/typechain/factories/brevis-contracts/contracts/sdk/lib/index.ts
+var lib_exports = {};
+__export(lib_exports, {
+  libSol: () => Lib_exports
+});
+
+// ../contract/typechain/factories/brevis-contracts/contracts/sdk/lib/Lib.sol/index.ts
+var Lib_exports = {};
+__export(Lib_exports, {
+  Tx__factory: () => Tx__factory
+});
+
+// ../contract/typechain/factories/brevis-contracts/contracts/sdk/lib/Lib.sol/Tx__factory.ts
+import {
+  Contract as Contract5,
+  ContractFactory,
+  Interface as Interface5
+} from "ethers";
 var _abi5 = [
   {
     inputs: [
@@ -2192,32 +2251,46 @@ var Tx__factory = class extends ContractFactory {
     } else {
       super(_abi5, _bytecode, args[0]);
     }
-    this.contractName = "Tx";
-  }
-  deploy(overrides) {
-    return super.deploy(overrides || {});
   }
   getDeployTransaction(overrides) {
     return super.getDeployTransaction(overrides || {});
   }
-  attach(address) {
-    return super.attach(address);
+  deploy(overrides) {
+    return super.deploy(overrides || {});
   }
-  connect(signer) {
-    return super.connect(signer);
+  connect(runner) {
+    return super.connect(runner);
   }
   static createInterface() {
-    return new utils5.Interface(_abi5);
+    return new Interface5(_abi5);
   }
-  static connect(address, signerOrProvider) {
-    return new Contract6(address, _abi5, signerOrProvider);
+  static connect(address, runner) {
+    return new Contract5(address, _abi5, runner);
   }
 };
 Tx__factory.bytecode = _bytecode;
 Tx__factory.abi = _abi5;
 
-// ../contract/typechain/factories/FeeReimbursementApp__factory.ts
-import { utils as utils6, Contract as Contract7, ContractFactory as ContractFactory2 } from "ethers";
+// ../contract/typechain/factories/contracts/index.ts
+var contracts_exports3 = {};
+__export(contracts_exports3, {
+  MockFeeModule__factory: () => MockFeeModule__factory,
+  feeReimbursementAppSol: () => FeeReimbursementApp_exports
+});
+
+// ../contract/typechain/factories/contracts/FeeReimbursementApp.sol/index.ts
+var FeeReimbursementApp_exports = {};
+__export(FeeReimbursementApp_exports, {
+  FeeReimbursementApp__factory: () => FeeReimbursementApp__factory,
+  IFeeRebateTierModule__factory: () => IFeeRebateTierModule__factory
+});
+
+// ../contract/typechain/factories/contracts/FeeReimbursementApp.sol/FeeReimbursementApp__factory.ts
+import {
+  Contract as Contract6,
+  ContractFactory as ContractFactory2,
+  Interface as Interface6
+} from "ethers";
 var _abi6 = [
   {
     inputs: [
@@ -2965,35 +3038,32 @@ var FeeReimbursementApp__factory = class extends ContractFactory2 {
     } else {
       super(_abi6, _bytecode2, args[0]);
     }
-    this.contractName = "FeeReimbursementApp";
-  }
-  deploy(_brevisProof, overrides) {
-    return super.deploy(
-      _brevisProof,
-      overrides || {}
-    );
   }
   getDeployTransaction(_brevisProof, overrides) {
     return super.getDeployTransaction(_brevisProof, overrides || {});
   }
-  attach(address) {
-    return super.attach(address);
+  deploy(_brevisProof, overrides) {
+    return super.deploy(_brevisProof, overrides || {});
   }
-  connect(signer) {
-    return super.connect(signer);
+  connect(runner) {
+    return super.connect(runner);
   }
   static createInterface() {
-    return new utils6.Interface(_abi6);
+    return new Interface6(_abi6);
   }
-  static connect(address, signerOrProvider) {
-    return new Contract7(address, _abi6, signerOrProvider);
+  static connect(address, runner) {
+    return new Contract6(
+      address,
+      _abi6,
+      runner
+    );
   }
 };
 FeeReimbursementApp__factory.bytecode = _bytecode2;
 FeeReimbursementApp__factory.abi = _abi6;
 
-// ../contract/typechain/factories/IFeeRebateTierModule__factory.ts
-import { Contract as Contract8, utils as utils7 } from "ethers";
+// ../contract/typechain/factories/contracts/FeeReimbursementApp.sol/IFeeRebateTierModule__factory.ts
+import { Contract as Contract7, Interface as Interface7 } from "ethers";
 var _abi7 = [
   {
     inputs: [
@@ -3017,20 +3087,24 @@ var _abi7 = [
 ];
 var IFeeRebateTierModule__factory = class {
   static createInterface() {
-    return new utils7.Interface(_abi7);
+    return new Interface7(_abi7);
   }
-  static connect(address, signerOrProvider) {
-    return new Contract8(
+  static connect(address, runner) {
+    return new Contract7(
       address,
       _abi7,
-      signerOrProvider
+      runner
     );
   }
 };
 IFeeRebateTierModule__factory.abi = _abi7;
 
-// ../contract/typechain/factories/MockFeeModule__factory.ts
-import { utils as utils8, Contract as Contract9, ContractFactory as ContractFactory3 } from "ethers";
+// ../contract/typechain/factories/contracts/MockFeeModule__factory.ts
+import {
+  Contract as Contract8,
+  ContractFactory as ContractFactory3,
+  Interface as Interface8
+} from "ethers";
 var _abi8 = [
   {
     anonymous: false,
@@ -3113,32 +3187,32 @@ var MockFeeModule__factory = class extends ContractFactory3 {
     } else {
       super(_abi8, _bytecode3, args[0]);
     }
-    this.contractName = "MockFeeModule";
-  }
-  deploy(overrides) {
-    return super.deploy(overrides || {});
   }
   getDeployTransaction(overrides) {
     return super.getDeployTransaction(overrides || {});
   }
-  attach(address) {
-    return super.attach(address);
+  deploy(overrides) {
+    return super.deploy(overrides || {});
   }
-  connect(signer) {
-    return super.connect(signer);
+  connect(runner) {
+    return super.connect(runner);
   }
   static createInterface() {
-    return new utils8.Interface(_abi8);
+    return new Interface8(_abi8);
   }
-  static connect(address, signerOrProvider) {
-    return new Contract9(address, _abi8, signerOrProvider);
+  static connect(address, runner) {
+    return new Contract8(address, _abi8, runner);
   }
 };
 MockFeeModule__factory.bytecode = _bytecode3;
 MockFeeModule__factory.abi = _abi8;
 
 // src/brevis_request/BrevisRequest__factory.ts
-import { utils as utils9, Contract as Contract10, ContractFactory as ContractFactory4 } from "ethers";
+import {
+  Contract as Contract9,
+  ContractFactory as ContractFactory4,
+  Interface as Interface9
+} from "ethers";
 var _abi9 = [
   {
     inputs: [
@@ -3204,7 +3278,33 @@ var _abi9 = [
         type: "bytes32"
       }
     ],
+    name: "RequestCallbackFailed",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "bytes32",
+        name: "requestId",
+        type: "bytes32"
+      }
+    ],
     name: "RequestFulfilled",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "bytes32",
+        name: "requestId",
+        type: "bytes32"
+      }
+    ],
+    name: "RequestRefunded",
     type: "event"
   },
   {
@@ -3258,6 +3358,32 @@ var _abi9 = [
     type: "event"
   },
   {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "bytes32[]",
+        name: "requestIds",
+        type: "bytes32[]"
+      }
+    ],
+    name: "RequestsCallbackFailed",
+    type: "event"
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "bytes32[]",
+        name: "requestId",
+        type: "bytes32[]"
+      }
+    ],
+    name: "RequestsFulfilled",
+    type: "event"
+  },
+  {
     inputs: [],
     name: "brevisProof",
     outputs: [
@@ -3268,19 +3394,6 @@ var _abi9 = [
       }
     ],
     stateMutability: "view",
-    type: "function"
-  },
-  {
-    inputs: [
-      {
-        internalType: "bytes32",
-        name: "_requestId",
-        type: "bytes32"
-      }
-    ],
-    name: "chargeFee",
-    outputs: [],
-    stateMutability: "nonpayable",
     type: "function"
   },
   {
@@ -3312,6 +3425,71 @@ var _abi9 = [
       }
     ],
     stateMutability: "view",
+    type: "function"
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint64",
+        name: "_chainId",
+        type: "uint64"
+      },
+      {
+        internalType: "bytes32[]",
+        name: "_requestIds",
+        type: "bytes32[]"
+      },
+      {
+        internalType: "bytes",
+        name: "_proof",
+        type: "bytes"
+      },
+      {
+        components: [
+          {
+            internalType: "bytes32",
+            name: "commitHash",
+            type: "bytes32"
+          },
+          {
+            internalType: "bytes32",
+            name: "vkHash",
+            type: "bytes32"
+          },
+          {
+            internalType: "bytes32",
+            name: "appCommitHash",
+            type: "bytes32"
+          },
+          {
+            internalType: "bytes32",
+            name: "appVkHash",
+            type: "bytes32"
+          },
+          {
+            internalType: "bytes32",
+            name: "smtRoot",
+            type: "bytes32"
+          }
+        ],
+        internalType: "struct Brevis.ProofData[]",
+        name: "_proofDataArray",
+        type: "tuple[]"
+      },
+      {
+        internalType: "bytes[]",
+        name: "_appCircuitOutputs",
+        type: "bytes[]"
+      },
+      {
+        internalType: "address",
+        name: "_callback",
+        type: "address"
+      }
+    ],
+    name: "fulfillAggRequests",
+    outputs: [],
+    stateMutability: "nonpayable",
     type: "function"
   },
   {
@@ -3371,7 +3549,7 @@ var _abi9 = [
     name: "queryRequestStatus",
     outputs: [
       {
-        internalType: "enum BrevisRequest.RequestStatus",
+        internalType: "enum IBrevisRequest.RequestStatus",
         name: "",
         type: "uint8"
       }
@@ -3443,7 +3621,7 @@ var _abi9 = [
         type: "address"
       },
       {
-        internalType: "enum BrevisRequest.RequestStatus",
+        internalType: "enum IBrevisRequest.RequestStatus",
         name: "status",
         type: "uint8"
       }
@@ -3518,7 +3696,7 @@ var _abi9 = [
     type: "receive"
   }
 ];
-var _bytecode4 = "0x6080346100c057601f610d9638819003918201601f19168301916001600160401b038311848410176100c55780849260409485528339810103126100c05780516001600160a01b0391828216918290036100c05760200151908282168092036100c0576000549060018060a01b0319913383821617600055604051943391167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0600080a38160015416176001556003541617600355610cba90816100dc8239f35b600080fd5b634e487b7160e01b600052604160045260246000fdfe60806040818152600480361015610021575b505050361561001f57600080fd5b005b600092833560e01c9081633f20b4c91461097b57508063622b6af41461091a5780636a96173514610700578063715018a6146106a0578381637249fbb614610600575080637ff7b0d2146105735780638da5cb5b1461054d5780639d866985146104e9578063a42dce8014610470578063b6979c3e1461043a578063c415b95c14610412578063c7f5aaa0146103ea578063da47dc32146101d5578063e713b4c9146101b15763f2fde38b0361001157346101ad5760203660031901126101ad576100ea6109e0565b908354906001600160a01b0380831693610105338614610a19565b169384156101445750506001600160a01b031916821783557f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08380a380f35b906020608492519162461bcd60e51b8352820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201527f64647265737300000000000000000000000000000000000000000000000000006064820152fd5b8280fd5b8382346101d15760203660031901126101d1576101ce9035610b49565b80f35b5080fd5b50919060603660031901126101d1578235906101ef6109ca565b90604435916001600160a01b038084168094036103e657848652602091878352838720546103a35781169081156103605760025442019081421161034d5784519160a0830183811067ffffffffffffffff82111761033a5786528252600384830192348452868101948552606081019488865260808201948b86528a8c528c8852888c209251835551600183015583600283019151166001600160a01b031982541617905501925116825491516003811015610327577fffffffffffffffffffffff0000000000000000000000000000000000000000009092161760a09190911b74ff00000000000000000000000000000000000000001617905581519384523390840152349083015260608201527f4eede03ca33645529b4d82428b024149165298c901cf7453f68eb43bd3d3b65890608090a180f35b634e487b7160e01b895260218a52602489fd5b634e487b7160e01b8a5260418b5260248afd5b634e487b7160e01b885260118952602488fd5b835162461bcd60e51b8152808901849052601560248201527f726566756e646565206e6f742070726f766964656400000000000000000000006044820152606490fd5b835162461bcd60e51b8152808901849052601860248201527f7265717565737420616c726561647920696e20717565756500000000000000006044820152606490fd5b8580fd5b5050346101d157816003193601126101d1576020906001600160a01b03600354169051908152f35b5050346101d157816003193601126101d1576020906001600160a01b03600154169051908152f35b50346101ad5760203660031901126101ad5760ff6003836020958461046e95358252875220015460a01c16915180926109f6565bf35b5050346101d15760203660031901126101d1577f5d16ad41baeb009cd23eb8f6c7cde5c2e0cd5acf4a33926ab488875c37c37f38906104ad6109e0565b6001600160a01b036104c3818654163314610a19565b80600154921690816001600160a01b03198416176001558351921682526020820152a180f35b50346101ad5760203660031901126101ad578160a0938261046e93358252602052208054926001820154916001600160a01b039160038360028401541692015493815196875260208701528501528116606084015260ff6080840191851c166109f6565b5050346101d157816003193601126101d1576001600160a01b0360209254169051908152f35b50346101ad57816003193601126101ad5761058c6109ca565b916001600160a01b036001541633036105bd57508280806101ce948194359061c350f16105b7610abd565b50610c38565b906020606492519162461bcd60e51b8352820152601160248201527f6e6f742066656520636f6c6c6563746f720000000000000000000000000000006044820152fd5b8084843461069c57602036600319011261069c5780358084528160205261062b838520541515610afd565b80845281602052828420805442111561069857848080808460039961066b965560016001600160a01b036002830154169101549061c350f16105b7610abd565b84526020528220017402000000000000000000000000000000000000000060ff60a01b1982541617905580f35b8480fd5b5050fd5b83346106fd57806003193601126106fd578080546001600160a01b03196001600160a01b038216916106d3338414610a19565b1682557f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08280a380f35b80fd5b509190346101d15760a03660031901126101d15767ffffffffffffffff833560243582811690819003610698576044358381116103e6576107449036908801610997565b949060643594851515809603610905576084359081116109055761076b9036908a01610997565b939095896001600160a01b03936107a685600354169187519b8c968795630979240d60e21b8752860152606060248601526064850191610a9c565b926044830152818b60209b8c9503925af19081156109105788916108df575b50840361089c5786976107d785610b49565b8488528087526003838920017401000000000000000000000000000000000000000060ff60a01b198254161790557f85e1543bf2f84fe80c6badbce3648c8539ad1df4d2b3d822938ca0538be727e6878451878152a1848852865260038288200154169384610844578680f35b86956108756108839288958551958694850198633ceb5b5160e11b8a52602486015260448501526064840191610a9c565b03601f198101835282610a64565b51925af150610890610abd565b50803880808080808680f35b815162461bcd60e51b8152808901879052601d60248201527f72657175657374496420616e642070726f6f66206e6f74206d617463680000006044820152606490fd5b90508681813d8311610909575b6108f68183610a64565b810103126109055751386107c5565b8780fd5b503d6108ec565b83513d8a823e3d90fd5b5090346101ad5760203660031901126101ad577f87a73c061f18ffd513249d1d727921e40e348948b01e2979efb36ef4f5204a6391356109656001600160a01b038554163314610a19565b600254908060025582519182526020820152a180f35b8490346101d157816003193601126101d1576020906002548152f35b9181601f840112156109c55782359167ffffffffffffffff83116109c557602083818601950101116109c557565b600080fd5b602435906001600160a01b03821682036109c557565b600435906001600160a01b03821682036109c557565b906003821015610a035752565b634e487b7160e01b600052602160045260246000fd5b15610a2057565b606460405162461bcd60e51b815260206004820152602060248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e65726044820152fd5b90601f8019910116810190811067ffffffffffffffff821117610a8657604052565b634e487b7160e01b600052604160045260246000fd5b908060209392818452848401376000828201840152601f01601f1916010190565b3d15610af8573d9067ffffffffffffffff8211610a865760405191610aec601f8201601f191660200184610a64565b82523d6000602084013e565b606090565b15610b0457565b60405162461bcd60e51b815260206004820152601460248201527f72657175657374206e6f7420696e2071756575650000000000000000000000006044820152606490fd5b60009080825260209060048252610b6560408420541515610afd565b6024826001600160a01b0360035416604051928380926371e8f36b60e11b82528660048301525afa908115610c2d578491610bf3575b5015610bae578252600490526040812055565b60405162461bcd60e51b815260048101839052601360248201527f70726f6f66206e6f742067656e657261746564000000000000000000000000006044820152606490fd5b90508281813d8311610c26575b610c0a8183610a64565b81010312610c2257518015158103610c225738610b9b565b8380fd5b503d610c00565b6040513d86823e3d90fd5b15610c3f57565b60405162461bcd60e51b815260206004820152601260248201527f73656e64206e6174697665206661696c656400000000000000000000000000006044820152606490fdfea26469706673582212201905409e4cdfc7fb6b946c9212735c55a3478272e9a45a4b96ed82c94b4d1ba164736f6c63430008140033";
+var _bytecode4 = "0x6080346100c057601f61127538819003918201601f19168301916001600160401b038311848410176100c55780849260409485528339810103126100c05780516001600160a01b0391828216918290036100c05760200151908282168092036100c0576000549060018060a01b0319913383821617600055604051943391167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0600080a3816001541617600155600354161760035561119990816100dc8239f35b600080fd5b634e487b7160e01b600052604160045260246000fdfe608080604052600436101561001d575b50361561001b57600080fd5b005b600090813560e01c9081633f20b4c914610ec357508063622b6af414610e605780636a96173514610bc9578063715018a614610b6c5780637249fbb6146109e85780637ff7b0d2146109565780638da5cb5b146109305780639d866985146108c6578063a42dce801461084d578063b6979c3e14610813578063c415b95c146107ec578063c7f5aaa0146107c5578063da47dc32146105a6578063ecdafd46146101ae5763f2fde38b0361000f57346101ab5760203660031901126101ab576100e4610f28565b6001600160a01b0380916100fc828554163314610f92565b1690811561014057600054826001600160a01b0319821617600055167f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0600080a380f35b60405162461bcd60e51b815260206004820152602660248201527f4f776e61626c653a206e6577206f776e657220697320746865207a65726f206160448201527f64647265737300000000000000000000000000000000000000000000000000006064820152608490fd5b80fd5b50346101ab5760c03660031901126101ab5760043567ffffffffffffffff811681036105965760243567ffffffffffffffff8111610592576101f4903690600401610f61565b9160443567ffffffffffffffff81116105a257610215903690600401610edf565b67ffffffffffffffff6064351161059e5736602360643501121561059e5767ffffffffffffffff606435600401351161059e5736602460a0606435600401350260643501011161059e5760843567ffffffffffffffff811161059a5761027f903690600401610f61565b919092876001600160a01b03928360a4351660a43503610596578360035416803b156105925767ffffffffffffffff83896102f78c978e966102e56040519a8b998a988997633ab58d6f60e21b89521660048801526060602488015260648701916110da565b84810360031901604486015291611079565b03925af1801561058757610557575b5060015b8660ff82161061050557507fc9f9dbb4a40f26672580c28841452a59f824f5c0053e412183cfec77e76570ef604051602081528061034c602082018a8a6110da565b0390a160a4351661035b578580f35b85916040519363ed1fe83b60e01b602086015267ffffffffffffffff60848601911660248601526060604486015260643560040135905260a4840191602460643501845b6064356004013581106104c4575050602319858403016064860152808352602083019060208160051b850101938386915b83831061045757505050505050916103f281839403601f198101835282610fdd565b6020815191018260a4355af161040661109a565b5015610414575b8080808580f35b7fa27ac73d985dc053bec967c59a530feb90be0582343095d7b85ec7e7c3fef2089161044d6040519283926020845260208401916110da565b0390a1388061040d565b9193959092949650601f198282030186528635601e19843603018112156104c0578301906020823592019167ffffffffffffffff81116104bc5780360383136104bc576104aa6020928392600195611079565b98019601930190918a969594926103d0565b8c80fd5b8b80fd5b813585526020808301359086015260408083013590860152606080830135908601526080808301359086015289955060a0948501949091019060010161039f565b611fe08160051b168601358852600460205260036040892001600160a01b60ff60a01b1982541617905560ff8091169081146105435760010161030a565b634e487b7160e01b88526011600452602488fd5b67ffffffffffffffff8198929811610573576040529538610306565b634e487b7160e01b82526041600452602482fd5b6040513d8a823e3d90fd5b8280fd5b5080fd5b8680fd5b8580fd5b8480fd5b5060603660031901126101ab576004356105be610f12565b604435906001600160a01b038083168093036105a25783855260209160048352604086205461078057811690811561073b57600254420190814211610727576040519160a0830183811067ffffffffffffffff82111761071357604052825260038483019234845260408101948552606081019487865260808201948a8652898b526004885260408b209251835551600183015583600283019151166001600160a01b0319825416179055019251168254915160038110156106ff579160809593917fffffffffffffffffffffff00000000000000000000000000000000000000000074ff00000000000000000000000000000000000000007f4eede03ca33645529b4d82428b024149165298c901cf7453f68eb43bd3d3b65899979560a01b1692161717905560405192835233908301523460408301526060820152a180f35b634e487b7160e01b88526021600452602488fd5b634e487b7160e01b89526041600452602489fd5b634e487b7160e01b87526011600452602487fd5b60405162461bcd60e51b815260048101849052601560248201527f726566756e646565206e6f742070726f766964656400000000000000000000006044820152606490fd5b60405162461bcd60e51b815260048101849052601860248201527f7265717565737420616c726561647920696e20717565756500000000000000006044820152606490fd5b50346101ab57806003193601126101ab5760206001600160a01b0360035416604051908152f35b50346101ab57806003193601126101ab5760206001600160a01b0360015416604051908152f35b50346101ab5760203660031901126101ab5760ff6003604060209360043581526004855220015460a01c1661084b6040518092610f3e565bf35b50346101ab5760203660031901126101ab577f5d16ad41baeb009cd23eb8f6c7cde5c2e0cd5acf4a33926ab488875c37c37f38604061088a610f28565b6001600160a01b036108a0818654163314610f92565b80600154921690816001600160a01b03198416176001558351921682526020820152a180f35b50346101ab5760203660031901126101ab57604060a091600435815260046020522061084b8154916001810154906001600160a01b039060038260028301541691015492604051958652602086015260408501528116606084015260ff6080840191851c16610f3e565b50346101ab57806003193601126101ab576001600160a01b036020915416604051908152f35b50346101ab5760403660031901126101ab57610970610f12565b6001600160a01b036001541633036109a357818080806109a0946004359061c350f161099a61109a565b50611117565b80f35b60405162461bcd60e51b815260206004820152601160248201527f6e6f742066656520636f6c6c6563746f720000000000000000000000000000006044820152606490fd5b50346101ab5760208060031936011261059657600435808352600482526040832054421115610592576001600160a01b036024838260035416604051928380926371e8f36b60e11b82528760048301525afa8015610b6157610a52918691610b34575b501561102d565b81845260048352604084205415610aef5790610ab5848080807ffea410cb461deba9fe807dde02d6641d82e1bf09ecc88ecfa0f2ffadf2a1fdfe979686825260048852600160408320918383556002830154169101549061c350f161099a61109a565b80845260048252600360408520017402000000000000000000000000000000000000000060ff60a01b19825416179055604051908152a180f35b60405162461bcd60e51b815260048101849052601460248201527f72657175657374206e6f7420696e2071756575650000000000000000000000006044820152606490fd5b610b549150853d8711610b5a575b610b4c8183610fdd565b810190611015565b38610a4b565b503d610b42565b6040513d87823e3d90fd5b50346101ab57806003193601126101ab578080546001600160a01b03196001600160a01b03821691610b9f338414610f92565b1682557f8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e08280a380f35b50346101ab5760a03660031901126101ab5760043560243567ffffffffffffffff808216809203610e5c576044358181116105a257610c0c903690600401610edf565b906064359283151580940361059a5760843590811161059a57610c33903690600401610edf565b9290936001600160a01b03928360035416604051936371e8f36b60e11b85528960048601528a6020998a87602481875afa958615610e5157610c818c97610cab998591610e3a57501561102d565b60405197889687958694630979240d60e21b86526004860152606060248601526064850191611079565b90604483015203925af1908115610e2f578791610e02575b508503610dbd57908592918584526004855260036040852001600160a01b60ff60a01b198254161790557f85e1543bf2f84fe80c6badbce3648c8539ad1df4d2b3d822938ca0538be727e685604051888152a1858452600485526003604085200154169081610d30578380f35b83610d64610d7282956040519283918a830196633ceb5b5160e11b88528c6024850152604060448501526064840191611079565b03601f198101835282610fdd565b51925af1610d7e61109a565b5015610d8d575b828180808380f35b7ff9e9ac125efc63eaa0638c58fd8a1ab11673bae30202f01909611e4ebdbe9b4e91604051908152a13880610d85565b60405162461bcd60e51b815260048101859052601d60248201527f72657175657374496420616e642070726f6f66206e6f74206d617463680000006044820152606490fd5b90508481813d8311610e28575b610e198183610fdd565b8101031261059a575138610cc3565b503d610e0f565b6040513d89823e3d90fd5b610b549150893d8b11610b5a57610b4c8183610fdd565b6040513d84823e3d90fd5b8380fd5b50346101ab5760203660031901126101ab577f87a73c061f18ffd513249d1d727921e40e348948b01e2979efb36ef4f5204a636040600435610ead6001600160a01b038554163314610f92565b600254908060025582519182526020820152a180f35b9050346105965781600319360112610596576020906002548152f35b9181601f84011215610f0d5782359167ffffffffffffffff8311610f0d5760208381860195010111610f0d57565b600080fd5b602435906001600160a01b0382168203610f0d57565b600435906001600160a01b0382168203610f0d57565b906003821015610f4b5752565b634e487b7160e01b600052602160045260246000fd5b9181601f84011215610f0d5782359167ffffffffffffffff8311610f0d576020808501948460051b010111610f0d57565b15610f9957565b606460405162461bcd60e51b815260206004820152602060248201527f4f776e61626c653a2063616c6c6572206973206e6f7420746865206f776e65726044820152fd5b90601f8019910116810190811067ffffffffffffffff821117610fff57604052565b634e487b7160e01b600052604160045260246000fd5b90816020910312610f0d57518015158103610f0d5790565b1561103457565b60405162461bcd60e51b815260206004820152601760248201527f70726f6f6620616c72656164792067656e6572617465640000000000000000006044820152606490fd5b908060209392818452848401376000828201840152601f01601f1916010190565b3d156110d5573d9067ffffffffffffffff8211610fff57604051916110c9601f8201601f191660200184610fdd565b82523d6000602084013e565b606090565b90918281527f07ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff8311610f0d5760209260051b809284830137010190565b1561111e57565b60405162461bcd60e51b815260206004820152601260248201527f73656e64206e6174697665206661696c656400000000000000000000000000006044820152606490fdfea2646970667358221220c2624f28ab83f528b4b0611ce6018b867ef7227e773a85684493580622d4936464736f6c63430008140033";
 var isSuperArgs4 = (xs) => xs.length > 1;
 var BrevisRequest__factory = class extends ContractFactory4 {
   constructor(...args) {
@@ -3527,14 +3705,6 @@ var BrevisRequest__factory = class extends ContractFactory4 {
     } else {
       super(_abi9, _bytecode4, args[0]);
     }
-    this.contractName = "BrevisRequest";
-  }
-  deploy(_feeCollector, _brevisProof, overrides) {
-    return super.deploy(
-      _feeCollector,
-      _brevisProof,
-      overrides || {}
-    );
   }
   getDeployTransaction(_feeCollector, _brevisProof, overrides) {
     return super.getDeployTransaction(
@@ -3543,17 +3713,21 @@ var BrevisRequest__factory = class extends ContractFactory4 {
       overrides || {}
     );
   }
-  attach(address) {
-    return super.attach(address);
+  deploy(_feeCollector, _brevisProof, overrides) {
+    return super.deploy(
+      _feeCollector,
+      _brevisProof,
+      overrides || {}
+    );
   }
-  connect(signer) {
-    return super.connect(signer);
+  connect(runner) {
+    return super.connect(runner);
   }
   static createInterface() {
-    return new utils9.Interface(_abi9);
+    return new Interface9(_abi9);
   }
-  static connect(address, signerOrProvider) {
-    return new Contract10(address, _abi9, signerOrProvider);
+  static connect(address, runner) {
+    return new Contract9(address, _abi9, runner);
   }
 };
 BrevisRequest__factory.bytecode = _bytecode4;
@@ -3563,13 +3737,13 @@ BrevisRequest__factory.abi = _abi9;
 import * as dotenv from "dotenv";
 dotenv.config();
 var { FeeReimbursementApp__factory: FeeReimbursementApp__factory2 } = typechain_exports;
-var dstChainProvider = new ethers2.providers.JsonRpcProvider(
+var dstChainProvider = new ethers.JsonRpcProvider(
   process.env.DEST_RPC ?? ""
 );
-var sourceChainProvider = new ethers2.providers.JsonRpcProvider(
+var sourceChainProvider = new ethers.JsonRpcProvider(
   process.env.SOURCE_RPC ?? ""
 );
-var wallet = new ethers2.Wallet(
+var wallet = new ethers.Wallet(
   process.env.PRIVATE_KEY ?? "",
   dstChainProvider
 );
@@ -3582,46 +3756,10 @@ var userSwapAmountApp = FeeReimbursementApp__factory2.connect(
   wallet
 );
 async function monitorFeeAccumulated() {
-  userSwapAmountApp.on("FeeRebateAccumulated", (account, feeRebate, volume30D, feeRebateWithRate, startBlockNumber, endBlockNumber) => {
-    const feeRebateBN = feeRebate;
-    const volume30DBN = volume30D;
-    const feeRebateWithRateBN = feeRebateWithRate;
-    const startBlockNumberBN = startBlockNumber;
-    const endBlockNumberBN = endBlockNumber;
-    console.log("Fee Accumulated Event", account, feeRebate, volume30D, feeRebateWithRate, startBlockNumber, endBlockNumber);
-    if (account === void 0 || account === null || feeRebateBN === void 0 || feeRebateBN === null || volume30DBN === void 0 || volume30DBN === null || feeRebateWithRateBN === void 0 || feeRebateWithRateBN === null || startBlockNumberBN === void 0 || startBlockNumberBN === null || endBlockNumberBN === void 0 || endBlockNumberBN === null) {
-      return;
-    }
-    findUserExistingUTVF(account, BigInt(startBlockNumberBN.toString()), BigInt(endBlockNumberBN.toString())).then((utvf) => {
-      if (utvf) {
-        utvf.status = PROOF_STATUS_ONCHAIN_VERIFIED;
-        utvf.fee_rebate = feeRebateWithRateBN;
-        return updateUserTradeVolumeFee(utvf);
-      }
-    }).catch((error) => {
-      console.error(
-        "failed to update user swap amount",
-        account,
-        startBlockNumber,
-        endBlockNumber,
-        error
-      );
-    });
-  });
-}
-async function monitorBrevisRequest() {
-  brevisRequest.on("RequestSent", (requestId) => {
-    updateBrevisRequestStatus(requestId).then().catch((error) => {
-      console.error(
-        "failed to update brevis request on-chain status",
-        requestId,
-        error
-      );
-    });
-  });
 }
 async function submitBrevisRequestTx(utvf) {
   console.log(`submit tx for ${utvf.account}-${utvf.ymd}`);
+  updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true);
   brevisRequest.sendRequest(
     utvf.brevis_query_hash,
     wallet.address ?? "",
@@ -3669,6 +3807,8 @@ async function querySingleReceipt(receipt) {
           result.data,
           shouldBeFilteredOut
         );
+      } else {
+        console.debug(`${receipt.tx_hash} is not a order fee flow tx: ${result.data}`);
       }
     } else if (Number(receipt.transaction_type) === TX_TYPE_EXECUTION) {
       const result = getJSONForExecutionTx(receipt.account, transactionReceipt);
@@ -3681,6 +3821,8 @@ async function querySingleReceipt(receipt) {
           result.data,
           shouldBeFilteredOut
         );
+      } else {
+        console.debug(`${receipt.tx_hash} is not a execution tx: ${result.data}`);
       }
     } else {
       console.error("unexpected transaction type");
@@ -3690,7 +3832,7 @@ async function querySingleReceipt(receipt) {
 function getJSONForOrderFeeFlowTx(account, transactionReceipt) {
   let original = {
     block_num: transactionReceipt.blockNumber,
-    tx_hash: transactionReceipt.transactionHash,
+    tx_hash: transactionReceipt.hash,
     fields: []
   };
   transactionReceipt.logs.forEach((log, i) => {
@@ -3702,7 +3844,7 @@ function getJSONForOrderFeeFlowTx(account, transactionReceipt) {
     if (topic0.toLowerCase() === DelayedOrderSubmittedEvent && !isValidPositionModifiedContract(logAddress)) {
       console.log(`${logAddress}`);
     }
-    if (logAddress === OrderFlowFeeImposedEventContractAddress && topic0.toLowerCase() === OrderFlowFeeImposedEvent && BigNumber4.from(log.topics[1]).eq(BigNumber4.from(account))) {
+    if (logAddress === OrderFlowFeeImposedEventContractAddress && topic0.toLowerCase() === OrderFlowFeeImposedEvent && BigInt(log.topics[1].toLowerCase()) === BigInt(account.toLowerCase())) {
       original.fields.push({
         contract: OrderFlowFeeImposedEventContractAddress,
         log_index: i,
@@ -3719,7 +3861,7 @@ function getJSONForOrderFeeFlowTx(account, transactionReceipt) {
         field_index: 0,
         value: "0x" + log.data.replace("0x", "").slice(0, 64)
       });
-    } else if (isValidPositionModifiedContract(logAddress) && topic0.toLowerCase() === DelayedOrderSubmittedEvent && BigNumber4.from(log.topics[1]).eq(BigNumber4.from(account))) {
+    } else if (isValidPositionModifiedContract(logAddress) && topic0.toLowerCase() === DelayedOrderSubmittedEvent && BigInt(log.topics[1].toLowerCase()) === BigInt(account.toLowerCase())) {
       original.fields.push({
         contract: logAddress,
         log_index: i,
@@ -3744,7 +3886,7 @@ function getJSONForOrderFeeFlowTx(account, transactionReceipt) {
 function getJSONForExecutionTx(account, transactionReceipt) {
   let original = {
     block_num: transactionReceipt.blockNumber,
-    tx_hash: transactionReceipt.transactionHash,
+    tx_hash: transactionReceipt.hash,
     fields: []
   };
   transactionReceipt.logs.forEach((log, i) => {
@@ -3756,7 +3898,7 @@ function getJSONForExecutionTx(account, transactionReceipt) {
     if (topic0.toLowerCase() === PositionModifiedEvent && !isValidPositionModifiedContract(logAddress)) {
       console.log(`${logAddress}`);
     }
-    if (isValidPositionModifiedContract(logAddress) && topic0.toLowerCase() === PositionModifiedEvent && BigNumber4.from(log.topics[2]).eq(BigNumber4.from(account))) {
+    if (isValidPositionModifiedContract(logAddress) && topic0.toLowerCase() === PositionModifiedEvent && BigInt(log.topics[2].toLowerCase()) === BigInt(account.toLowerCase())) {
       original.fields.push({
         contract: logAddress,
         log_index: i,
@@ -3807,9 +3949,10 @@ async function queryTrade(trade) {
   }
   receiptPromises.push(getReceipt(execution_tx_receipt_id));
   const receipts = await Promise.all(receiptPromises);
-  var volume = BigNumber4.from(0);
-  var fee = BigNumber4.from(0);
+  var volume = BigInt(0);
+  var fee = BigInt(0);
   var debugFee = "";
+  var debugVolume = "";
   for (var receiptIndex = 0; receiptIndex < receipts.length; receiptIndex++) {
     const receipt = receipts[receiptIndex];
     if (receipt === void 0 || receipt === null) {
@@ -3820,24 +3963,29 @@ async function queryTrade(trade) {
     }
     const data = JSON.parse(receipt.data);
     if (Number(receipt.transaction_type) === TX_TYPE_ORDER_FEE_FLOW) {
-      debugFee += `tx ${receipt.tx_hash} add order flow fee `;
+      debugFee += ` order fee flow tx ${receipt.tx_hash} `;
       for (var i = 1; i < data.fields.length; i += 2) {
-        fee = fee.add(BigNumber4.from(data.fields[i].value));
+        fee = fee + BigInt(data.fields[i].value);
         debugFee += ` fee: ${data.fields[i].value} `;
       }
     } else {
-      debugFee += `tx ${receipt.tx_hash} add execution fee `;
+      debugFee += ` execution tx ${receipt.tx_hash} `;
+      debugVolume += ` execution tx ${receipt.tx_hash} `;
       for (let i2 = 0; i2 < data.fields.length / 4; i2++) {
-        volume = volume.add(BigNumber4.from(data.fields[i2 * 4 + 1].value).fromTwos(256).abs().mul(BigNumber4.from(data.fields[i2 * 4 + 2].value)).div(BigNumber4.from("1000000000000000000")));
-        fee = fee.add(BigNumber4.from(data.fields[i2 * 4 + 3].value));
+        var size = BigInt.asIntN(256, BigInt(data.fields[i2 * 4 + 1].value));
+        if (size < 0) {
+          size = -size;
+        }
+        volume = volume + size * BigInt(data.fields[i2 * 4 + 2].value) / BigInt("1000000000000000000");
+        fee = fee + BigInt(data.fields[i2 * 4 + 3].value);
         debugFee += ` fee: ${data.fields[i2 * 4 + 3].value} `;
       }
     }
   }
-  if (!volume.eq(BigNumber4.from(trade.volume))) {
-    console.error(`trade: ${trade.account}-${trade.execution_tx_receipt_id} volume not match: ${trade.volume}, ${volume.toString()}`);
-  } else if (!fee.eq(BigNumber4.from(trade.fee))) {
-    console.error(`trade: ${trade.account}-${trade.execution_tx_receipt_id} fee not match: ${trade.fee}, ${fee.toString()}, ${receipts[0].tx_hash} . Debug info: ${debugFee}`);
+  if (volume !== BigInt(trade.volume)) {
+    console.debug(`trade volume-not-match: account ${trade.account}. expected: ${trade.volume}. Debug-info: ${debugVolume}`);
+  } else if (fee !== BigInt(trade.fee)) {
+    console.debug(`trade fee-not-match: account ${trade.account}. Debug info: ${debugFee}`);
   }
   await updateTrade(trade.execution_tx_receipt_id, trade.account, STATUS_READY);
 }
@@ -3846,7 +3994,7 @@ async function queryTrade(trade) {
 import moment2 from "moment";
 async function prepareNewDayTradeClaims() {
   try {
-    const yesterday = Number(moment2.utc(/* @__PURE__ */ new Date()).subtract(1, "d").format("YYYYMMDD"));
+    const yesterday = Number(moment2.utc(/* @__PURE__ */ new Date()).add(1, "h").subtract(1, "d").format("YYYYMMDD"));
     var track = await getDailyTrack(BigInt(yesterday));
     if (track != void 0 && track != null && track) {
       return;
@@ -3859,6 +4007,7 @@ async function prepareNewDayTradeClaims() {
     if (result.error !== null) {
       throw result.error;
     }
+    console.log(`${yesterday}, trades count: ${result.trades.length}`);
     const accountTradesList = getAccountTradesList(result.trades);
     for (var i = 0; i < accountTradesList.length; i++) {
       const trades = accountTradesList[i].trades;
@@ -3890,8 +4039,8 @@ async function prepareNewDayTradeClaims() {
       const trade_ids = await saveTrades(trades, account);
       const claimPeriod = await userSwapAmountApp.accountClaimPeriod(account);
       var startBlockNumber = claimableTrades[0].blockNumber;
-      if (claimPeriod[1].gt(BigNumber5.from(startBlockNumber))) {
-        startBlockNumber = claimPeriod[1].toNumber() + 1;
+      if (claimPeriod[1] > BigInt(startBlockNumber)) {
+        startBlockNumber = Number(claimPeriod[1]) + 1;
       }
       utvf.start_blk_num = BigInt(startBlockNumber);
       utvf.end_blk_num = BigInt(claimableTrades[claimableTrades.length - 1].blockNumber);
@@ -3913,7 +4062,7 @@ async function getReceiptInfos() {
     }
     await Promise.all(promises);
   } catch (error) {
-    console.error("failed to get receipt infos");
+    console.error("failed to get receipt infos", error);
   }
 }
 async function prepareTrades() {
@@ -3925,7 +4074,7 @@ async function prepareTrades() {
     }
     await Promise.all(promises);
   } catch (error) {
-    console.error("failed to get receipt infos");
+    console.error("failed to prepare trade");
   }
 }
 async function prepareUserSwapAmountProof() {
@@ -3987,7 +4136,6 @@ setInterval(uploadUserSwapAmountProof, 15e3);
 prepareTrades().then();
 setInterval(prepareTrades, 1e3);
 monitorFeeAccumulated();
-monitorBrevisRequest();
 prepareNewDayTradeClaims();
 setInterval(prepareNewDayTradeClaims, 6e4);
 submitUserSwapAmountTx();
