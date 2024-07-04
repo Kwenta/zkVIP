@@ -362,9 +362,6 @@ async function findUTVFToDownLoadProof():  Promise<any> {
       proof: {
         equals: null,
       },
-      status: {
-        equals: PROOF_STATUS_BREVIS_QUERY_ERROR
-      }
     },
   });
 }
