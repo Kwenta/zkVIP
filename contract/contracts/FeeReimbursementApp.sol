@@ -59,9 +59,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         uint248 feeRebateWithRate = feeRebate;
         if (feeRebate > 0) {
             percentage = feeRebateTierModule.getFeeRebatePercentage(volume30D);
-            if (percentage != 0) {
-                feeRebateWithRate = feeRebate * percentage / 100; 
-            }
+            feeRebateWithRate = feeRebate * percentage / 100; 
         }
        
         ClaimPeriod memory claimPeriod = _newClaimPeriod(startBlockNumber, endBlockNumber, account);
