@@ -357,10 +357,10 @@ async function findUTVFToDownLoadProof():  Promise<any> {
     take: 5,
     where: {
       prover_id: {
-        not: "",
+        not: null,
       },
       proof: {
-        equals: '',
+        equals: null,
       },
       status: {
         equals: PROOF_STATUS_BREVIS_QUERY_ERROR
