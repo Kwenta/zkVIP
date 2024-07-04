@@ -14,13 +14,14 @@ import {
   findUserExistingUTVF, 
   findUserExistingUTVFByDate, 
   findUserTradeVolumeFees,
+  findUTVFToDownLoadProof,
   getDailyTrack,
   insertDailyTrack,
   insertUserTradeVolumeFee,
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
 import { getAllTradesWithin30Day, getAccountTradesList, saveTrades } from "../graphql/index.ts";
-import { sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
+import { downloadUTVFProofForBrevisError, sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
 import { findDayStartTimestamp, findNextDay, getCurrentDay } from "../server/type.ts";
 import moment from "moment";
@@ -28,7 +29,7 @@ import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/
 
 export async function prepareNewDayTradeClaims() {
   try {
-    const yesterday = Number((moment.utc(new Date()).add(1, "h").subtract(1, "d")).format('YYYYMMDD'))
+    const yesterday = Number((moment.utc(new Date()).subtract(1, "h").subtract(1, "d")).format('YYYYMMDD'))
     var track = await getDailyTrack(BigInt(yesterday));
     if (track != undefined && track != null && track) {
       return;
@@ -190,3 +191,17 @@ export async function submitUserSwapAmountTx() {
 
   }
 }
+
+export async function downloadProofs() {
+  try {
+    const utvfs = await findUTVFToDownLoadProof();
+    let promises = Array<Promise<void>>();
+    for (let i = 0; i < utvfs.length; i++) {
+      promises.push(downloadUTVFProofForBrevisError(utvfs[i]));
+    }
+    await Promise.all(promises);
+  } catch (error) {
+
+  }
+}
+

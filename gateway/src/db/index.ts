@@ -352,6 +352,23 @@ async function getDailyTrack(year_month_day: bigint): Promise<any> {
   });
 }
 
+async function findUTVFToDownLoadProof():  Promise<any> {
+  return prisma.user_trade_volume_fee.findMany({
+    take: 5,
+    where: {
+      prover_id: {
+        not: "",
+      },
+      proof: {
+        equals: '',
+      },
+      status: {
+        equals: PROOF_STATUS_BREVIS_QUERY_ERROR
+      }
+    },
+  });
+}
+
 async function insertTrade(
   trade: Trade,
   order_fee_flow_tx_receipt_id: string,
@@ -436,5 +453,6 @@ export {
   findNotReadyTrades,
   findProofToUpload,
   updateUserTradeVolumeFeeRequestSent,
-  findBrevisRequestSentUTVFS
+  findBrevisRequestSentUTVFS,
+  findUTVFToDownLoadProof
 };

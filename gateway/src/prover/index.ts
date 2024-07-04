@@ -515,6 +515,26 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
   }
 }
 
+async function downloadUTVFProofForBrevisError(utvf: UserTradeVolumeFee) {
+  try {
+    console.log("DownloadProofForBrevisError: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())  
+    const r = await buildUserTradeVolumeFeeProofReq(utvf);
+    if (r.proverIndex < 0) {
+      console.log("Cannot proceed upload proof cause prover index is invalid", utvf.id, (new Date()).toLocaleString())
+      return 
+    }
+    const getProofRes = await provers[r.proverIndex].getProof(utvf.prover_id)
+
+    utvf.proof = getProofRes.proof
+
+    console.log("Brevis error proof downloaded: ", utvf.id, (new Date()).toLocaleString())
+
+    updateUserTradeVolumeFee(utvf);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 function devideReceiptIntoCircuitInputReceipts(receipt: Receipt) {
   const result: Receipt[] = []
   const data = JSON.parse(receipt.data);
@@ -564,4 +584,5 @@ function sortByBlk(a: Receipt, b: Receipt) {
 export {
   sendUserTradeVolumeFeeProvingRequest,
   uploadUserTradeVolumeFeeProof,
+  downloadUTVFProofForBrevisError,
 };

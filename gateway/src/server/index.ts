@@ -14,6 +14,7 @@ import {
   PROOF_STATUS_BREVIS_QUERY_ERROR,
 } from "../constants/index.ts";
 import {
+  downloadProofs,
   getReceiptInfos,
   getStorageInfos,
   prepareNewDayTradeClaims,
@@ -60,6 +61,9 @@ setInterval(prepareNewDayTradeClaims, 60000);
 
 submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 2000);
+
+downloadProofs();
+setInterval(downloadProofs, 10000);
 
 
 var deleteDay = 0
