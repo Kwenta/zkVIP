@@ -372,13 +372,13 @@ async function findUTVFToUploadProof():  Promise<any> {
     take: 5,
     where: {
       brevis_query_hash: {
-        not: null,
+        not: null || '',
       },
       status: {
         not: PROOF_STATUS_PROOF_UPLOADED,
       },
       proof: {
-        not: null,
+        not: null || '',
       },
     },
   });
