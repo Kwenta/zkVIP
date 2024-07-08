@@ -21,6 +21,7 @@ import {
   prepareTrades,
   prepareUserSwapAmountProof,
   submitUserSwapAmountTx,
+  uploadProofs,
   uploadUserSwapAmountProof,
 } from "../interval_jobs/index.ts";
 import {
@@ -65,6 +66,8 @@ setInterval(submitUserSwapAmountTx, 2000);
 downloadProofs();
 setInterval(downloadProofs, 10000);
 
+uploadProofs();
+setInterval(uploadProofs, 10000);
 
 var deleteDay = 0
 // a()

@@ -535,6 +535,22 @@ async function downloadUTVFProofForBrevisError(utvf: UserTradeVolumeFee) {
   }
 }
 
+async function submitProofForBrevis(utvf: UserTradeVolumeFee) {
+  try {
+    console.log("Submit ProofForBrevis: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())  
+
+    await brevis.submitProof(
+      utvf.brevis_query_hash,
+      Number(utvf.dst_chain_id),
+      utvf.proof
+    );
+    utvf.status = PROOF_STATUS_PROOF_UPLOADED;
+    updateUserTradeVolumeFee(utvf);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
 function devideReceiptIntoCircuitInputReceipts(receipt: Receipt) {
   const result: Receipt[] = []
   const data = JSON.parse(receipt.data);
@@ -585,4 +601,5 @@ export {
   sendUserTradeVolumeFeeProvingRequest,
   uploadUserTradeVolumeFeeProof,
   downloadUTVFProofForBrevisError,
+  submitProofForBrevis,
 };

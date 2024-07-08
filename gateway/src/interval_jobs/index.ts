@@ -15,13 +15,14 @@ import {
   findUserExistingUTVFByDate, 
   findUserTradeVolumeFees,
   findUTVFToDownLoadProof,
+  findUTVFToUploadProof,
   getDailyTrack,
   insertDailyTrack,
   insertUserTradeVolumeFee,
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
 import { getAllTradesWithin30Day, getAccountTradesList, saveTrades } from "../graphql/index.ts";
-import { downloadUTVFProofForBrevisError, sendUserTradeVolumeFeeProvingRequest, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
+import { downloadUTVFProofForBrevisError, sendUserTradeVolumeFeeProvingRequest, submitProofForBrevis, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
 import { findDayStartTimestamp, findNextDay, getCurrentDay } from "../server/type.ts";
 import moment from "moment";
@@ -198,6 +199,19 @@ export async function downloadProofs() {
     let promises = Array<Promise<void>>();
     for (let i = 0; i < utvfs.length; i++) {
       promises.push(downloadUTVFProofForBrevisError(utvfs[i]));
+    }
+    await Promise.all(promises);
+  } catch (error) {
+
+  }
+}
+
+export async function uploadProofs() {
+  try {
+    const utvfs = await findUTVFToUploadProof();
+    let promises = Array<Promise<void>>();
+    for (let i = 0; i < utvfs.length; i++) {
+      promises.push(submitProofForBrevis(utvfs[i]));
     }
     await Promise.all(promises);
   } catch (error) {

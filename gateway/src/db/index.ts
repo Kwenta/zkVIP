@@ -4,6 +4,7 @@ import {
   PROOF_STATUS_BREVIS_QUERY_ERROR,
   PROOF_STATUS_INIT,
   PROOF_STATUS_PROOF_UPLOAD_SENT,
+  PROOF_STATUS_PROOF_UPLOADED,
   PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
   STATUS_INIT,
 } from "../constants/index.ts";
@@ -366,6 +367,23 @@ async function findUTVFToDownLoadProof():  Promise<any> {
   });
 }
 
+async function findUTVFToUploadProof():  Promise<any> {
+  return prisma.user_trade_volume_fee.findMany({
+    take: 5,
+    where: {
+      brevis_query_hash: {
+        not: null,
+      },
+      status: {
+        not: PROOF_STATUS_PROOF_UPLOADED,
+      },
+      proof: {
+        not: null,
+      },
+    },
+  });
+}
+
 async function insertTrade(
   trade: Trade,
   order_fee_flow_tx_receipt_id: string,
@@ -451,5 +469,6 @@ export {
   findProofToUpload,
   updateUserTradeVolumeFeeRequestSent,
   findBrevisRequestSentUTVFS,
-  findUTVFToDownLoadProof
+  findUTVFToDownLoadProof,
+  findUTVFToUploadProof
 };
