@@ -277,12 +277,17 @@ async function findUserTradeVolumeFees(status: bigint): Promise<any> {
 
 async function findBrevisRequestSentUTVFS(): Promise<any> {
   return prisma.user_trade_volume_fee.findMany({
-    take: 2,
+    take: 1,
     where: {
       status: {
         equals: PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
       },
     },
+    orderBy: [
+      {
+        update_time: 'desc',
+      }
+    ]
   });
 }
 
