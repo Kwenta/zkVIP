@@ -277,7 +277,7 @@ async function findUserTradeVolumeFees(status: bigint): Promise<any> {
 
 async function findBrevisRequestSentUTVFS(): Promise<any> {
   return prisma.user_trade_volume_fee.findMany({
-    take: 5,
+    take: 2,
     where: {
       status: {
         equals: PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
