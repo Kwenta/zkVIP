@@ -369,6 +369,11 @@ async function findUTVFToDownLoadProof():  Promise<any> {
         equals: null || '',
       },
     },
+    orderBy: [
+      {
+        update_time: 'asc',
+      }
+    ]
   });
 }
 
@@ -386,6 +391,11 @@ async function findUTVFToUploadProof():  Promise<any> {
         not: null || '',
       },
     },
+    orderBy: [
+      {
+        update_time: 'asc',
+      }
+    ]
   });
 }
 

@@ -194,8 +194,10 @@ export async function submitUserSwapAmountTx() {
 }
 
 export async function downloadProofs() {
+  console.log("Start to download proofs")
   try {
     const utvfs = await findUTVFToDownLoadProof();
+    console.log(`Proofs length to be downloaded: ${utvfs.length}`)
     let promises = Array<Promise<void>>();
     for (let i = 0; i < utvfs.length; i++) {
       promises.push(downloadUTVFProof(utvfs[i]));

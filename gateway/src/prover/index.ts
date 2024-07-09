@@ -540,6 +540,7 @@ async function downloadUTVFProof(utvf: UserTradeVolumeFee) {
     await updateUserTradeVolumeFee(utvf);
   } catch (err) {
     console.error(err);
+    await updateUserTradeVolumeFee(utvf);
   }
 }
 
