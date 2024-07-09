@@ -285,7 +285,7 @@ async function findBrevisRequestSentUTVFS(): Promise<any> {
     },
     orderBy: [
       {
-        update_time: 'desc',
+        update_time: 'asc',
       }
     ]
   });
@@ -306,7 +306,7 @@ async function findProofToUpload(): Promise<any> {
     },
     orderBy: [
       {
-        update_time: 'desc',
+        update_time: 'asc',
       }
     ]
   });
