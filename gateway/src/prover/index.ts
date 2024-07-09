@@ -515,9 +515,9 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
   }
 }
 
-async function downloadUTVFProofForBrevisError(utvf: UserTradeVolumeFee) {
+async function downloadUTVFProof(utvf: UserTradeVolumeFee) {
   try {
-    console.log("DownloadProofForBrevisError: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())  
+    console.log("DownloadProof: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())  
     const r = await buildUserTradeVolumeFeeProofReq(utvf);
     if (r.proverIndex < 0) {
       console.log("Cannot proceed upload proof cause prover index is invalid", utvf.id, (new Date()).toLocaleString())
@@ -525,11 +525,19 @@ async function downloadUTVFProofForBrevisError(utvf: UserTradeVolumeFee) {
     }
     const getProofRes = await provers[r.proverIndex].getProof(utvf.prover_id)
 
+    if (getProofRes.has_err) {
+      await updateUserTradeVolumeFee(utvf)
+      return;
+    } else if (getProofRes.proof.length === 0) {
+      await updateUserTradeVolumeFee(utvf)
+      return;
+    }
+
     utvf.proof = getProofRes.proof
 
     console.log("Brevis error proof downloaded: ", utvf.id, (new Date()).toLocaleString())
 
-    updateUserTradeVolumeFee(utvf);
+    await updateUserTradeVolumeFee(utvf);
   } catch (err) {
     console.error(err);
   }
@@ -600,6 +608,6 @@ function sortByBlk(a: Receipt, b: Receipt) {
 export {
   sendUserTradeVolumeFeeProvingRequest,
   uploadUserTradeVolumeFeeProof,
-  downloadUTVFProofForBrevisError,
+  downloadUTVFProof,
   submitProofForBrevis,
 };
