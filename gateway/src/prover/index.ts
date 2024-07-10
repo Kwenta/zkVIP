@@ -11,6 +11,7 @@ import {
   PositionModifiedContracts,
   PositionModifiedEvent,
   PROOF_STATUS_BREVIS_QUERY_ERROR,
+  PROOF_STATUS_INELIGIBLE_ACCOUNT_ID,
   PROOF_STATUS_INPUT_READY,
   PROOF_STATUS_PROOF_UPLOAD_SENT,
   PROOF_STATUS_PROOF_UPLOADED,
@@ -88,6 +89,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     }
   })
 
+  var tradeVolume = BigInt(0)
   const receiptIds: string[] = []
   validTrades.forEach(trade => {
     if (trade.order_fee_flow_tx_receipt_id.length > 0) {
@@ -96,7 +98,18 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     if (trade.execution_tx_receipt_id.length > 0) {
       receiptIds.push(trade.execution_tx_receipt_id)
     }
+
+    if (trade.volume.length > 0) {
+      tradeVolume += BigInt(trade.volume)
+    }
   })
+
+  // If 30 Day volume is not greater than $1,000,000, there will be no fee rebate
+  if (tradeVolume <= BigInt(1000000) * BigInt('1000000000000000000')) {
+    utvf.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID
+    await updateUserTradeVolumeFee(utvf)
+    return {proverIndex: -1, proofReq: proofReq}
+  }
 
   let receiptPromises = Array<Promise<Receipt | undefined>>();
   for (let i = 0; i < receiptIds.length; i++) {
