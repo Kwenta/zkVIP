@@ -1,22 +1,25 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {AggregatorV2V3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV2V3Interface.sol";
+import {AggregatorV2V3Interface} from
+    "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV2V3Interface.sol";
 
 interface IFeeReimbursementApp {
     function accountAccumulatedFee(address account) external view returns (uint248);
     function claim(address account) external;
 }
 
-contract FeeReimbursementClaim is Ownable {
-    using SafeERC20 for IERC20;
-
+contract FeeReimbursementClaim is Ownable(msg.sender) {
     IFeeReimbursementApp public feeReimbursementApp;
     IERC20 public rewardToken;
-    DataConsumerWithSequencerCheck public opPriceFeed;
+
+    AggregatorV2V3Interface internal dataFeed;
+    AggregatorV2V3Interface internal sequencerUptimeFeed;
+
+    uint256 private constant GRACE_PERIOD_TIME = 3600;
 
     mapping(address => bool) public blacklist; // Blacklist mapping
 
@@ -40,15 +43,27 @@ contract FeeReimbursementClaim is Ownable {
     //////////////////////////////////////////////////////////////*/
 
     error Blacklisted();
+    error SequencerDown();
+    error GracePeriodNotOver();
 
     /*//////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _feeReimbursementApp, address _rewardToken) {
+    constructor(address _feeReimbursementApp, address _rewardToken, address _opPriceFeed) {
         feeReimbursementApp = IFeeReimbursementApp(_feeReimbursementApp);
         rewardToken = IERC20(_rewardToken);
-        opPriceFeed = DataConsumerWithSequencerCheck();
+        /**
+         * Network: Optimism mainnet
+         * Data Feed: OP/USD
+         * Data Feed address: 0x0D276FC14719f9292D5C1eA2198673d1f4269246
+         * Uptime Feed address: 0x371EAD81c9102C9BF4874A9075FFFf170F2Ee389
+         * For a list of available Sequencer Uptime Feed proxy addresses, see:
+         * https://docs.chain.link/docs/data-feeds/l2-sequencer-feeds
+         */
+        dataFeed = AggregatorV2V3Interface(_opPriceFeed);
+        // Optimism Sequencer Uptime Feed
+        sequencerUptimeFeed = AggregatorV2V3Interface(0x371EAD81c9102C9BF4874A9075FFFf170F2Ee389);
     }
 
     function claim() external notBlacklisted {
@@ -56,13 +71,13 @@ contract FeeReimbursementClaim is Ownable {
         uint248 feeRebate = feeReimbursementApp.accountAccumulatedFee(account);
 
         // Convert feeRebate from USD to OP
-        uint256 feeRebateOP = _convertUSDtoOP(feeRebateUSD);
+        uint256 feeRebateOP = _convertUSDtoOP(feeRebate);
 
-        require(feeRebateOP > 0, "No fee rebate available");
+        require(feeRebateOP > 0, "No fee rebate available to claim");
 
         // Ensure the contract has enough tokens to reimburse
         uint256 contractBalance = rewardToken.balanceOf(address(this));
-        require(contractBalance >= feeRebate, "Insufficient contract balance");
+        require(contractBalance >= feeRebate, "Insufficient contract balance to send rebate");
 
         // Interact with FeeReimbursementApp to reset the accumulated fee
         feeReimbursementApp.claim(account);
@@ -80,7 +95,7 @@ contract FeeReimbursementClaim is Ownable {
     }
 
     function _convertUSDtoOP(uint248 _usdAmount) internal view returns (uint256) {
-        int256 price = opPriceFeed.getChainlinkDataFeedLatestAnswer();
+        int256 price = getChainlinkDataFeedLatestAnswer();
 
         // OP price feed is given with 8 decimals
         uint256 opPriceInWei = uint256(price) * 1e10;
@@ -102,43 +117,16 @@ contract FeeReimbursementClaim is Ownable {
         blacklist[account] = isBlacklisted;
         emit BlacklistUpdated(account, isBlacklisted);
     }
-}
 
-
-contract DataConsumerWithSequencerCheck {
-    AggregatorV2V3Interface internal dataFeed;
-    AggregatorV2V3Interface internal sequencerUptimeFeed;
-
-    uint256 private constant GRACE_PERIOD_TIME = 3600;
-
-    error SequencerDown();
-    error GracePeriodNotOver();
-
-    /**
-     * Network: Optimism mainnet
-     * Data Feed: OP/USD
-     * Data Feed address: 0x0D276FC14719f9292D5C1eA2198673d1f4269246
-     * Uptime Feed address: 0x371EAD81c9102C9BF4874A9075FFFf170F2Ee389
-     * For a list of available Sequencer Uptime Feed proxy addresses, see:
-     * https://docs.chain.link/docs/data-feeds/l2-sequencer-feeds
-     */
-    constructor() {
-        dataFeed = AggregatorV2V3Interface(
-            0x0D276FC14719f9292D5C1eA2198673d1f4269246
-        );
-        sequencerUptimeFeed = AggregatorV2V3Interface(
-            0x371EAD81c9102C9BF4874A9075FFFf170F2Ee389
-        );
-    }
-
-    // Check the sequencer status and return the latest data
-    function getChainlinkDataFeedLatestAnswer() public view returns (int) {
+    function getChainlinkDataFeedLatestAnswer() internal view returns (int256) {
         // prettier-ignore
         (
-            /*uint80 roundID*/,
+            /*uint80 roundID*/
+            ,
             int256 answer,
             uint256 startedAt,
-            /*uint256 updatedAt*/,
+            /*uint256 updatedAt*/
+            ,
             /*uint80 answeredInRound*/
         ) = sequencerUptimeFeed.latestRoundData();
 
@@ -158,10 +146,13 @@ contract DataConsumerWithSequencerCheck {
 
         // prettier-ignore
         (
-            /*uint80 roundID*/,
-            int data,
-            /*uint startedAt*/,
-            /*uint timeStamp*/,
+            /*uint80 roundID*/
+            ,
+            int256 data,
+            /*uint startedAt*/
+            ,
+            /*uint timeStamp*/
+            ,
             /*uint80 answeredInRound*/
         ) = dataFeed.latestRoundData();
 
