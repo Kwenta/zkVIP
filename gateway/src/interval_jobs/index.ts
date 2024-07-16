@@ -30,7 +30,8 @@ import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/
 
 export async function prepareNewDayTradeClaims() {
   try {
-    const yesterday = Number((moment.utc(new Date()).subtract(1, "h").subtract(1, "d")).format('YYYYMMDD'))
+    // Give 10 minutes buffer to avoid brevis gateway failure
+    const yesterday = Number((moment.utc(new Date()).subtract(10, "m").subtract(1, "d")).format('YYYYMMDD'))
     var track = await getDailyTrack(BigInt(yesterday));
     if (track != undefined && track != null && track) {
       return;
