@@ -317,7 +317,7 @@ async function findUserExistingUTVFByDate(account, ymd) {
 }
 async function findUserTradeVolumeFees(status) {
   return prisma.user_trade_volume_fee.findMany({
-    take: 10,
+    take: 3,
     where: {
       status: {
         equals: status
@@ -327,12 +327,17 @@ async function findUserTradeVolumeFees(status) {
 }
 async function findBrevisRequestSentUTVFS() {
   return prisma.user_trade_volume_fee.findMany({
-    take: 5,
+    take: 1,
     where: {
       status: {
         equals: PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
       }
-    }
+    },
+    orderBy: [
+      {
+        update_time: "asc"
+      }
+    ]
   });
 }
 async function findProofToUpload() {
@@ -350,7 +355,7 @@ async function findProofToUpload() {
     },
     orderBy: [
       {
-        update_time: "desc"
+        update_time: "asc"
       }
     ]
   });
@@ -385,15 +390,41 @@ async function getDailyTrack(year_month_day) {
 }
 async function findUTVFToDownLoadProof() {
   return prisma.user_trade_volume_fee.findMany({
-    take: 5,
+    take: 1,
     where: {
       prover_id: {
-        not: null
+        not: ""
       },
       proof: {
-        equals: null
+        equals: ""
       }
-    }
+    },
+    orderBy: [
+      {
+        update_time: "asc"
+      }
+    ]
+  });
+}
+async function findUTVFToUploadProof() {
+  return prisma.user_trade_volume_fee.findMany({
+    take: 5,
+    where: {
+      brevis_query_hash: {
+        not: ""
+      },
+      status: {
+        not: PROOF_STATUS_PROOF_UPLOADED
+      },
+      proof: {
+        not: ""
+      }
+    },
+    orderBy: [
+      {
+        update_time: "asc"
+      }
+    ]
   });
 }
 async function insertTrade(trade, order_fee_flow_tx_receipt_id, execution_tx_receipt_id) {
@@ -704,6 +735,7 @@ var buildUserTradeVolumeFeeProofReq = async (utvf) => {
       return 1;
     }
   });
+  var tradeVolume = BigInt(0);
   const receiptIds = [];
   validTrades.forEach((trade) => {
     if (trade.order_fee_flow_tx_receipt_id.length > 0) {
@@ -712,7 +744,15 @@ var buildUserTradeVolumeFeeProofReq = async (utvf) => {
     if (trade.execution_tx_receipt_id.length > 0) {
       receiptIds.push(trade.execution_tx_receipt_id);
     }
+    if (trade.volume.length > 0) {
+      tradeVolume += BigInt(trade.volume);
+    }
   });
+  if (tradeVolume <= BigInt(1) * BigInt("1000000000000000000")) {
+    utvf.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID;
+    await updateUserTradeVolumeFee(utvf);
+    return { proverIndex: -1, proofReq };
+  }
   let receiptPromises = Array();
   for (let i = 0; i < receiptIds.length; i++) {
     receiptPromises.push(
@@ -1059,17 +1099,46 @@ async function uploadUserTradeVolumeFeeProof(utvfOld) {
     console.error(err);
   }
 }
-async function downloadUTVFProofForBrevisError(utvf) {
+async function downloadUTVFProof(utvf) {
   try {
-    console.log("DownloadProofForBrevisError: ", utvf.id, utvf.prover_id, (/* @__PURE__ */ new Date()).toLocaleString());
-    const r = await buildUserTradeVolumeFeeProofReq(utvf);
-    if (r.proverIndex < 0) {
-      console.log("Cannot proceed upload proof cause prover index is invalid", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
+    console.log("DownloadProof: ", utvf.id, utvf.prover_id, (/* @__PURE__ */ new Date()).toLocaleString());
+    const proofDownloadPromises = Array();
+    for (let i = 0; i < provers.length; i++) {
+      const proofResult = provers[i].getProof(utvf.prover_id).then((response) => {
+        return response.proof;
+      }).catch((error) => {
+        return "";
+      });
+    }
+    const proofs = await Promise.all(proofDownloadPromises);
+    var finalProof = "";
+    proofs.forEach((proof) => {
+      if (proof.length > 0) {
+        finalProof = proof;
+      }
+    });
+    if (finalProof.length === 0) {
+      console.log("Proof not ready: ", utvf.id, utvf.prover_id, (/* @__PURE__ */ new Date()).toLocaleString());
+      await updateUserTradeVolumeFee(utvf);
       return;
     }
-    const getProofRes = await provers[r.proverIndex].getProof(utvf.prover_id);
-    utvf.proof = getProofRes.proof;
-    console.log("Brevis error proof downloaded: ", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
+    utvf.proof = finalProof;
+    console.log("Brevis proof downloaded: ", utvf.id, (/* @__PURE__ */ new Date()).toLocaleString());
+    await updateUserTradeVolumeFee(utvf);
+  } catch (err) {
+    console.error(err);
+    await updateUserTradeVolumeFee(utvf);
+  }
+}
+async function submitProofForBrevis(utvf) {
+  try {
+    console.log("Submit ProofForBrevis: ", utvf.id, utvf.prover_id, (/* @__PURE__ */ new Date()).toLocaleString());
+    await brevis.submitProof(
+      utvf.brevis_query_hash,
+      Number(utvf.dst_chain_id),
+      utvf.proof
+    );
+    utvf.status = PROOF_STATUS_PROOF_UPLOADED;
     updateUserTradeVolumeFee(utvf);
   } catch (err) {
     console.error(err);
@@ -4032,7 +4101,7 @@ async function queryTrade(trade) {
 var import_moment2 = __toESM(require("moment"));
 async function prepareNewDayTradeClaims() {
   try {
-    const yesterday = Number(import_moment2.default.utc(/* @__PURE__ */ new Date()).subtract(1, "h").subtract(1, "d").format("YYYYMMDD"));
+    const yesterday = Number(import_moment2.default.utc(/* @__PURE__ */ new Date()).subtract(10, "m").subtract(1, "d").format("YYYYMMDD"));
     var track = await getDailyTrack(BigInt(yesterday));
     if (track != void 0 && track != null && track) {
       return;
@@ -4159,7 +4228,18 @@ async function downloadProofs() {
     const utvfs = await findUTVFToDownLoadProof();
     let promises = Array();
     for (let i = 0; i < utvfs.length; i++) {
-      promises.push(downloadUTVFProofForBrevisError(utvfs[i]));
+      promises.push(downloadUTVFProof(utvfs[i]));
+    }
+    await Promise.all(promises);
+  } catch (error) {
+  }
+}
+async function uploadProofs() {
+  try {
+    const utvfs = await findUTVFToUploadProof();
+    let promises = Array();
+    for (let i = 0; i < utvfs.length; i++) {
+      promises.push(submitProofForBrevis(utvfs[i]));
     }
     await Promise.all(promises);
   } catch (error) {
@@ -4191,6 +4271,8 @@ submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 2e3);
 downloadProofs();
 setInterval(downloadProofs, 1e4);
+uploadProofs();
+setInterval(uploadProofs, 1e4);
 
 // src/index.ts
 var dotenv2 = __toESM(require("dotenv"));
