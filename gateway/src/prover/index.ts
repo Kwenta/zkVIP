@@ -105,7 +105,10 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   })
 
   // If 30 Day volume is not greater than $1,000,000, there will be no fee rebate
-  if (tradeVolume <= BigInt(1000000) * BigInt('1000000000000000000')) {
+  // if (tradeVolume <= BigInt(1000000) * BigInt('1000000000000000000')) {
+
+  // For testing: If 30 Day volume is not greater than $1, there will be no fee rebate
+  if (tradeVolume <= BigInt(1) * BigInt('1000000000000000000')) {
     utvf.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID
     await updateUserTradeVolumeFee(utvf)
     return {proverIndex: -1, proofReq: proofReq}
