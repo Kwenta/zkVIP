@@ -37,9 +37,10 @@ const {
 } = sdk;
 
 const provers = [
-  new Prover("222.74.153.228:53248"),
-  new Prover("222.74.153.228:53249"),
-  new Prover("222.74.153.228:53351")
+  new Prover("54.189.38.119:53248"),
+  new Prover("54.189.38.119:53249"),
+  new Prover("54.189.38.119:53423"),
+  new Prover("54.189.38.119:53351")
 ]
 
 type DebugReceipt = {
@@ -257,10 +258,16 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     proverIndex = 1
     offRIndex = 412
     exeRIndex = 462
+  } else if (unclaimableTradeReceipts.length <= 1300 
+    && claimableTradeOrderFeeFlowReceipts.length <= 100
+    && claimableTradeExecutionReceipts.length <= 100) {
+    proverIndex = 2
+    offRIndex = 1300
+    exeRIndex = 1400
   } else if (unclaimableTradeReceipts.length <= 4400 
     && claimableTradeOrderFeeFlowReceipts.length <=300
     && claimableTradeExecutionReceipts.length <= 300) {
-    proverIndex = 2
+    proverIndex = 3
     offRIndex = 4400
     exeRIndex = 4700
   } else {
