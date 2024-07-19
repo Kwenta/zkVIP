@@ -14,6 +14,7 @@ import {
   PROOF_STATUS_BREVIS_QUERY_ERROR,
 } from "../constants/index.ts";
 import {
+  checkRequestStatusOnchain,
   downloadProofs,
   getReceiptInfos,
   getStorageInfos,
@@ -62,6 +63,9 @@ setInterval(prepareNewDayTradeClaims, 60000);
 
 submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 2000);
+
+checkRequestStatusOnchain();
+setInterval(checkRequestStatusOnchain, 1000);
 
 downloadProofs();
 setInterval(downloadProofs, 10000);

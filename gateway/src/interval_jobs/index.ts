@@ -10,6 +10,7 @@ import {
   findNotReadyStorages, 
   findNotReadyTrades, 
   findProofToUpload, 
+  findRequestSentsUTVF, 
   findTxToBeSent, 
   findUserExistingUTVF, 
   findUserExistingUTVFByDate, 
@@ -26,7 +27,7 @@ import { downloadUTVFProof, sendUserTradeVolumeFeeProvingRequest, submitProofFor
 import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
 import { findDayStartTimestamp, findNextDay, getCurrentDay } from "../server/type.ts";
 import moment from "moment";
-import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
+import { brevisRequest, submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
 
 export async function prepareNewDayTradeClaims() {
   try {
@@ -189,6 +190,21 @@ export async function submitUserSwapAmountTx() {
       promises.push(submitBrevisRequestTx(utvfs[i]));
     }
     await Promise.all(promises);
+  } catch (error) {
+
+  }
+}
+
+export async function checkRequestStatusOnchain() {
+  try {
+    const yesterday = Number((moment.utc(new Date()).subtract(10, "m").subtract(1, "d")).format('YYYYMMDD'))
+    const utvf = await findRequestSentsUTVF(BigInt(yesterday));
+    const request = await brevisRequest.requests(utvf.brevis_query_hash)
+    if (request[0] === BigInt(0)) {
+      console.log(`request info not found for ${utvf.account}-${utvf.ymd}`)
+      utvf.request_sent = false
+      await updateUserTradeVolumeFee(utvf)
+    }
   } catch (error) {
 
   }

@@ -327,15 +327,16 @@ async function findTxToBeSent(): Promise<any> {
   });
 }
 
-async function updateBrevisRequestStatus(
-  brevis_query_hash: string
-): Promise<any> {
-  return prisma.user_trade_volume_fee.updateMany({
+async function findRequestSentsUTVF(ymd: bigint): Promise<any> {
+  return prisma.user_trade_volume_fee.findMany({
+    take: 1,
     where: {
-      brevis_query_hash: brevis_query_hash?.toLowerCase(),
-    },
-    data: {
-      request_sent: true,
+      request_sent: {
+        equals: true,
+      },
+      ymd: {
+        equals: ymd,
+      }
     },
   });
 }
@@ -469,7 +470,6 @@ export {
   findUserExistingUTVF,
   findUserExistingUTVFByDate,
   findUserTradeVolumeFees,
-  updateBrevisRequestStatus,
   insertStorage,
   updateStorage,
   getStorage,
@@ -485,5 +485,6 @@ export {
   updateUserTradeVolumeFeeRequestSent,
   findBrevisRequestSentUTVFS,
   findUTVFToDownLoadProof,
-  findUTVFToUploadProof
+  findUTVFToUploadProof,
+  findRequestSentsUTVF
 };
