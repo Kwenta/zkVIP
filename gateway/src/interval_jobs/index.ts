@@ -42,6 +42,12 @@ export async function prepareNewDayTradeClaims() {
     var tsStart = yesterdayStart.utc().unix()
     var tsEnd = yesterdayStart.utc().add(1, "d").unix() - 1
     var ts30DAgo = yesterdayStart.utc().subtract(29, "d").unix()
+
+    const eventStartDay = moment.utc("20240716", "YYYYMMDD", true).utc().unix()
+
+    if (ts30DAgo < eventStartDay) {
+      ts30DAgo = eventStartDay
+    }
     
     const result = await getAllTradesWithin30Day(ts30DAgo, tsEnd)
     if (result.error !== null) {

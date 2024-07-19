@@ -1,4 +1,4 @@
-const GraphRpc = "https://subgraph.satsuma-prod.com/616cc2144c5c/kwenta/optimism-perps/version/0.0.22/api";
+const GraphRpc = "https://subgraph.satsuma-prod.com/616cc2144c5c/kwenta/optimism-perps/version/0.0.22.1/api";
 
 type Trade = {
   blockNumber: number,
