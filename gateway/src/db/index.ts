@@ -336,7 +336,7 @@ async function findRequestSentsUTVF(ymd: bigint): Promise<any> {
       },
       ymd: {
         equals: ymd,
-      }
+      },
     },
   });
 }
