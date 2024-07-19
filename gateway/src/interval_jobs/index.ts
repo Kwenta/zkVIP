@@ -203,7 +203,6 @@ export async function checkRequestStatusOnchain() {
       return 
     }
     const utvf = utvfs[0]
-    console.log(`check utvf ${utvf.account}---${utvf.ymd} brevis query hash`)
     const request = await brevisRequest.requests(utvf.brevis_query_hash)
     if (request[0] === BigInt(0)) {
       console.log(`request info not found for ${utvf.account}-${utvf.ymd}`)
