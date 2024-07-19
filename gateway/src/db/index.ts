@@ -338,6 +338,11 @@ async function findRequestSentsUTVF(ymd: bigint): Promise<any> {
         equals: ymd,
       },
     },
+    orderBy: [
+      {
+        update_time: 'asc',
+      }
+    ]
   });
 }
 
