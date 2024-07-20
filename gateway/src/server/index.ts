@@ -68,10 +68,10 @@ checkRequestStatusOnchain();
 setInterval(checkRequestStatusOnchain, 1000);
 
 downloadProofs();
-setInterval(downloadProofs, 10000);
+setInterval(downloadProofs, 1000);
 
 uploadProofs();
-setInterval(uploadProofs, 10000);
+setInterval(uploadProofs, 5000);
 
 var deleteDay = 0
 // a()
