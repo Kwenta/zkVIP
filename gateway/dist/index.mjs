@@ -352,6 +352,24 @@ async function findTxToBeSent() {
     }
   });
 }
+async function findRequestSentsUTVF(ymd) {
+  return prisma.user_trade_volume_fee.findMany({
+    take: 1,
+    where: {
+      request_sent: {
+        equals: true
+      },
+      ymd: {
+        equals: ymd
+      }
+    },
+    orderBy: [
+      {
+        update_time: "asc"
+      }
+    ]
+  });
+}
 async function insertDailyTrack(year_month_day) {
   return prisma.daily_track.create({
     data: {
@@ -450,7 +468,7 @@ async function updateTrade(execution_tx_receipt_id, account, status) {
 }
 
 // src/graphql/common.ts
-var GraphRpc = "https://subgraph.satsuma-prod.com/616cc2144c5c/kwenta/optimism-perps/version/0.0.22/api";
+var GraphRpc = "https://subgraph.satsuma-prod.com/616cc2144c5c/kwenta/optimism-perps/version/0.0.22.1/api";
 
 // src/graphql/index.ts
 var getAllTradesWithin30Day = async (ts30Ago, tsClaimDayEnd) => {
@@ -673,9 +691,10 @@ var {
   asUint521
 } = sdk;
 var provers = [
-  new Prover("222.74.153.228:53248"),
-  new Prover("222.74.153.228:53249"),
-  new Prover("222.74.153.228:53351")
+  new Prover("54.189.38.119:53248"),
+  new Prover("54.189.38.119:53249"),
+  new Prover("54.189.38.119:53423"),
+  new Prover("54.189.38.119:53351")
 ];
 var brevis = new Brevis("appsdk.brevis.network:11080");
 var buildUserTradeVolumeFeeProofReq = async (utvf) => {
@@ -846,8 +865,12 @@ var buildUserTradeVolumeFeeProofReq = async (utvf) => {
     proverIndex = 1;
     offRIndex = 412;
     exeRIndex = 462;
-  } else if (unclaimableTradeReceipts.length <= 4400 && claimableTradeOrderFeeFlowReceipts.length <= 300 && claimableTradeExecutionReceipts.length <= 300) {
+  } else if (unclaimableTradeReceipts.length <= 1300 && claimableTradeOrderFeeFlowReceipts.length <= 100 && claimableTradeExecutionReceipts.length <= 100) {
     proverIndex = 2;
+    offRIndex = 1300;
+    exeRIndex = 1400;
+  } else if (unclaimableTradeReceipts.length <= 4400 && claimableTradeOrderFeeFlowReceipts.length <= 300 && claimableTradeExecutionReceipts.length <= 300) {
+    proverIndex = 3;
     offRIndex = 4400;
     exeRIndex = 4700;
   } else {
@@ -1058,7 +1081,21 @@ async function uploadUserTradeVolumeFeeProof(utvfOld) {
       await updateUserTradeVolumeFee(utvf);
       return;
     } else if (getProofRes.proof.length === 0) {
-      utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED;
+      const utvfObject = utvf;
+      if (utvfObject === void 0 || utvfObject === null) {
+        utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED;
+        await updateUserTradeVolumeFee(utvf);
+        return;
+      }
+      const now = /* @__PURE__ */ new Date();
+      const timeDiff = now.getTime() - utvfObject.create_time.getTime();
+      if (timeDiff >= 7200) {
+        console.log(`Proof not found for long time: retry proving for  ${utvf.id}`);
+        utvf.status = PROOF_STATUS_INPUT_READY;
+        utvf.create_time = now;
+      } else {
+        utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED;
+      }
       await updateUserTradeVolumeFee(utvf);
       return;
     }
@@ -1498,7 +1535,7 @@ __export(contracts_exports2, {
 var sdk_exports = {};
 __export(sdk_exports, {
   apps: () => apps_exports,
-  interface: () => interface_exports,
+  interfacea: () => interface_exports,
   lib: () => lib_exports
 });
 
@@ -4104,6 +4141,10 @@ async function prepareNewDayTradeClaims() {
     var tsStart = yesterdayStart.utc().unix();
     var tsEnd = yesterdayStart.utc().add(1, "d").unix() - 1;
     var ts30DAgo = yesterdayStart.utc().subtract(29, "d").unix();
+    const eventStartDay = moment2.utc("20240716", "YYYYMMDD", true).utc().unix();
+    if (ts30DAgo < eventStartDay) {
+      ts30DAgo = eventStartDay;
+    }
     const result = await getAllTradesWithin30Day(ts30DAgo, tsEnd);
     if (result.error !== null) {
       throw result.error;
@@ -4217,6 +4258,24 @@ async function submitUserSwapAmountTx() {
   } catch (error) {
   }
 }
+async function checkRequestStatusOnchain() {
+  try {
+    const yesterday = Number(moment2.utc(/* @__PURE__ */ new Date()).subtract(10, "m").subtract(1, "d").format("YYYYMMDD"));
+    const utvfs = await findRequestSentsUTVF(BigInt(yesterday));
+    if (utvfs.length < 1) {
+      return;
+    }
+    const utvf = utvfs[0];
+    const request = await brevisRequest.requests(utvf.brevis_query_hash);
+    if (request[0] === BigInt(0)) {
+      console.log(`request info not found for ${utvf.account}-${utvf.ymd}`);
+      utvf.request_sent = false;
+    }
+    await updateUserTradeVolumeFee(utvf);
+  } catch (error) {
+    console.log(`${error}`);
+  }
+}
 async function downloadProofs() {
   try {
     const utvfs = await findUTVFToDownLoadProof();
@@ -4263,10 +4322,12 @@ prepareNewDayTradeClaims();
 setInterval(prepareNewDayTradeClaims, 6e4);
 submitUserSwapAmountTx();
 setInterval(submitUserSwapAmountTx, 2e3);
+checkRequestStatusOnchain();
+setInterval(checkRequestStatusOnchain, 1e3);
 downloadProofs();
-setInterval(downloadProofs, 1e4);
+setInterval(downloadProofs, 1e3);
 uploadProofs();
-setInterval(uploadProofs, 1e4);
+setInterval(uploadProofs, 5e3);
 
 // src/index.ts
 import * as dotenv2 from "dotenv";
