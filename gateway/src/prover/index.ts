@@ -527,6 +527,7 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
       if (timeDiff >= 7200) {
         console.log(`Proof not found for long time: retry proving for  ${utvf.id}`)
         utvf.status = PROOF_STATUS_INPUT_READY
+        utvf.create_time = now
       } else {
         utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
       }
