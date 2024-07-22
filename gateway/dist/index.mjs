@@ -234,6 +234,33 @@ async function insertUserTradeVolumeFee(src_chain_id, dst_chain_id, account, own
     }
   });
 }
+async function updateUserTradeVolumeFeeWithCreateTime(utvf) {
+  return prisma.user_trade_volume_fee.update({
+    where: {
+      account_ymd: {
+        account: utvf.account?.toLowerCase(),
+        ymd: utvf.ymd
+      }
+    },
+    data: {
+      volume: utvf.volume,
+      fee: utvf.fee,
+      trade_ids: utvf.trade_ids,
+      storage_ids: utvf.storage_ids,
+      brevis_query_hash: utvf.brevis_query_hash?.toLowerCase(),
+      brevis_query_fee: utvf.brevis_query_fee,
+      proof: utvf.proof,
+      status: utvf.status,
+      create_time: utvf.create_time,
+      update_time: /* @__PURE__ */ new Date(),
+      prover_id: utvf.prover_id,
+      request_sent: utvf.request_sent,
+      start_blk_num: utvf.start_blk_num,
+      end_blk_num: utvf.end_blk_num,
+      fee_rebate: utvf.fee_rebate
+    }
+  });
+}
 async function updateUserTradeVolumeFee(utvf) {
   return prisma.user_trade_volume_fee.update({
     where: {
@@ -1089,14 +1116,15 @@ async function uploadUserTradeVolumeFeeProof(utvfOld) {
       }
       const now = /* @__PURE__ */ new Date();
       const timeDiff = now.getTime() - utvfObject.create_time.getTime();
-      if (timeDiff >= 7200) {
-        console.log(`Proof not found for long time: retry proving for  ${utvf.id}`);
+      if (timeDiff >= 7200 * 1e3) {
+        console.log(`Proof not found for long time from ${utvfObject.create_time} to ${now}: retry proving for  ${utvf.id}`);
         utvf.status = PROOF_STATUS_INPUT_READY;
         utvf.create_time = now;
+        await updateUserTradeVolumeFeeWithCreateTime(utvf);
       } else {
         utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED;
+        await updateUserTradeVolumeFee(utvf);
       }
-      await updateUserTradeVolumeFee(utvf);
       return;
     }
     await brevis.submitProof(
