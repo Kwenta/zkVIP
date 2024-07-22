@@ -514,7 +514,22 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
       await updateUserTradeVolumeFee(utvf)
       return;
     } else if (getProofRes.proof.length === 0) {
-      utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
+      const utvfObject = utvf as UserTradeVolumeFee
+      if (utvfObject === undefined || utvfObject === null) {
+        utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
+        await updateUserTradeVolumeFee(utvf)
+        return;
+      }
+
+      const now = new Date()
+      const timeDiff = now.getTime() - utvfObject.create_time.getTime()
+      // If there is no proof found in 2 hours. Retry proving 
+      if (timeDiff >= 7200) {
+        console.log(`Proof not found for long time: retry proving for  ${utvf.id}`)
+        utvf.status = PROOF_STATUS_INPUT_READY
+      } else {
+        utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
+      }
       await updateUserTradeVolumeFee(utvf)
       return;
     }
