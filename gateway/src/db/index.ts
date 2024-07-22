@@ -177,6 +177,35 @@ async function insertUserTradeVolumeFee(
   });
 }
 
+async function updateUserTradeVolumeFeeWithCreateTime(utvf: any): Promise<any> {
+  return prisma.user_trade_volume_fee.update({
+    where: {
+      account_ymd: {
+        account: utvf.account?.toLowerCase(),
+        ymd: utvf.ymd,
+      }
+    },
+    data: {
+      volume: utvf.volume,
+      fee: utvf.fee,
+      trade_ids: utvf.trade_ids,
+      storage_ids: utvf.storage_ids,
+      brevis_query_hash: utvf.brevis_query_hash?.toLowerCase(),
+      brevis_query_fee: utvf.brevis_query_fee,
+      proof: utvf.proof,
+      status: utvf.status,
+      create_time: utvf.create_time,
+      update_time: new Date(),
+      prover_id: utvf.prover_id,
+      request_sent: utvf.request_sent,
+      start_blk_num: utvf.start_blk_num,
+      end_blk_num: utvf.end_blk_num,
+      fee_rebate: utvf.fee_rebate,
+    },
+  });
+}
+
+
 async function updateUserTradeVolumeFee(utvf: any): Promise<any> {
   return prisma.user_trade_volume_fee.update({
     where: {
@@ -491,5 +520,6 @@ export {
   findBrevisRequestSentUTVFS,
   findUTVFToDownLoadProof,
   findUTVFToUploadProof,
-  findRequestSentsUTVF
+  findRequestSentsUTVF,
+  updateUserTradeVolumeFeeWithCreateTime,
 };

@@ -5,6 +5,7 @@ import {
   getTrade,
   getUserTradeVolumeFee,
   updateUserTradeVolumeFee,
+  updateUserTradeVolumeFeeWithCreateTime,
 } from "../db/index.ts";
 import {
   isValidPositionModifiedContract,
@@ -528,10 +529,11 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
         console.log(`Proof not found for long time: retry proving for  ${utvf.id}`)
         utvf.status = PROOF_STATUS_INPUT_READY
         utvf.create_time = now
+        await updateUserTradeVolumeFeeWithCreateTime(utvf)
       } else {
         utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
+        await updateUserTradeVolumeFee(utvf)
       }
-      await updateUserTradeVolumeFee(utvf)
       return;
     }
 
