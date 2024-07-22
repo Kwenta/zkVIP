@@ -525,8 +525,8 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
       const now = new Date()
       const timeDiff = now.getTime() - utvfObject.create_time.getTime()
       // If there is no proof found in 2 hours. Retry proving 
-      if (timeDiff >= 7200) {
-        console.log(`Proof not found for long time: retry proving for  ${utvf.id}`)
+      if (timeDiff >= 7200 * 1000) {
+        console.log(`Proof not found for long time from ${utvfObject.create_time} to ${now}: retry proving for  ${utvf.id}`)
         utvf.status = PROOF_STATUS_INPUT_READY
         utvf.create_time = now
         await updateUserTradeVolumeFeeWithCreateTime(utvf)
