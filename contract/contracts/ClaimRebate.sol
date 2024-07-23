@@ -12,8 +12,13 @@ interface IFeeReimbursementApp {
     function claim(address account) external;
 }
 
+interface IFactory {
+    function getAccountOwner(address _account) external view returns (address);
+}
+
 contract FeeReimbursementClaim is Ownable(msg.sender) {
     IFeeReimbursementApp public feeReimbursementApp;
+    IFactory public factory;
     IERC20 public rewardToken;
 
     AggregatorV2V3Interface internal dataFeed;
@@ -45,13 +50,17 @@ contract FeeReimbursementClaim is Ownable(msg.sender) {
     error Blacklisted();
     error SequencerDown();
     error GracePeriodNotOver();
+    error NotAccountOwner();
+    error NoFeeRebateAvailable();
+    error InsufficientContractBalance(uint256 available, uint256 required);
 
     /*//////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _feeReimbursementApp, address _rewardToken, address _opPriceFeed) {
+    constructor(address _feeReimbursementApp, address _factory, address _rewardToken, address _opPriceFeed) {
         feeReimbursementApp = IFeeReimbursementApp(_feeReimbursementApp);
+        factory = IFactory(_factory);
         rewardToken = IERC20(_rewardToken);
         /**
          * Network: Optimism mainnet
@@ -66,21 +75,30 @@ contract FeeReimbursementClaim is Ownable(msg.sender) {
         sequencerUptimeFeed = AggregatorV2V3Interface(0x371EAD81c9102C9BF4874A9075FFFf170F2Ee389);
     }
 
-    function claim() external notBlacklisted {
+    function claim(address _smartMarginAccount) external notBlacklisted {
         address account = msg.sender;
-        uint248 feeRebate = feeReimbursementApp.accountAccumulatedFee(account);
+
+        if (factory.getAccountOwner(_smartMarginAccount) != account) {
+            revert NotAccountOwner();
+        }
+
+        uint248 feeRebate = feeReimbursementApp.accountAccumulatedFee(_smartMarginAccount);
 
         // Convert feeRebate from USD to OP
         uint256 feeRebateOP = _convertUSDtoOP(feeRebate);
 
-        require(feeRebateOP > 0, "No fee rebate available to claim");
+        if (feeRebateOP == 0) {
+            revert NoFeeRebateAvailable();
+        }
 
         // Ensure the contract has enough tokens to reimburse
         uint256 contractBalance = rewardToken.balanceOf(address(this));
-        require(contractBalance >= feeRebate, "Insufficient contract balance to send rebate");
+        if (contractBalance < feeRebate) {
+            revert InsufficientContractBalance({available: contractBalance, required: feeRebate});
+        }
 
         // Interact with FeeReimbursementApp to reset the accumulated fee
-        feeReimbursementApp.claim(account);
+        feeReimbursementApp.claim(_smartMarginAccount);
 
         // transfer fee rebate from this contract to the user
         rewardToken.transfer(account, feeRebateOP);
