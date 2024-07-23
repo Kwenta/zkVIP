@@ -20,6 +20,8 @@ export type { Tx } from "./brevis-contracts/contracts/sdk/lib/Lib.sol/Tx";
 export { Tx__factory } from "./factories/brevis-contracts/contracts/sdk/lib/Lib.sol/Tx__factory";
 export type { FeeReimbursementApp } from "./contracts/FeeReimbursementApp.sol/FeeReimbursementApp";
 export { FeeReimbursementApp__factory } from "./factories/contracts/FeeReimbursementApp.sol/FeeReimbursementApp__factory";
+export type { IFactory } from "./contracts/FeeReimbursementApp.sol/IFactory";
+export { IFactory__factory } from "./factories/contracts/FeeReimbursementApp.sol/IFactory__factory";
 export type { IFeeRebateTierModule } from "./contracts/FeeReimbursementApp.sol/IFeeRebateTierModule";
 export { IFeeRebateTierModule__factory } from "./factories/contracts/FeeReimbursementApp.sol/IFeeRebateTierModule__factory";
 export type { MockFeeModule } from "./contracts/MockFeeModule";

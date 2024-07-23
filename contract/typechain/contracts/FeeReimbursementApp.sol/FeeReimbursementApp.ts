@@ -190,6 +190,7 @@ export interface FeeReimbursementAppInterface extends Interface {
       | "claim"
       | "claimer"
       | "contractsHash"
+      | "factory"
       | "feeRebateTierModule"
       | "owner"
       | "renounceOwnership"
@@ -245,6 +246,7 @@ export interface FeeReimbursementAppInterface extends Interface {
     functionFragment: "contractsHash",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "factory", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "feeRebateTierModule",
     values?: undefined
@@ -336,6 +338,7 @@ export interface FeeReimbursementAppInterface extends Interface {
     functionFragment: "contractsHash",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "factory", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "feeRebateTierModule",
     data: BytesLike
@@ -586,6 +589,8 @@ export interface FeeReimbursementApp extends BaseContract {
 
   contractsHash: TypedContractMethod<[], [bigint], "view">;
 
+  factory: TypedContractMethod<[], [string], "view">;
+
   feeRebateTierModule: TypedContractMethod<[], [string], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
@@ -711,6 +716,9 @@ export interface FeeReimbursementApp extends BaseContract {
   getFunction(
     nameOrSignature: "contractsHash"
   ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "factory"
+  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "feeRebateTierModule"
   ): TypedContractMethod<[], [string], "view">;
