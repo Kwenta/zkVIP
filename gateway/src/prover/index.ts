@@ -556,46 +556,6 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
   }
 }
 
-async function downloadUTVFProof(utvf: UserTradeVolumeFee) {
-  try {
-    console.log("DownloadProof: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())  
-  
-    // const getProofRes = await 
-    const proofDownloadPromises = Array<Promise<string>>()
-    for (let i = 0; i < provers.length; i++) {
-      const proofResult = provers[i].getProof(utvf.prover_id).then(response => {
-        return response.proof
-      }).catch(error => {
-        return ""
-      })
-    }
-  
-    const proofs = await Promise.all(proofDownloadPromises)
-
-    var finalProof = ''
-  
-    proofs.forEach(proof => {
-      if (proof.length > 0) {
-        finalProof = proof
-      }
-    })
-
-    if (finalProof.length === 0) {
-      console.log("Proof not ready: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())  
-      await updateUserTradeVolumeFee(utvf)
-      return 
-    }
-    utvf.proof = finalProof
-
-    console.log("Brevis proof downloaded: ", utvf.id, (new Date()).toLocaleString())
-
-    await updateUserTradeVolumeFee(utvf);
-  } catch (err) {
-    console.error(err);
-    await updateUserTradeVolumeFee(utvf);
-  }
-}
-
 async function submitProofForBrevis(utvf: UserTradeVolumeFee) {
   try {
     console.log("Submit ProofForBrevis: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())  
@@ -661,6 +621,5 @@ function sortByBlk(a: Receipt, b: Receipt) {
 export {
   sendUserTradeVolumeFeeProvingRequest,
   uploadUserTradeVolumeFeeProof,
-  downloadUTVFProof,
   submitProofForBrevis,
 };

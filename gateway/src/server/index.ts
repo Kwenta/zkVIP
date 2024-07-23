@@ -15,7 +15,6 @@ import {
 } from "../constants/index.ts";
 import {
   checkRequestStatusOnchain,
-  downloadProofs,
   getReceiptInfos,
   getStorageInfos,
   prepareNewDayTradeClaims,
@@ -66,9 +65,6 @@ setInterval(submitUserSwapAmountTx, 2000);
 
 checkRequestStatusOnchain();
 setInterval(checkRequestStatusOnchain, 1000);
-
-downloadProofs();
-setInterval(downloadProofs, 1000);
 
 uploadProofs();
 setInterval(uploadProofs, 5000);

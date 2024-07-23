@@ -23,7 +23,7 @@ import {
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
 import { getAllTradesWithin30Day, getAccountTradesList, saveTrades } from "../graphql/index.ts";
-import { downloadUTVFProof, sendUserTradeVolumeFeeProvingRequest, submitProofForBrevis, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
+import { sendUserTradeVolumeFeeProvingRequest, submitProofForBrevis, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
 import { findDayStartTimestamp, findNextDay, getCurrentDay, UserTradeVolumeFee } from "../server/type.ts";
 import moment from "moment";
@@ -217,19 +217,6 @@ export async function checkRequestStatusOnchain() {
     await updateUserTradeVolumeFee(utvf)
   } catch (error) {
     console.log(`${error}`)
-  }
-}
-
-export async function downloadProofs() {
-  try {
-    const utvfs = await findUTVFToDownLoadProof();
-    let promises = Array<Promise<void>>();
-    for (let i = 0; i < utvfs.length; i++) {
-      promises.push(downloadUTVFProof(utvfs[i]));
-    }
-    await Promise.all(promises);
-  } catch (error) {
-
   }
 }
 
