@@ -12,6 +12,10 @@ interface IFeeRebateTierModule {
     function getFeeRebatePercentage(uint248 volume30D) external view returns (uint64);
 }
 
+interface IFactory {
+    function getAccountOwner(address _account) external view returns (address);
+}
+
 struct ClaimPeriod {
     uint64 startBlockNumber;
     uint64 endBlockNumber;     
@@ -25,6 +29,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     address public rewardToken;
     uint24 public rewardTokenDecimals;
     IFeeRebateTierModule public feeRebateTierModule;
+    IFactory public factory;
     address public claimer;
     uint256 public contractsHash;
     mapping(bytes32 => uint16) public vkHashesToCircuitSize; // batch tier vk hashes => tier batch size
@@ -39,7 +44,9 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     event ClaimerUpdated(address);
     event ContractsHashUpdated(uint256);
     
-    constructor(address _brevisProof) BrevisApp(IBrevisProof(_brevisProof)) {}
+    constructor(address _brevisProof, address _factory) BrevisApp(IBrevisProof(_brevisProof)) {
+        factory = IFactory(_factory);
+    }
 
     // BrevisQuery contract will call our callback once Brevis backend submits the proof.
     function handleProofResult(
@@ -132,7 +139,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
 
     // After reimburse user's fee, call claim to reset accumulatedFee
     function claim(address account) public {
-        require(msg.sender == claimer, "invalid claimer address");
+        require(msg.sender == factory.getAccountOwner(account), "invalid claimer address");
         uint248 feeRebate = accountAccumulatedFee[account];
         accountAccumulatedFee[account] = 0;
         emit FeeReimbursed(account, feeRebate);
