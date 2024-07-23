@@ -16,6 +16,11 @@ interface IFactory {
     function getAccountOwner(address _account) external view returns (address);
 }
 
+interface IMigration {
+    function accountClaimPeriod(address _account) external view returns (uint64, uint64);
+    function accountAccumulatedFee(address _account) external view returns (uint248);
+}
+
 struct ClaimPeriod {
     uint64 startBlockNumber;
     uint64 endBlockNumber;     
@@ -35,6 +40,9 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     mapping(bytes32 => uint16) public vkHashesToCircuitSize; // batch tier vk hashes => tier batch size
     mapping(address => ClaimPeriod) public accountClaimPeriod;
     mapping(address => uint248) public accountAccumulatedFee;
+    
+    bool migrationDone;
+    IMigration public migrationContract;
 
     event FeeRebateAccumulated(address account, uint248 feeRebate, uint248 volume30D, uint248 feeRebateWithRate,  uint64 startBlockNumber,uint64 endBlockNumber);
     event VkHashesUpdated(bytes32[] vkHashes, uint16[] sizes);
@@ -43,9 +51,12 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     event FeeRebateTireModuleUpdated(address);
     event ClaimerUpdated(address);
     event ContractsHashUpdated(uint256);
+    event MigrationDone();
+    event MigrationFinishedForAccount(address account, uint248 feeAccumulated, uint64 startBlockNumber, uint64 endBlockNumber);
     
-    constructor(address _brevisProof, address _factory) BrevisApp(IBrevisProof(_brevisProof)) {
+    constructor(address _brevisProof, address _factory, address _migrationContract) BrevisApp(IBrevisProof(_brevisProof)) {
         factory = IFactory(_factory);
+        migrationContract = IMigration(_migrationContract);
     }
 
     // BrevisQuery contract will call our callback once Brevis backend submits the proof.
@@ -148,5 +159,26 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     function setBrevisProof(address _brevisProof) external onlyOwner {
         brevisProof = IBrevisProof(_brevisProof);
         emit BrevisProofUpdated(_brevisProof);
+    }
+
+    function setMigrationFinished() external onlyOwner {
+        migrationDone = true;
+        emit MigrationDone();
+    }
+
+    function migrate(address[] calldata _accounts) external onlyOwner {
+        require(!migrationDone, "migration finished");
+
+        for (uint256 i = 0; i < _accounts.length; i++) {
+            // vkHashesToCircuitSize[_vkHashes[i]] = _sizes[i];
+            uint248 accumulatedFee = migrationContract.accountAccumulatedFee(_accounts[i]);
+            accountAccumulatedFee[_accounts[i]] = accumulatedFee;
+            (uint64 startBlockNumber, uint64 endBlockNumber) = migrationContract.accountClaimPeriod(_accounts[i]);
+            ClaimPeriod memory claimPeriod;
+            claimPeriod.startBlockNumber = startBlockNumber;
+            claimPeriod.endBlockNumber = endBlockNumber;
+            accountClaimPeriod[_accounts[i]] = claimPeriod;
+            emit MigrationFinishedForAccount(_accounts[i], accumulatedFee, startBlockNumber, endBlockNumber);
+        }
     }
 }

@@ -46,6 +46,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IFeeRebateTierModule__factory>;
     getContractFactory(
+      name: "IMigration",
+      signerOrOptions?: ethers.Signer | FactoryOptions
+    ): Promise<Contracts.IMigration__factory>;
+    getContractFactory(
       name: "MockFeeModule",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.MockFeeModule__factory>;
@@ -91,6 +95,11 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.IFeeRebateTierModule>;
     getContractAt(
+      name: "IMigration",
+      address: string | ethers.Addressable,
+      signer?: ethers.Signer
+    ): Promise<Contracts.IMigration>;
+    getContractAt(
       name: "MockFeeModule",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -129,6 +138,10 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IFeeRebateTierModule>;
     deployContract(
+      name: "IMigration",
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IMigration>;
+    deployContract(
       name: "MockFeeModule",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.MockFeeModule>;
@@ -173,6 +186,11 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.IFeeRebateTierModule>;
+    deployContract(
+      name: "IMigration",
+      args: any[],
+      signerOrOptions?: ethers.Signer | DeployContractOptions
+    ): Promise<Contracts.IMigration>;
     deployContract(
       name: "MockFeeModule",
       args: any[],

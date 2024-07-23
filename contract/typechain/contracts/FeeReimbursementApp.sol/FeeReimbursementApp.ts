@@ -192,6 +192,8 @@ export interface FeeReimbursementAppInterface extends Interface {
       | "contractsHash"
       | "factory"
       | "feeRebateTierModule"
+      | "migrate"
+      | "migrationContract"
       | "owner"
       | "renounceOwnership"
       | "rewardToken"
@@ -200,6 +202,7 @@ export interface FeeReimbursementAppInterface extends Interface {
       | "setClaimer"
       | "setContractsHash"
       | "setFeeRebateTierModule"
+      | "setMigrationFinished"
       | "setRewardToken"
       | "setVkHashes"
       | "singleRun"
@@ -216,6 +219,8 @@ export interface FeeReimbursementAppInterface extends Interface {
       | "FeeRebateAccumulated"
       | "FeeRebateTireModuleUpdated"
       | "FeeReimbursed"
+      | "MigrationDone"
+      | "MigrationFinishedForAccount"
       | "OwnershipTransferred"
       | "VkHashesUpdated"
   ): EventFragment;
@@ -251,6 +256,14 @@ export interface FeeReimbursementAppInterface extends Interface {
     functionFragment: "feeRebateTierModule",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "migrate",
+    values: [AddressLike[]]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "migrationContract",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -279,6 +292,10 @@ export interface FeeReimbursementAppInterface extends Interface {
   encodeFunctionData(
     functionFragment: "setFeeRebateTierModule",
     values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setMigrationFinished",
+    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "setRewardToken",
@@ -343,6 +360,11 @@ export interface FeeReimbursementAppInterface extends Interface {
     functionFragment: "feeRebateTierModule",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "migrate", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "migrationContract",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
@@ -367,6 +389,10 @@ export interface FeeReimbursementAppInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setFeeRebateTierModule",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setMigrationFinished",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -484,6 +510,41 @@ export namespace FeeReimbursedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace MigrationDoneEvent {
+  export type InputTuple = [];
+  export type OutputTuple = [];
+  export interface OutputObject {}
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace MigrationFinishedForAccountEvent {
+  export type InputTuple = [
+    account: AddressLike,
+    feeAccumulated: BigNumberish,
+    startBlockNumber: BigNumberish,
+    endBlockNumber: BigNumberish
+  ];
+  export type OutputTuple = [
+    account: string,
+    feeAccumulated: bigint,
+    startBlockNumber: bigint,
+    endBlockNumber: bigint
+  ];
+  export interface OutputObject {
+    account: string;
+    feeAccumulated: bigint;
+    startBlockNumber: bigint;
+    endBlockNumber: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace OwnershipTransferredEvent {
   export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
   export type OutputTuple = [previousOwner: string, newOwner: string];
@@ -593,6 +654,14 @@ export interface FeeReimbursementApp extends BaseContract {
 
   feeRebateTierModule: TypedContractMethod<[], [string], "view">;
 
+  migrate: TypedContractMethod<
+    [_accounts: AddressLike[]],
+    [void],
+    "nonpayable"
+  >;
+
+  migrationContract: TypedContractMethod<[], [string], "view">;
+
   owner: TypedContractMethod<[], [string], "view">;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
@@ -624,6 +693,8 @@ export interface FeeReimbursementApp extends BaseContract {
     [void],
     "nonpayable"
   >;
+
+  setMigrationFinished: TypedContractMethod<[], [void], "nonpayable">;
 
   setRewardToken: TypedContractMethod<
     [_rewardToken: AddressLike, _decimals: BigNumberish],
@@ -723,6 +794,12 @@ export interface FeeReimbursementApp extends BaseContract {
     nameOrSignature: "feeRebateTierModule"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
+    nameOrSignature: "migrate"
+  ): TypedContractMethod<[_accounts: AddressLike[]], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "migrationContract"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -750,6 +827,9 @@ export interface FeeReimbursementApp extends BaseContract {
     [void],
     "nonpayable"
   >;
+  getFunction(
+    nameOrSignature: "setMigrationFinished"
+  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setRewardToken"
   ): TypedContractMethod<
@@ -839,6 +919,20 @@ export interface FeeReimbursementApp extends BaseContract {
     FeeReimbursedEvent.OutputObject
   >;
   getEvent(
+    key: "MigrationDone"
+  ): TypedContractEvent<
+    MigrationDoneEvent.InputTuple,
+    MigrationDoneEvent.OutputTuple,
+    MigrationDoneEvent.OutputObject
+  >;
+  getEvent(
+    key: "MigrationFinishedForAccount"
+  ): TypedContractEvent<
+    MigrationFinishedForAccountEvent.InputTuple,
+    MigrationFinishedForAccountEvent.OutputTuple,
+    MigrationFinishedForAccountEvent.OutputObject
+  >;
+  getEvent(
     key: "OwnershipTransferred"
   ): TypedContractEvent<
     OwnershipTransferredEvent.InputTuple,
@@ -918,6 +1012,28 @@ export interface FeeReimbursementApp extends BaseContract {
       FeeReimbursedEvent.InputTuple,
       FeeReimbursedEvent.OutputTuple,
       FeeReimbursedEvent.OutputObject
+    >;
+
+    "MigrationDone()": TypedContractEvent<
+      MigrationDoneEvent.InputTuple,
+      MigrationDoneEvent.OutputTuple,
+      MigrationDoneEvent.OutputObject
+    >;
+    MigrationDone: TypedContractEvent<
+      MigrationDoneEvent.InputTuple,
+      MigrationDoneEvent.OutputTuple,
+      MigrationDoneEvent.OutputObject
+    >;
+
+    "MigrationFinishedForAccount(address,uint248,uint64,uint64)": TypedContractEvent<
+      MigrationFinishedForAccountEvent.InputTuple,
+      MigrationFinishedForAccountEvent.OutputTuple,
+      MigrationFinishedForAccountEvent.OutputObject
+    >;
+    MigrationFinishedForAccount: TypedContractEvent<
+      MigrationFinishedForAccountEvent.InputTuple,
+      MigrationFinishedForAccountEvent.OutputTuple,
+      MigrationFinishedForAccountEvent.OutputObject
     >;
 
     "OwnershipTransferred(address,address)": TypedContractEvent<
