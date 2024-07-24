@@ -17,7 +17,7 @@ interface IFactory {
 }
 
 contract FeeReimbursementClaim is Ownable(msg.sender) {
-    IFeeReimbursementApp public feeReimbursementApp;
+    IFeeReimbursementApp public immutable feeReimbursementApp;
     IFactory public factory;
     IERC20 public rewardToken;
 
@@ -58,7 +58,12 @@ contract FeeReimbursementClaim is Ownable(msg.sender) {
                                 CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
-    constructor(address _feeReimbursementApp, address _factory, address _rewardToken, address _opPriceFeed) {
+    constructor(
+        address _feeReimbursementApp,
+        address _factory,
+        address _rewardToken,
+        address _opPriceFeed
+    ) {
         feeReimbursementApp = IFeeReimbursementApp(_feeReimbursementApp);
         factory = IFactory(_factory);
         rewardToken = IERC20(_rewardToken);
@@ -118,7 +123,7 @@ contract FeeReimbursementClaim is Ownable(msg.sender) {
         // OP price feed is given with 8 decimals
         uint256 opPriceInWei = uint256(price) * 1e10;
 
-        return uint256(_usdAmount) / opPriceInWei;
+        return (uint256(_usdAmount) * 1 ether) / opPriceInWei;
     }
 
     /// @notice access control modifier for blacklist
