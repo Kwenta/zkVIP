@@ -14,9 +14,9 @@ const init = async () => {
   const migration = FeeReimbursementApp__factory.connect("0x1345c8a6b99536531f1fa3cfe37d8a5b7fc859aa", signer);
   const todoList = new Set<string>()
 
-  for (var i = 0; i < 338; i++){
-    const start = 123048087 - i * 2326
-    const end = 123050413 - i *2326
+  for (var i = 0; i < 366; i++){
+    const start = 123112576 - 2326 - i * 2326
+    const end = 123112576 - i *2326
     console.log(`Query from ${start} to ${end}`)
     var events = await migration.queryFilter(migration.getEvent("FeeRebateAccumulated"),  start, end)
 

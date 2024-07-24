@@ -188,9 +188,9 @@ export interface FeeReimbursementAppInterface extends Interface {
       | "brevisCallback"
       | "brevisProof"
       | "claim"
+      | "claimContract"
       | "claimer"
       | "contractsHash"
-      | "factory"
       | "feeRebateTierModule"
       | "migrate"
       | "migrationContract"
@@ -199,6 +199,7 @@ export interface FeeReimbursementAppInterface extends Interface {
       | "rewardToken"
       | "rewardTokenDecimals"
       | "setBrevisProof"
+      | "setClaimContract"
       | "setClaimer"
       | "setContractsHash"
       | "setFeeRebateTierModule"
@@ -246,12 +247,15 @@ export interface FeeReimbursementAppInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "claim", values: [AddressLike]): string;
+  encodeFunctionData(
+    functionFragment: "claimContract",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "claimer", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "contractsHash",
     values?: undefined
   ): string;
-  encodeFunctionData(functionFragment: "factory", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "feeRebateTierModule",
     values?: undefined
@@ -279,6 +283,10 @@ export interface FeeReimbursementAppInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setBrevisProof",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setClaimContract",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
@@ -350,12 +358,15 @@ export interface FeeReimbursementAppInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "claim", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "claimContract",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "claimer", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "contractsHash",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "factory", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "feeRebateTierModule",
     data: BytesLike
@@ -380,6 +391,10 @@ export interface FeeReimbursementAppInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setBrevisProof",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setClaimContract",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setClaimer", data: BytesLike): Result;
@@ -646,11 +661,11 @@ export interface FeeReimbursementApp extends BaseContract {
 
   claim: TypedContractMethod<[account: AddressLike], [void], "nonpayable">;
 
+  claimContract: TypedContractMethod<[], [string], "view">;
+
   claimer: TypedContractMethod<[], [string], "view">;
 
   contractsHash: TypedContractMethod<[], [bigint], "view">;
-
-  factory: TypedContractMethod<[], [string], "view">;
 
   feeRebateTierModule: TypedContractMethod<[], [string], "view">;
 
@@ -672,6 +687,12 @@ export interface FeeReimbursementApp extends BaseContract {
 
   setBrevisProof: TypedContractMethod<
     [_brevisProof: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  setClaimContract: TypedContractMethod<
+    [_claimContract: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -782,14 +803,14 @@ export interface FeeReimbursementApp extends BaseContract {
     nameOrSignature: "claim"
   ): TypedContractMethod<[account: AddressLike], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "claimContract"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "claimer"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "contractsHash"
   ): TypedContractMethod<[], [bigint], "view">;
-  getFunction(
-    nameOrSignature: "factory"
-  ): TypedContractMethod<[], [string], "view">;
   getFunction(
     nameOrSignature: "feeRebateTierModule"
   ): TypedContractMethod<[], [string], "view">;
@@ -814,6 +835,9 @@ export interface FeeReimbursementApp extends BaseContract {
   getFunction(
     nameOrSignature: "setBrevisProof"
   ): TypedContractMethod<[_brevisProof: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setClaimContract"
+  ): TypedContractMethod<[_claimContract: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setClaimer"
   ): TypedContractMethod<[_claimer: AddressLike], [void], "nonpayable">;

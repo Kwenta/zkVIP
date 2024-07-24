@@ -24,7 +24,7 @@ struct ClaimPeriod {
 
 error InvalidNewClaimPeriod();
 /// @notice Only Claim Contract can access this
-error onlyClaimContract();
+error onlyClaimContractCanAccess();
 /// @notice cannot set this value to the zero address
 error ZeroAddress();
 /// @notice Claim contract was already set
@@ -189,7 +189,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     }
 
     function _onlyClaimContract() internal view {
-        if (msg.sender != claimContract) revert onlyClaimContract();
+        if (msg.sender != claimContract) revert onlyClaimContractCanAccess();
     }
 
     function setClaimContract(address _claimContract) external onlyOwner {
