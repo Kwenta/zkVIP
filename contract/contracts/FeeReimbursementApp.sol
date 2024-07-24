@@ -12,10 +12,6 @@ interface IFeeRebateTierModule {
     function getFeeRebatePercentage(uint248 volume30D) external view returns (uint64);
 }
 
-interface IFactory {
-    function getAccountOwner(address _account) external view returns (address);
-}
-
 interface IMigration {
     function accountClaimPeriod(address _account) external view returns (uint64, uint64);
     function accountAccumulatedFee(address _account) external view returns (uint248);
@@ -27,6 +23,12 @@ struct ClaimPeriod {
 }
 
 error InvalidNewClaimPeriod();
+/// @notice Only Claim Contract can access this
+error onlyClaimContract();
+/// @notice cannot set this value to the zero address
+error ZeroAddress();
+/// @notice Claim contract was already set
+error AlreadySet();
 
 contract FeeReimbursementApp is BrevisApp, Ownable {
     using SafeERC20 for IERC20;
@@ -34,12 +36,12 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     address public rewardToken;
     uint24 public rewardTokenDecimals;
     IFeeRebateTierModule public feeRebateTierModule;
-    IFactory public factory;
     address public claimer;
     uint256 public contractsHash;
     mapping(bytes32 => uint16) public vkHashesToCircuitSize; // batch tier vk hashes => tier batch size
     mapping(address => ClaimPeriod) public accountClaimPeriod;
     mapping(address => uint248) public accountAccumulatedFee;
+    address public claimContract;
     
     bool migrationDone;
     IMigration public migrationContract;
@@ -54,8 +56,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     event MigrationDone();
     event MigrationFinishedForAccount(address account, uint248 feeAccumulated, uint64 startBlockNumber, uint64 endBlockNumber);
     
-    constructor(address _brevisProof, address _factory, address _migrationContract) BrevisApp(IBrevisProof(_brevisProof)) {
-        factory = IFactory(_factory);
+    constructor(address _brevisProof, address _migrationContract) BrevisApp(IBrevisProof(_brevisProof)) {
         migrationContract = IMigration(_migrationContract);
     }
 
@@ -149,8 +150,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     }
 
     // After reimburse user's fee, call claim to reset accumulatedFee
-    function claim(address account) public {
-        require(msg.sender == factory.getAccountOwner(account), "invalid claimer address");
+    function claim(address account) public onlyClaimContract {
         uint248 feeRebate = accountAccumulatedFee[account];
         accountAccumulatedFee[account] = 0;
         emit FeeReimbursed(account, feeRebate);
@@ -180,5 +180,20 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
             accountClaimPeriod[_accounts[i]] = claimPeriod;
             emit MigrationFinishedForAccount(_accounts[i], accumulatedFee, startBlockNumber, endBlockNumber);
         }
+    }
+
+    /// @notice access control modifier for claimContract
+    modifier onlyClaimContract() {
+        _onlyClaimContract();
+        _;
+    }
+
+    function _onlyClaimContract() internal view {
+        if (msg.sender != claimContract) revert onlyClaimContract();
+    }
+
+    function setClaimContract(address _claimContract) external onlyOwner {
+        if (_claimContract == address(0)) revert ZeroAddress();
+        claimContract = _claimContract;
     }
 }
