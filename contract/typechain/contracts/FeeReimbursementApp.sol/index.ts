@@ -2,6 +2,5 @@
 /* tslint:disable */
 /* eslint-disable */
 export type { FeeReimbursementApp } from "./FeeReimbursementApp";
-export type { IFactory } from "./IFactory";
 export type { IFeeRebateTierModule } from "./IFeeRebateTierModule";
 export type { IMigration } from "./IMigration";

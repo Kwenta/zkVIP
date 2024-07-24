@@ -38,10 +38,6 @@ declare module "hardhat/types/runtime" {
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.FeeReimbursementApp__factory>;
     getContractFactory(
-      name: "IFactory",
-      signerOrOptions?: ethers.Signer | FactoryOptions
-    ): Promise<Contracts.IFactory__factory>;
-    getContractFactory(
       name: "IFeeRebateTierModule",
       signerOrOptions?: ethers.Signer | FactoryOptions
     ): Promise<Contracts.IFeeRebateTierModule__factory>;
@@ -85,11 +81,6 @@ declare module "hardhat/types/runtime" {
       signer?: ethers.Signer
     ): Promise<Contracts.FeeReimbursementApp>;
     getContractAt(
-      name: "IFactory",
-      address: string | ethers.Addressable,
-      signer?: ethers.Signer
-    ): Promise<Contracts.IFactory>;
-    getContractAt(
       name: "IFeeRebateTierModule",
       address: string | ethers.Addressable,
       signer?: ethers.Signer
@@ -129,10 +120,6 @@ declare module "hardhat/types/runtime" {
       name: "FeeReimbursementApp",
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.FeeReimbursementApp>;
-    deployContract(
-      name: "IFactory",
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IFactory>;
     deployContract(
       name: "IFeeRebateTierModule",
       signerOrOptions?: ethers.Signer | DeployContractOptions
@@ -176,11 +163,6 @@ declare module "hardhat/types/runtime" {
       args: any[],
       signerOrOptions?: ethers.Signer | DeployContractOptions
     ): Promise<Contracts.FeeReimbursementApp>;
-    deployContract(
-      name: "IFactory",
-      args: any[],
-      signerOrOptions?: ethers.Signer | DeployContractOptions
-    ): Promise<Contracts.IFactory>;
     deployContract(
       name: "IFeeRebateTierModule",
       args: any[],

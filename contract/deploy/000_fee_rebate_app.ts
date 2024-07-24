@@ -10,7 +10,7 @@ const deployFunc: DeployFunction = async (hre: HardhatRuntimeEnvironment) => {
   const { deploy } = deployments;
   const { deployer } = await getNamedAccounts();
 
-  const args = ["0xB876cc05c3C3C8ECBA65dAc4CF69CaF871F2e0DD", "0x1345c8a6b99536531f1fa3cfe37d8a5b7fc859aa"];
+  const args = ["0xB876cc05c3C3C8ECBA65dAc4CF69CaF871F2e0DD"];
   const deployment = await deploy('FeeReimbursementApp', {
     from: deployer,
     log: true,

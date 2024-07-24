@@ -192,8 +192,6 @@ export interface FeeReimbursementAppInterface extends Interface {
       | "claimer"
       | "contractsHash"
       | "feeRebateTierModule"
-      | "migrate"
-      | "migrationContract"
       | "owner"
       | "renounceOwnership"
       | "rewardToken"
@@ -203,7 +201,6 @@ export interface FeeReimbursementAppInterface extends Interface {
       | "setClaimer"
       | "setContractsHash"
       | "setFeeRebateTierModule"
-      | "setMigrationFinished"
       | "setRewardToken"
       | "setVkHashes"
       | "singleRun"
@@ -260,14 +257,6 @@ export interface FeeReimbursementAppInterface extends Interface {
     functionFragment: "feeRebateTierModule",
     values?: undefined
   ): string;
-  encodeFunctionData(
-    functionFragment: "migrate",
-    values: [AddressLike[]]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "migrationContract",
-    values?: undefined
-  ): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
@@ -300,10 +289,6 @@ export interface FeeReimbursementAppInterface extends Interface {
   encodeFunctionData(
     functionFragment: "setFeeRebateTierModule",
     values: [AddressLike]
-  ): string;
-  encodeFunctionData(
-    functionFragment: "setMigrationFinished",
-    values?: undefined
   ): string;
   encodeFunctionData(
     functionFragment: "setRewardToken",
@@ -371,11 +356,6 @@ export interface FeeReimbursementAppInterface extends Interface {
     functionFragment: "feeRebateTierModule",
     data: BytesLike
   ): Result;
-  decodeFunctionResult(functionFragment: "migrate", data: BytesLike): Result;
-  decodeFunctionResult(
-    functionFragment: "migrationContract",
-    data: BytesLike
-  ): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
@@ -404,10 +384,6 @@ export interface FeeReimbursementAppInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setFeeRebateTierModule",
-    data: BytesLike
-  ): Result;
-  decodeFunctionResult(
-    functionFragment: "setMigrationFinished",
     data: BytesLike
   ): Result;
   decodeFunctionResult(
@@ -669,14 +645,6 @@ export interface FeeReimbursementApp extends BaseContract {
 
   feeRebateTierModule: TypedContractMethod<[], [string], "view">;
 
-  migrate: TypedContractMethod<
-    [_accounts: AddressLike[]],
-    [void],
-    "nonpayable"
-  >;
-
-  migrationContract: TypedContractMethod<[], [string], "view">;
-
   owner: TypedContractMethod<[], [string], "view">;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
@@ -714,8 +682,6 @@ export interface FeeReimbursementApp extends BaseContract {
     [void],
     "nonpayable"
   >;
-
-  setMigrationFinished: TypedContractMethod<[], [void], "nonpayable">;
 
   setRewardToken: TypedContractMethod<
     [_rewardToken: AddressLike, _decimals: BigNumberish],
@@ -815,12 +781,6 @@ export interface FeeReimbursementApp extends BaseContract {
     nameOrSignature: "feeRebateTierModule"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
-    nameOrSignature: "migrate"
-  ): TypedContractMethod<[_accounts: AddressLike[]], [void], "nonpayable">;
-  getFunction(
-    nameOrSignature: "migrationContract"
-  ): TypedContractMethod<[], [string], "view">;
-  getFunction(
     nameOrSignature: "owner"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -851,9 +811,6 @@ export interface FeeReimbursementApp extends BaseContract {
     [void],
     "nonpayable"
   >;
-  getFunction(
-    nameOrSignature: "setMigrationFinished"
-  ): TypedContractMethod<[], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setRewardToken"
   ): TypedContractMethod<

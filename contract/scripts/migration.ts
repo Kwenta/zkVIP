@@ -27,9 +27,9 @@ const init = async () => {
 
   console.log(JSON.stringify(Array.from(todoList)))
 
-  const tx = await newApp.migrate(Array.from(todoList))
-  console.log(`migrate for ${todoList} tx: ${tx.hash}`)
-  await tx.wait();
+  // const tx = await newApp.migrate(Array.from(todoList))
+  // console.log(`migrate for ${todoList} tx: ${tx.hash}`)
+  // await tx.wait();
 };
 
 init();
