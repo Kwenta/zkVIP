@@ -5,6 +5,7 @@ import {
   getTrade,
   getUserTradeVolumeFee,
   updateUserTradeVolumeFee,
+  updateUserTradeVolumeFeeWithCreateTime,
 } from "../db/index.ts";
 import {
   isValidPositionModifiedContract,
@@ -37,9 +38,10 @@ const {
 } = sdk;
 
 const provers = [
-  new Prover("222.74.153.228:53248"),
-  new Prover("222.74.153.228:53249"),
-  new Prover("222.74.153.228:53351")
+  new Prover("54.189.38.119:53248"),
+  new Prover("54.189.38.119:53249"),
+  new Prover("54.189.38.119:53423"),
+  new Prover("54.189.38.119:53351")
 ]
 
 type DebugReceipt = {
@@ -105,7 +107,10 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
   })
 
   // If 30 Day volume is not greater than $1,000,000, there will be no fee rebate
-  if (tradeVolume <= BigInt(1000000) * BigInt('1000000000000000000')) {
+  // if (tradeVolume <= BigInt(1000000) * BigInt('1000000000000000000')) {
+
+  // For testing: If 30 Day volume is not greater than $1, there will be no fee rebate
+  if (tradeVolume <= BigInt(1) * BigInt('1000000000000000000')) {
     utvf.status = PROOF_STATUS_INELIGIBLE_ACCOUNT_ID
     await updateUserTradeVolumeFee(utvf)
     return {proverIndex: -1, proofReq: proofReq}
@@ -254,10 +259,16 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
     proverIndex = 1
     offRIndex = 412
     exeRIndex = 462
+  } else if (unclaimableTradeReceipts.length <= 1300 
+    && claimableTradeOrderFeeFlowReceipts.length <= 100
+    && claimableTradeExecutionReceipts.length <= 100) {
+    proverIndex = 2
+    offRIndex = 1300
+    exeRIndex = 1400
   } else if (unclaimableTradeReceipts.length <= 4400 
     && claimableTradeOrderFeeFlowReceipts.length <=300
     && claimableTradeExecutionReceipts.length <= 300) {
-    proverIndex = 2
+    proverIndex = 3
     offRIndex = 4400
     exeRIndex = 4700
   } else {
@@ -504,8 +515,25 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
       await updateUserTradeVolumeFee(utvf)
       return;
     } else if (getProofRes.proof.length === 0) {
-      utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
-      await updateUserTradeVolumeFee(utvf)
+      const utvfObject = utvf as UserTradeVolumeFee
+      if (utvfObject === undefined || utvfObject === null) {
+        utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
+        await updateUserTradeVolumeFee(utvf)
+        return;
+      }
+
+      const now = new Date()
+      const timeDiff = now.getTime() - utvfObject.create_time.getTime()
+      // If there is no proof found in 2 hours. Retry proving 
+      if (timeDiff >= 7200 * 1000) {
+        console.log(`Proof not found for long time from ${utvfObject.create_time} to ${now}: retry proving for  ${utvf.id}`)
+        utvf.status = PROOF_STATUS_INPUT_READY
+        utvf.create_time = now
+        await updateUserTradeVolumeFeeWithCreateTime(utvf)
+      } else {
+        utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
+        await updateUserTradeVolumeFee(utvf)
+      }
       return;
     }
 
@@ -525,46 +553,6 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
     utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED;
     updateUserTradeVolumeFee(utvf);
     console.error(err);
-  }
-}
-
-async function downloadUTVFProof(utvf: UserTradeVolumeFee) {
-  try {
-    console.log("DownloadProof: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())  
-  
-    // const getProofRes = await 
-    const proofDownloadPromises = Array<Promise<string>>()
-    for (let i = 0; i < provers.length; i++) {
-      const proofResult = provers[i].getProof(utvf.prover_id).then(response => {
-        return response.proof
-      }).catch(error => {
-        return ""
-      })
-    }
-  
-    const proofs = await Promise.all(proofDownloadPromises)
-
-    var finalProof = ''
-  
-    proofs.forEach(proof => {
-      if (proof.length > 0) {
-        finalProof = proof
-      }
-    })
-
-    if (finalProof.length === 0) {
-      console.log("Proof not ready: ", utvf.id, utvf.prover_id, (new Date()).toLocaleString())  
-      await updateUserTradeVolumeFee(utvf)
-      return 
-    }
-    utvf.proof = finalProof
-
-    console.log("Brevis proof downloaded: ", utvf.id, (new Date()).toLocaleString())
-
-    await updateUserTradeVolumeFee(utvf);
-  } catch (err) {
-    console.error(err);
-    await updateUserTradeVolumeFee(utvf);
   }
 }
 
@@ -633,6 +621,5 @@ function sortByBlk(a: Receipt, b: Receipt) {
 export {
   sendUserTradeVolumeFeeProvingRequest,
   uploadUserTradeVolumeFeeProof,
-  downloadUTVFProof,
   submitProofForBrevis,
 };

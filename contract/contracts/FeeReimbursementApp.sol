@@ -18,6 +18,12 @@ struct ClaimPeriod {
 }
 
 error InvalidNewClaimPeriod();
+/// @notice Only Claim Contract can access this
+error onlyClaimContractCanAccess();
+/// @notice cannot set this value to the zero address
+error ZeroAddress();
+/// @notice Claim contract was already set
+error AlreadySet();
 
 contract FeeReimbursementApp is BrevisApp, Ownable {
     using SafeERC20 for IERC20;
@@ -30,6 +36,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     mapping(bytes32 => uint16) public vkHashesToCircuitSize; // batch tier vk hashes => tier batch size
     mapping(address => ClaimPeriod) public accountClaimPeriod;
     mapping(address => uint248) public accountAccumulatedFee;
+    address public claimContract;
 
     event FeeRebateAccumulated(address account, uint248 feeRebate, uint248 volume30D, uint248 feeRebateWithRate,  uint64 startBlockNumber,uint64 endBlockNumber);
     event VkHashesUpdated(bytes32[] vkHashes, uint16[] sizes);
@@ -38,6 +45,8 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     event FeeRebateTireModuleUpdated(address);
     event ClaimerUpdated(address);
     event ContractsHashUpdated(uint256);
+    event MigrationDone();
+    event MigrationFinishedForAccount(address account, uint248 feeAccumulated, uint64 startBlockNumber, uint64 endBlockNumber);
     
     constructor(address _brevisProof) BrevisApp(IBrevisProof(_brevisProof)) {}
 
@@ -131,8 +140,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     }
 
     // After reimburse user's fee, call claim to reset accumulatedFee
-    function claim(address account) public {
-        require(msg.sender == claimer, "invalid claimer address");
+    function claim(address account) public onlyClaimContract {
         uint248 feeRebate = accountAccumulatedFee[account];
         accountAccumulatedFee[account] = 0;
         emit FeeReimbursed(account, feeRebate);
@@ -141,5 +149,20 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     function setBrevisProof(address _brevisProof) external onlyOwner {
         brevisProof = IBrevisProof(_brevisProof);
         emit BrevisProofUpdated(_brevisProof);
+    }
+
+    /// @notice access control modifier for claimContract
+    modifier onlyClaimContract() {
+        _onlyClaimContract();
+        _;
+    }
+
+    function _onlyClaimContract() internal view {
+        if (msg.sender != claimContract) revert onlyClaimContractCanAccess();
+    }
+
+    function setClaimContract(address _claimContract) external onlyOwner {
+        if (_claimContract == address(0)) revert ZeroAddress();
+        claimContract = _claimContract;
     }
 }

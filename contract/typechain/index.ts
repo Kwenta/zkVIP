@@ -22,5 +22,7 @@ export type { FeeReimbursementApp } from "./contracts/FeeReimbursementApp.sol/Fe
 export { FeeReimbursementApp__factory } from "./factories/contracts/FeeReimbursementApp.sol/FeeReimbursementApp__factory";
 export type { IFeeRebateTierModule } from "./contracts/FeeReimbursementApp.sol/IFeeRebateTierModule";
 export { IFeeRebateTierModule__factory } from "./factories/contracts/FeeReimbursementApp.sol/IFeeRebateTierModule__factory";
+export type { IMigration } from "./contracts/FeeReimbursementApp.sol/IMigration";
+export { IMigration__factory } from "./factories/contracts/FeeReimbursementApp.sol/IMigration__factory";
 export type { MockFeeModule } from "./contracts/MockFeeModule";
 export { MockFeeModule__factory } from "./factories/contracts/MockFeeModule__factory";

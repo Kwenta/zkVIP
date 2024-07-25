@@ -188,6 +188,7 @@ export interface FeeReimbursementAppInterface extends Interface {
       | "brevisCallback"
       | "brevisProof"
       | "claim"
+      | "claimContract"
       | "claimer"
       | "contractsHash"
       | "feeRebateTierModule"
@@ -196,6 +197,7 @@ export interface FeeReimbursementAppInterface extends Interface {
       | "rewardToken"
       | "rewardTokenDecimals"
       | "setBrevisProof"
+      | "setClaimContract"
       | "setClaimer"
       | "setContractsHash"
       | "setFeeRebateTierModule"
@@ -215,6 +217,8 @@ export interface FeeReimbursementAppInterface extends Interface {
       | "FeeRebateAccumulated"
       | "FeeRebateTireModuleUpdated"
       | "FeeReimbursed"
+      | "MigrationDone"
+      | "MigrationFinishedForAccount"
       | "OwnershipTransferred"
       | "VkHashesUpdated"
   ): EventFragment;
@@ -240,6 +244,10 @@ export interface FeeReimbursementAppInterface extends Interface {
     values?: undefined
   ): string;
   encodeFunctionData(functionFragment: "claim", values: [AddressLike]): string;
+  encodeFunctionData(
+    functionFragment: "claimContract",
+    values?: undefined
+  ): string;
   encodeFunctionData(functionFragment: "claimer", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "contractsHash",
@@ -264,6 +272,10 @@ export interface FeeReimbursementAppInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "setBrevisProof",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "setClaimContract",
     values: [AddressLike]
   ): string;
   encodeFunctionData(
@@ -331,6 +343,10 @@ export interface FeeReimbursementAppInterface extends Interface {
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "claim", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "claimContract",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "claimer", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "contractsHash",
@@ -355,6 +371,10 @@ export interface FeeReimbursementAppInterface extends Interface {
   ): Result;
   decodeFunctionResult(
     functionFragment: "setBrevisProof",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "setClaimContract",
     data: BytesLike
   ): Result;
   decodeFunctionResult(functionFragment: "setClaimer", data: BytesLike): Result;
@@ -481,6 +501,41 @@ export namespace FeeReimbursedEvent {
   export type LogDescription = TypedLogDescription<Event>;
 }
 
+export namespace MigrationDoneEvent {
+  export type InputTuple = [];
+  export type OutputTuple = [];
+  export interface OutputObject {}
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
+export namespace MigrationFinishedForAccountEvent {
+  export type InputTuple = [
+    account: AddressLike,
+    feeAccumulated: BigNumberish,
+    startBlockNumber: BigNumberish,
+    endBlockNumber: BigNumberish
+  ];
+  export type OutputTuple = [
+    account: string,
+    feeAccumulated: bigint,
+    startBlockNumber: bigint,
+    endBlockNumber: bigint
+  ];
+  export interface OutputObject {
+    account: string;
+    feeAccumulated: bigint;
+    startBlockNumber: bigint;
+    endBlockNumber: bigint;
+  }
+  export type Event = TypedContractEvent<InputTuple, OutputTuple, OutputObject>;
+  export type Filter = TypedDeferredTopicFilter<Event>;
+  export type Log = TypedEventLog<Event>;
+  export type LogDescription = TypedLogDescription<Event>;
+}
+
 export namespace OwnershipTransferredEvent {
   export type InputTuple = [previousOwner: AddressLike, newOwner: AddressLike];
   export type OutputTuple = [previousOwner: string, newOwner: string];
@@ -582,6 +637,8 @@ export interface FeeReimbursementApp extends BaseContract {
 
   claim: TypedContractMethod<[account: AddressLike], [void], "nonpayable">;
 
+  claimContract: TypedContractMethod<[], [string], "view">;
+
   claimer: TypedContractMethod<[], [string], "view">;
 
   contractsHash: TypedContractMethod<[], [bigint], "view">;
@@ -598,6 +655,12 @@ export interface FeeReimbursementApp extends BaseContract {
 
   setBrevisProof: TypedContractMethod<
     [_brevisProof: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
+  setClaimContract: TypedContractMethod<
+    [_claimContract: AddressLike],
     [void],
     "nonpayable"
   >;
@@ -706,6 +769,9 @@ export interface FeeReimbursementApp extends BaseContract {
     nameOrSignature: "claim"
   ): TypedContractMethod<[account: AddressLike], [void], "nonpayable">;
   getFunction(
+    nameOrSignature: "claimContract"
+  ): TypedContractMethod<[], [string], "view">;
+  getFunction(
     nameOrSignature: "claimer"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -729,6 +795,9 @@ export interface FeeReimbursementApp extends BaseContract {
   getFunction(
     nameOrSignature: "setBrevisProof"
   ): TypedContractMethod<[_brevisProof: AddressLike], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "setClaimContract"
+  ): TypedContractMethod<[_claimContract: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "setClaimer"
   ): TypedContractMethod<[_claimer: AddressLike], [void], "nonpayable">;
@@ -831,6 +900,20 @@ export interface FeeReimbursementApp extends BaseContract {
     FeeReimbursedEvent.OutputObject
   >;
   getEvent(
+    key: "MigrationDone"
+  ): TypedContractEvent<
+    MigrationDoneEvent.InputTuple,
+    MigrationDoneEvent.OutputTuple,
+    MigrationDoneEvent.OutputObject
+  >;
+  getEvent(
+    key: "MigrationFinishedForAccount"
+  ): TypedContractEvent<
+    MigrationFinishedForAccountEvent.InputTuple,
+    MigrationFinishedForAccountEvent.OutputTuple,
+    MigrationFinishedForAccountEvent.OutputObject
+  >;
+  getEvent(
     key: "OwnershipTransferred"
   ): TypedContractEvent<
     OwnershipTransferredEvent.InputTuple,
@@ -910,6 +993,28 @@ export interface FeeReimbursementApp extends BaseContract {
       FeeReimbursedEvent.InputTuple,
       FeeReimbursedEvent.OutputTuple,
       FeeReimbursedEvent.OutputObject
+    >;
+
+    "MigrationDone()": TypedContractEvent<
+      MigrationDoneEvent.InputTuple,
+      MigrationDoneEvent.OutputTuple,
+      MigrationDoneEvent.OutputObject
+    >;
+    MigrationDone: TypedContractEvent<
+      MigrationDoneEvent.InputTuple,
+      MigrationDoneEvent.OutputTuple,
+      MigrationDoneEvent.OutputObject
+    >;
+
+    "MigrationFinishedForAccount(address,uint248,uint64,uint64)": TypedContractEvent<
+      MigrationFinishedForAccountEvent.InputTuple,
+      MigrationFinishedForAccountEvent.OutputTuple,
+      MigrationFinishedForAccountEvent.OutputObject
+    >;
+    MigrationFinishedForAccount: TypedContractEvent<
+      MigrationFinishedForAccountEvent.InputTuple,
+      MigrationFinishedForAccountEvent.OutputTuple,
+      MigrationFinishedForAccountEvent.OutputObject
     >;
 
     "OwnershipTransferred(address,address)": TypedContractEvent<

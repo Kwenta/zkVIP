@@ -3,3 +3,4 @@
 /* eslint-disable */
 export type { FeeReimbursementApp } from "./FeeReimbursementApp";
 export type { IFeeRebateTierModule } from "./IFeeRebateTierModule";
+export type { IMigration } from "./IMigration";

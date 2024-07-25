@@ -3,3 +3,4 @@
 /* eslint-disable */
 export { FeeReimbursementApp__factory } from "./FeeReimbursementApp__factory";
 export { IFeeRebateTierModule__factory } from "./IFeeRebateTierModule__factory";
+export { IMigration__factory } from "./IMigration__factory";

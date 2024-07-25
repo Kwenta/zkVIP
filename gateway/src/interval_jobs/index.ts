@@ -10,6 +10,7 @@ import {
   findNotReadyStorages, 
   findNotReadyTrades, 
   findProofToUpload, 
+  findRequestSentsUTVF, 
   findTxToBeSent, 
   findUserExistingUTVF, 
   findUserExistingUTVFByDate, 
@@ -22,15 +23,16 @@ import {
   updateUserTradeVolumeFee,
 } from "../db/index.ts";
 import { getAllTradesWithin30Day, getAccountTradesList, saveTrades } from "../graphql/index.ts";
-import { downloadUTVFProof, sendUserTradeVolumeFeeProvingRequest, submitProofForBrevis, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
+import { sendUserTradeVolumeFeeProvingRequest, submitProofForBrevis, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
-import { findDayStartTimestamp, findNextDay, getCurrentDay } from "../server/type.ts";
+import { findDayStartTimestamp, findNextDay, getCurrentDay, UserTradeVolumeFee } from "../server/type.ts";
 import moment from "moment";
-import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
+import { brevisRequest, submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
 
 export async function prepareNewDayTradeClaims() {
   try {
-    const yesterday = Number((moment.utc(new Date()).subtract(1, "h").subtract(1, "d")).format('YYYYMMDD'))
+    // Give 10 minutes buffer to avoid brevis gateway failure
+    const yesterday = Number((moment.utc(new Date()).subtract(6, "m").subtract(1, "d")).format('YYYYMMDD'))
     var track = await getDailyTrack(BigInt(yesterday));
     if (track != undefined && track != null && track) {
       return;
@@ -40,6 +42,12 @@ export async function prepareNewDayTradeClaims() {
     var tsStart = yesterdayStart.utc().unix()
     var tsEnd = yesterdayStart.utc().add(1, "d").unix() - 1
     var ts30DAgo = yesterdayStart.utc().subtract(29, "d").unix()
+
+    const eventStartDay = moment.utc("20240724", "YYYYMMDD", true).utc().unix()
+
+    if (ts30DAgo < eventStartDay) {
+      ts30DAgo = eventStartDay
+    }
     
     const result = await getAllTradesWithin30Day(ts30DAgo, tsEnd)
     if (result.error !== null) {
@@ -193,16 +201,22 @@ export async function submitUserSwapAmountTx() {
   }
 }
 
-export async function downloadProofs() {
+export async function checkRequestStatusOnchain() {
   try {
-    const utvfs = await findUTVFToDownLoadProof();
-    let promises = Array<Promise<void>>();
-    for (let i = 0; i < utvfs.length; i++) {
-      promises.push(downloadUTVFProof(utvfs[i]));
+    const yesterday = Number((moment.utc(new Date()).subtract(10, "m").subtract(1, "d")).format('YYYYMMDD'))
+    const utvfs = await findRequestSentsUTVF(BigInt(yesterday));
+    if (utvfs.length < 1) {
+      return 
     }
-    await Promise.all(promises);
+    const utvf = utvfs[0]
+    const request = await brevisRequest.requests(utvf.brevis_query_hash)
+    if (request[0] === BigInt(0)) {
+      console.log(`request info not found for ${utvf.account}-${utvf.ymd}`)
+      utvf.request_sent = false
+    }
+    await updateUserTradeVolumeFee(utvf)
   } catch (error) {
-
+    console.log(`${error}`)
   }
 }
 
