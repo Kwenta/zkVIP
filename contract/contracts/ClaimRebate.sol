@@ -34,7 +34,8 @@ contract FeeReimbursementClaim is Ownable(msg.sender) {
 
     /// @notice emitted when fee rebate is claimed
     /// @param account: address of account that claimed
-    event FeeRebateClaimed(address indexed account);
+    /// @param price: price of OP token at the moment of claim
+    event FeeRebateClaimed(address indexed account, int256 price);
 
     /// @notice emitted when tokens are recovered from this contract
     /// @param token: address of token recovered
@@ -90,7 +91,7 @@ contract FeeReimbursementClaim is Ownable(msg.sender) {
         uint248 feeRebate = feeReimbursementApp.accountAccumulatedFee(_smartMarginAccount);
 
         // Convert feeRebate from USD to OP
-        uint256 feeRebateOP = _convertUSDtoOP(feeRebate);
+        (uint256 feeRebateOP, int256 opPrice) = _convertUSDtoOP(feeRebate);
 
         if (feeRebateOP == 0) {
             revert NoFeeRebateAvailable();
@@ -108,7 +109,7 @@ contract FeeReimbursementClaim is Ownable(msg.sender) {
         // transfer fee rebate from this contract to the user
         rewardToken.transfer(account, feeRebateOP);
 
-        emit FeeRebateClaimed(account);
+        emit FeeRebateClaimed(account, opPrice);
     }
 
     // Function to recover any ERC20 tokens sent to this contract
@@ -117,13 +118,19 @@ contract FeeReimbursementClaim is Ownable(msg.sender) {
         IERC20(_tokenAddress).transfer(owner(), _tokenAmount);
     }
 
-    function _convertUSDtoOP(uint248 _usdAmount) internal view returns (uint256) {
-        int256 price = getChainlinkDataFeedLatestAnswer();
+    function _convertUSDtoOP(uint248 _usdAmount)
+        internal
+        view
+        returns (uint256 opAmount, int256 price)
+    {
+        price = getChainlinkDataFeedLatestAnswer();
 
         // OP price feed is given with 8 decimals
         uint256 opPriceInWei = uint256(price) * 1e10;
 
-        return (uint256(_usdAmount) * 1 ether) / opPriceInWei;
+        opAmount = (uint256(_usdAmount) * 1 ether) / opPriceInWei;
+
+        return (opAmount, price);
     }
 
     /// @notice access control modifier for blacklist
