@@ -2,18 +2,17 @@ pragma solidity ^0.8.18;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract TestFeeModule is Ownable {
+contract TestFeeModule is Ownable(msg.sender) {
     function getFeeRebatePercentage(uint248 volume30D) external pure returns (uint64) {
-        uint248 _volume = volume30D / 1000000000000000000;
-        if (_volume > 10000) {
+        if (volume30D > 1000 * 1 ether) {
             return 30;
-        } else  if (_volume > 100) {
+        } else if (volume30D > 100 * 1 ether) {
             return 20;
-        } else  if (_volume > 10) {
+        } else if (volume30D > 10 * 1 ether) {
             return 10;
-        }  else  if (_volume > 1) {
+        } else if (volume30D > 1 * 1 ether) {
             return 5;
-        } 
+        }
         return 0;
     }
 }
