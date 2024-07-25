@@ -16,7 +16,7 @@ interface IFactory {
     function getAccountOwner(address _account) external view returns (address);
 }
 
-contract FeeReimbursementClaim is Ownable(msg.sender) {
+contract FeeReimbursementClaim is Ownable {
     IFeeReimbursementApp public immutable feeReimbursementApp;
     IFactory public factory;
     IERC20 public rewardToken;
