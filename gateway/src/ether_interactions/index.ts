@@ -93,7 +93,7 @@ async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
       updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
       console.log(`tx has been sent for ${utvf.account}, ${utvf.ymd}`)
     } else {
-      console.error(`failed to submit tx: ${msg}`);
+      console.error(`failed to submit tx for ${utvf.account}-${utvf.ymd}: ${msg}`);
     }
   })
 }
