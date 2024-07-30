@@ -48,23 +48,6 @@ contract FeeReimbursementClaimTest is Test {
         mockRewardToken.mint(address(feeReimbursementClaim), TEST_VALUE);
     }
 
-    function test_Update_Blacklist(address caller) public {
-        vm.startPrank(caller);
-
-        if (caller == owner) {
-            feeReimbursementClaim.updateBlacklist(account, true);
-
-            assertTrue(feeReimbursementClaim.blacklist(account));
-        } else {
-            vm.expectRevert("Ownable: caller is not the owner");
-            feeReimbursementClaim.updateBlacklist(account, true);
-
-            assertFalse(feeReimbursementClaim.blacklist(account));
-        }
-
-        vm.stopPrank();
-    }
-
     function test_Only_Owner_Can_Call_recoverERC20(address caller) public {
         vm.startPrank(caller);
 

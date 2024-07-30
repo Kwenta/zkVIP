@@ -4,6 +4,8 @@ pragma solidity ^0.8.18;
 import {IFactory} from "../../contracts/interfaces/IFactory.sol";
 
 contract MockFactory is IFactory {
+    /// @inheritdoc IFactory
+    mapping(address accounts => bool exist) public accounts;
     // Mapping to store account owners
     mapping(address => address) private _accountOwners;
 
