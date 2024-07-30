@@ -7,6 +7,7 @@ import {AggregatorV2V3Interface} from
     "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV2V3Interface.sol";
 import {IFeeReimbursementApp} from "./interfaces/IFeeReimbursementApp.sol";
 import {IFactory} from "./interfaces/IFactory.sol";
+import {IAccount} from "./interfaces/IAccount.sol";
 
 contract FeeReimbursementClaim is Ownable {
     /*///////////////////////////////////////////////////////////////
@@ -45,7 +46,8 @@ contract FeeReimbursementClaim is Ownable {
 
     error SequencerDown();
     error GracePeriodNotOver();
-    error NotAccountOwner();
+    error InvalidAccount();
+    error Unauthorized();
     error NoFeeRebateAvailable();
     error InsufficientContractBalance(uint256 available, uint256 required);
 
@@ -88,8 +90,13 @@ contract FeeReimbursementClaim is Ownable {
     function claim(address _smartMarginAccount) external {
         address account = msg.sender;
 
-        if (factory.getAccountOwner(_smartMarginAccount) != account) {
-            revert NotAccountOwner();
+        if (!factory.accounts(_smartMarginAccount)) {
+            revert InvalidAccount();
+        }
+
+        IAccount smAccount = IAccount(_smartMarginAccount);
+        if (!smAccount.isAuth()) {
+            revert Unauthorized();
         }
 
         uint248 feeRebate = feeReimbursementApp.accountAccumulatedFee(_smartMarginAccount);

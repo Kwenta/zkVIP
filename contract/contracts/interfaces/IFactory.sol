@@ -7,4 +7,8 @@ interface IFactory {
     /// @param _account: address of account
     /// @return owner of account
     function getAccountOwner(address _account) external view returns (address);
+
+    /// @param _account: address of account
+    /// @return whether or not account exists
+    function accounts(address _account) external view returns (bool);
 }
