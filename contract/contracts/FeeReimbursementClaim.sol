@@ -1,32 +1,33 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.18;
+pragma solidity 0.8.18;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {AggregatorV2V3Interface} from
     "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV2V3Interface.sol";
-
-interface IFeeReimbursementApp {
-    function accountAccumulatedFee(address account) external view returns (uint248);
-    function claim(address account) external;
-}
-
-interface IFactory {
-    function getAccountOwner(address _account) external view returns (address);
-}
+import {IFeeReimbursementApp} from "./interfaces/IFeeReimbursementApp.sol";
+import {IFactory} from "./interfaces/IFactory.sol";
 
 contract FeeReimbursementClaim is Ownable {
+    /*///////////////////////////////////////////////////////////////
+                        IMPORTS AND STATE VARIABLES
+    //////////////////////////////////////////////////////////////*/
+
     IFeeReimbursementApp public immutable feeReimbursementApp;
-    IFactory public factory;
-    IERC20 public rewardToken;
+    IFactory public immutable factory;
+    IERC20 public immutable rewardToken;
 
     AggregatorV2V3Interface internal dataFeed;
     AggregatorV2V3Interface internal sequencerUptimeFeed;
 
+    /// @dev Grace period time in seconds used for the Chainlink price feed
+    /// If the sequencer is up and the GRACE_PERIOD_TIME has passed, the _getChainlinkDataFeedLatestAnswer function retrieves
+    /// the latest answer from the data feed using the dataFeed object.
     uint256 private constant GRACE_PERIOD_TIME = 3600;
 
-    mapping(address => bool) public blacklist; // Blacklist mapping
+    /// @notice Configurable blacklist controlled by pDAO (owner of this contract).
+    /// @dev This blacklist prevents specific addresses from claiming rewards.
+    mapping(address => bool) public blacklist;
 
     /*///////////////////////////////////////////////////////////////
                                 EVENTS
@@ -42,6 +43,9 @@ contract FeeReimbursementClaim is Ownable {
     /// @param amount: amount of token recovered
     event Recovered(address token, uint256 amount);
 
+    /// @notice emitted when an account's blacklist status is updated
+    /// @param account address of the account whose blacklist status is updated
+    /// @param isBlacklisted boolean indicating if the account is blacklisted or not
     event BlacklistUpdated(address indexed account, bool isBlacklisted);
 
     /*//////////////////////////////////////////////////////////////
@@ -59,11 +63,18 @@ contract FeeReimbursementClaim is Ownable {
                                 CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
+    /// @notice Constructs the FeeReimbursementClaim contract
+    /// @param _feeReimbursementApp address of the fee FeeReimbursementApp contract
+    /// @param _factory address of the Factory contract.
+    /// @param _rewardToken address of the reward token contract
+    /// @param _dataFeed address of the Chainlink data feed
+    /// @param _sequencerUptimeFeed address of the Chainlink sequencer uptime feed
     constructor(
         address _feeReimbursementApp,
         address _factory,
         address _rewardToken,
-        address _opPriceFeed
+        address _dataFeed,
+        address _sequencerUptimeFeed
     ) {
         feeReimbursementApp = IFeeReimbursementApp(_feeReimbursementApp);
         factory = IFactory(_factory);
@@ -76,11 +87,14 @@ contract FeeReimbursementClaim is Ownable {
          * For a list of available Sequencer Uptime Feed proxy addresses, see:
          * https://docs.chain.link/docs/data-feeds/l2-sequencer-feeds
          */
-        dataFeed = AggregatorV2V3Interface(_opPriceFeed);
+        dataFeed = AggregatorV2V3Interface(_dataFeed);
         // Optimism Sequencer Uptime Feed
-        sequencerUptimeFeed = AggregatorV2V3Interface(0x371EAD81c9102C9BF4874A9075FFFf170F2Ee389);
+        sequencerUptimeFeed = AggregatorV2V3Interface(_sequencerUptimeFeed);
     }
 
+    /// @notice Claims the available fee rebate for the specified smart margin account
+    /// @param _smartMarginAccount address of the smart margin account
+    /// @dev This function can only be called by the owner of the smart margin account
     function claim(address _smartMarginAccount) external notBlacklisted {
         address account = msg.sender;
 
@@ -90,18 +104,12 @@ contract FeeReimbursementClaim is Ownable {
 
         uint248 feeRebate = feeReimbursementApp.accountAccumulatedFee(_smartMarginAccount);
 
-        // Convert feeRebate from USD to OP
-        (uint256 feeRebateOP, int256 opPrice) = _convertUSDtoOP(feeRebate);
-
-        if (feeRebateOP == 0) {
+        if (feeRebate == 0) {
             revert NoFeeRebateAvailable();
         }
 
-        // Ensure the contract has enough tokens to reimburse
-        uint256 contractBalance = rewardToken.balanceOf(address(this));
-        if (contractBalance < feeRebate) {
-            revert InsufficientContractBalance({available: contractBalance, required: feeRebate});
-        }
+        // Convert feeRebate from USD to OP
+        (uint256 feeRebateOP, int256 opPrice) = _convertUSDtoOP(feeRebate);
 
         // Interact with FeeReimbursementApp to reset the accumulated fee
         feeReimbursementApp.claim(_smartMarginAccount);
@@ -123,7 +131,7 @@ contract FeeReimbursementClaim is Ownable {
         view
         returns (uint256 opAmount, int256 price)
     {
-        price = getChainlinkDataFeedLatestAnswer();
+        price = _getChainlinkDataFeedLatestAnswer();
 
         // OP price feed is given with 8 decimals
         uint256 opPriceInWei = uint256(price) * 1e10;
@@ -143,12 +151,13 @@ contract FeeReimbursementClaim is Ownable {
         if (blacklist[msg.sender]) revert Blacklisted();
     }
 
-    function updateBlacklist(address account, bool isBlacklisted) external onlyOwner {
-        blacklist[account] = isBlacklisted;
-        emit BlacklistUpdated(account, isBlacklisted);
+    function updateBlacklist(address _account, bool _isBlacklisted) external onlyOwner {
+        blacklist[_account] = _isBlacklisted;
+        emit BlacklistUpdated(_account, _isBlacklisted);
     }
 
-    function getChainlinkDataFeedLatestAnswer() internal view returns (int256) {
+    /// @notice Check the sequencer status and return the latest data
+    function _getChainlinkDataFeedLatestAnswer() internal view returns (int256) {
         // prettier-ignore
         (
             /*uint80 roundID*/
