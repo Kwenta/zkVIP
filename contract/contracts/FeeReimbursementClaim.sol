@@ -25,10 +25,6 @@ contract FeeReimbursementClaim is Ownable {
     /// the latest answer from the data feed using the dataFeed object.
     uint256 private constant GRACE_PERIOD_TIME = 3600;
 
-    /// @notice Configurable blacklist controlled by pDAO (owner of this contract).
-    /// @dev This blacklist prevents specific addresses from claiming rewards.
-    mapping(address => bool) public blacklist;
-
     /*///////////////////////////////////////////////////////////////
                                 EVENTS
     ///////////////////////////////////////////////////////////////*/
@@ -43,16 +39,10 @@ contract FeeReimbursementClaim is Ownable {
     /// @param amount: amount of token recovered
     event Recovered(address token, uint256 amount);
 
-    /// @notice emitted when an account's blacklist status is updated
-    /// @param account address of the account whose blacklist status is updated
-    /// @param isBlacklisted boolean indicating if the account is blacklisted or not
-    event BlacklistUpdated(address indexed account, bool isBlacklisted);
-
     /*//////////////////////////////////////////////////////////////
                                 ERRORS
     //////////////////////////////////////////////////////////////*/
 
-    error Blacklisted();
     error SequencerDown();
     error GracePeriodNotOver();
     error NotAccountOwner();
@@ -95,7 +85,7 @@ contract FeeReimbursementClaim is Ownable {
     /// @notice Claims the available fee rebate for the specified smart margin account
     /// @param _smartMarginAccount address of the smart margin account
     /// @dev This function can only be called by the owner of the smart margin account
-    function claim(address _smartMarginAccount) external notBlacklisted {
+    function claim(address _smartMarginAccount) external {
         address account = msg.sender;
 
         if (factory.getAccountOwner(_smartMarginAccount) != account) {
@@ -139,21 +129,6 @@ contract FeeReimbursementClaim is Ownable {
         opAmount = (uint256(_usdAmount) * 1 ether) / opPriceInWei;
 
         return (opAmount, price);
-    }
-
-    /// @notice access control modifier for blacklist
-    modifier notBlacklisted() {
-        _notBlacklisted();
-        _;
-    }
-
-    function _notBlacklisted() internal view {
-        if (blacklist[msg.sender]) revert Blacklisted();
-    }
-
-    function updateBlacklist(address _account, bool _isBlacklisted) external onlyOwner {
-        blacklist[_account] = _isBlacklisted;
-        emit BlacklistUpdated(_account, _isBlacklisted);
     }
 
     /// @notice Check the sequencer status and return the latest data
