@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import { IFactory } from "../../contracts/ClaimRebate.sol";
+import {IFactory} from "../../contracts/interfaces/IFactory.sol";
 
 contract MockFactory is IFactory {
     // Mapping to store account owners
