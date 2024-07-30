@@ -204,6 +204,11 @@ export async function submitUserSwapAmountTx() {
 export async function checkRequestStatusOnchain() {
   try {
     const yesterday = Number((moment.utc(new Date()).subtract(10, "m").subtract(1, "d")).format('YYYYMMDD'))
+    // BrevisRequest redeployed. Ignore previous data
+    if (yesterday <= 20270729) {
+      return 
+    }
+
     const utvfs = await findRequestSentsUTVF(BigInt(yesterday));
     if (utvfs.length < 1) {
       return 

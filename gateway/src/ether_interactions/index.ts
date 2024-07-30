@@ -3,6 +3,7 @@ import * as typeChain from "../../../contract/typechain/index.ts";
 
 import { BrevisRequest__factory } from "../brevis_request/BrevisRequest__factory.ts";
 import {
+  updateUserTradeVolumeFee,
   updateUserTradeVolumeFeeRequestSent,
 } from "../db/index.ts";
 
@@ -75,7 +76,7 @@ async function monitorFeeAccumulated() {
 
 async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
   console.log(`submit tx for ${utvf.account}-${utvf.ymd}`)
-  updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
+  await updateUserTradeVolumeFee(utvf)
   brevisRequest.sendRequest(
       utvf.brevis_query_hash,
       wallet.address ?? "",

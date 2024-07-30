@@ -353,6 +353,11 @@ async function findTxToBeSent(): Promise<any> {
         equals: false,
       }
     },
+    orderBy: [
+      {
+        update_time: 'asc',
+      }
+    ]
   });
 }
 
