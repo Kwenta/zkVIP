@@ -48,6 +48,7 @@ contract FeeReimbursementClaim is Ownable {
     error GracePeriodNotOver();
     error InvalidAccount();
     error Unauthorized();
+    error UsdAmountTooSmall(uint248 amount);
     error NoFeeRebateAvailable();
     error InsufficientContractBalance(uint256 available, uint256 required);
 
@@ -128,6 +129,11 @@ contract FeeReimbursementClaim is Ownable {
         view
         returns (uint256 opAmount, int256 price)
     {
+        /// @dev ensures there are no rounding errors when converting USD to OP
+        if (_usdAmount < 1e8) {
+            revert UsdAmountTooSmall(_usdAmount);
+        }
+
         price = _getChainlinkDataFeedLatestAnswer();
 
         // OP price feed is given with 8 decimals
