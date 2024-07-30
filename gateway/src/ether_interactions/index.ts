@@ -89,7 +89,7 @@ async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
      console.log(`tx: ${tx.hash} sent for ${utvf.account}, ${utvf.ymd}`)
   }).catch(error => {
     const msg = `${error}`
-    if (msg.includes("execution reverted: request already in queue")) {
+    if (msg.includes("request already in queue")) {
       updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
       console.log(`tx has been sent for ${utvf.account}, ${utvf.ymd}`)
     } else {
