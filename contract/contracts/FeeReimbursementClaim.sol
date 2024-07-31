@@ -9,6 +9,8 @@ import {IFeeReimbursementApp} from "./interfaces/IFeeReimbursementApp.sol";
 import {IFactory} from "./interfaces/IFactory.sol";
 import {IAccount} from "./interfaces/IAccount.sol";
 
+/// @title Fee Reimbursement Claim Contract for zkVIP Program
+/// @author Flocqst (florian@kwenta.io)
 contract FeeReimbursementClaim is Ownable {
     /*///////////////////////////////////////////////////////////////
                         IMPORTS AND STATE VARIABLES
