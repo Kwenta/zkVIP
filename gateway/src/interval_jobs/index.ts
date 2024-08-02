@@ -201,25 +201,6 @@ export async function submitUserSwapAmountTx() {
   }
 }
 
-export async function checkRequestStatusOnchain() {
-  try {
-    const yesterday = Number((moment.utc(new Date()).subtract(10, "m").subtract(1, "d")).format('YYYYMMDD'))
-    const utvfs = await findRequestSentsUTVF(BigInt(yesterday));
-    if (utvfs.length < 1) {
-      return 
-    }
-    const utvf = utvfs[0]
-    const request = await brevisRequest.requests(utvf.brevis_query_hash)
-    if (request[0] === BigInt(0)) {
-      console.log(`request info not found for ${utvf.account}-${utvf.ymd}`)
-      utvf.request_sent = false
-    }
-    await updateUserTradeVolumeFee(utvf)
-  } catch (error) {
-    console.log(`${error}`)
-  }
-}
-
 export async function uploadProofs() {
   try {
     const utvfs = await findUTVFToUploadProof();
