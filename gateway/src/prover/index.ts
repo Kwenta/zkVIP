@@ -33,14 +33,6 @@ const {
 
 dotenv.config();
 
-// // process.env.FESTIVALS.split(' ');
-// const provers = [
-//   new Prover("54.189.38.119:53248"),
-//   new Prover("54.189.38.119:53249"),
-//   new Prover("54.189.38.119:53423"),
-//   new Prover("54.189.38.119:53351")
-// ]
-
 const provers = (process.env.PROVERS ?? "").split(',').map(value => {
   if (value.length > 0) {
     return new Prover(value)
