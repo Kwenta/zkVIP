@@ -1,8 +1,5 @@
 import {
-  PROOF_STATUS_INELIGIBLE_ACCOUNT_ID,
-  PROOF_STATUS_INIT,
   PROOF_STATUS_INPUT_READY,
-  PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
 } from "../constants/index.ts";
 import {
   findBrevisRequestSentUTVFS,
@@ -10,12 +7,9 @@ import {
   findNotReadyStorages, 
   findNotReadyTrades, 
   findProofToUpload, 
-  findRequestSentsUTVF, 
   findTxToBeSent, 
-  findUserExistingUTVF, 
   findUserExistingUTVFByDate, 
   findUserTradeVolumeFees,
-  findUTVFToDownLoadProof,
   findUTVFToUploadProof,
   getDailyTrack,
   insertDailyTrack,
@@ -25,13 +19,12 @@ import {
 import { getAllTradesWithin30Day, getAccountTradesList, saveTrades } from "../graphql/index.ts";
 import { sendUserTradeVolumeFeeProvingRequest, submitProofForBrevis, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
-import { findDayStartTimestamp, findNextDay, getCurrentDay, UserTradeVolumeFee } from "../server/type.ts";
 import moment from "moment";
-import { brevisRequest, submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
+import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
 
 export async function prepareNewDayTradeClaims() {
   try {
-    // Give 10 minutes buffer to avoid brevis gateway failure
+    // Give 6 minutes buffer to avoid brevis gateway failure
     const yesterday = Number((moment.utc(new Date()).subtract(6, "m").subtract(1, "d")).format('YYYYMMDD'))
     var track = await getDailyTrack(BigInt(yesterday));
     if (track != undefined && track != null && track) {

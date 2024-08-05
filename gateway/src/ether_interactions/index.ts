@@ -9,7 +9,6 @@ import {
 
 import * as dotenv from "dotenv";
 import { UserTradeVolumeFee } from "../server/type.ts";
-import { error } from "console";
 dotenv.config();
 
 const { FeeReimbursementApp__factory } = typeChain;
@@ -34,45 +33,6 @@ const userSwapAmountApp = FeeReimbursementApp__factory.connect(
   process.env.FEE_REIMBURSEMENT ?? "",
   wallet
 );
-
-async function monitorFeeAccumulated() { 
-  // userSwapAmountApp.on(FeeRebateAccumulatedEvent.Event, (account, feeRebate, volume30D, feeRebateWithRate, startBlockNumber, endBlockNumber) => {
-  //   const feeRebateBN = feeRebate as BigInt;
-  //   const volume30DBN = volume30D as BigInt;
-  //   const feeRebateWithRateBN = feeRebateWithRate as BigInt;
-  //   const startBlockNumberBN = startBlockNumber as BigInt;
-  //   const endBlockNumberBN = endBlockNumber as BigInt;
-
-  //   console.log("Fee Accumulated Event", account, feeRebate, volume30D, feeRebateWithRate, startBlockNumber, endBlockNumber)
-  //   if (
-  //     account === undefined || account === null ||
-  //     feeRebateBN === undefined || feeRebateBN === null ||
-  //     volume30DBN === undefined || volume30DBN === null ||
-  //     feeRebateWithRateBN === undefined || feeRebateWithRateBN === null ||
-  //     startBlockNumberBN === undefined || startBlockNumberBN === null ||
-  //     endBlockNumberBN === undefined || endBlockNumberBN === null
-  //   ) {
-  //     return;
-  //   }
-    
-  //   findUserExistingUTVF(account, BigInt(startBlockNumberBN.toString()), BigInt(endBlockNumberBN.toString()))
-  //     .then(utvf => {
-  //       if (utvf) {
-  //         utvf.status = PROOF_STATUS_ONCHAIN_VERIFIED
-  //         utvf.fee_rebate = feeRebateWithRateBN
-  //         return updateUserTradeVolumeFee(utvf)
-  //       }
-  //     }).catch(error => {
-  //       console.error(
-  //         "failed to update user swap amount",
-  //         account,
-  //         startBlockNumber,
-  //         endBlockNumber, 
-  //         error
-  //       );
-  //     })
-  // });
-}
 
 async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
   console.log(`submit tx for ${utvf.account}-${utvf.ymd}`)
@@ -105,6 +65,5 @@ export {
   wallet,
   brevisRequest,
   userSwapAmountApp,
-  monitorFeeAccumulated,
   submitBrevisRequestTx,
 };

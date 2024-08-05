@@ -8,9 +8,7 @@ import {
   updateUserTradeVolumeFeeWithCreateTime,
 } from "../db/index.ts";
 import {
-  isValidPositionModifiedContract,
   PositionModifiedContracts,
-  PositionModifiedEvent,
   PROOF_STATUS_BREVIS_QUERY_ERROR,
   PROOF_STATUS_INELIGIBLE_ACCOUNT_ID,
   PROOF_STATUS_INPUT_READY,
@@ -19,12 +17,10 @@ import {
   PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
   PROOF_STATUS_PROVING_SENT,
   STATUS_READY,
-  TX_TYPE_EXECUTION,
-  TX_TYPE_ORDER_FEE_FLOW,
 } from "../constants/index.ts";
-import { Contract, ethers } from "ethers";
 import { ReceiptInfo } from "../rpc/index.ts";
 import moment from "moment";
+import * as dotenv from "dotenv";
 
 const {
   Brevis,
@@ -32,17 +28,24 @@ const {
   ProofRequest,
   Prover,
   ReceiptData,
-  StorageData,
   asUint248,
-  asUint521,
 } = sdk;
 
-const provers = [
-  new Prover("54.189.38.119:53248"),
-  new Prover("54.189.38.119:53249"),
-  new Prover("54.189.38.119:53423"),
-  new Prover("54.189.38.119:53351")
-]
+dotenv.config();
+
+// // process.env.FESTIVALS.split(' ');
+// const provers = [
+//   new Prover("54.189.38.119:53248"),
+//   new Prover("54.189.38.119:53249"),
+//   new Prover("54.189.38.119:53423"),
+//   new Prover("54.189.38.119:53351")
+// ]
+
+const provers = (process.env.PROVERS ?? "").split(',').map(value => {
+  if (value.length > 0) {
+    return new Prover(value)
+  }
+})
 
 type DebugReceipt = {
   data: any;
@@ -409,6 +412,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 };
 
 async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee) {
+  
   const utvf = await getUserTradeVolumeFee(utvfOld.account, utvfOld.ymd)
   if (utvf.status != PROOF_STATUS_INPUT_READY) {
     return 
@@ -423,7 +427,16 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
       console.log("Cannot proceed cause prover index is invalid", utvf.id, (new Date()).toLocaleString())
       return 
     }
-    const proofRes = await provers[r.proverIndex].proveAsync(r.proofReq);
+    if (provers.length <= r.proverIndex) {
+      console.log(`Provers are not set for index ${r.proverIndex}: ${process.env.PROVERS}`)
+      return 
+    }
+    const prover = provers[r.proverIndex]
+    if (prover === undefined) {
+      console.log(`Provers are not set for index ${r.proverIndex}: ${process.env.PROVERS}`)
+      return 
+    }
+    const proofRes = await prover.proveAsync(r.proofReq);
     console.log("proofRes proof_id ready",proofRes.proof_id, (new Date()).toLocaleString())
     // error handling
     if (proofRes.has_err) {
@@ -507,7 +520,18 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
       console.log("Cannot proceed upload proof cause prover index is invalid", utvf.id, (new Date()).toLocaleString())
       return 
     }
-    const getProofRes = await provers[r.proverIndex].getProof(utvf.prover_id)
+
+    if (provers.length <= r.proverIndex) {
+      console.log(`Provers are not set for index ${r.proverIndex}: ${process.env.PROVERS}`)
+      return 
+    }
+    const prover = provers[r.proverIndex]
+    if (prover === undefined) {
+      console.log(`Provers are not set for index ${r.proverIndex}: ${process.env.PROVERS}`)
+      return 
+    }
+
+    const getProofRes = await prover.getProof(utvf.prover_id)
 
     if (getProofRes.has_err) {
       console.error(getProofRes.err.msg);
