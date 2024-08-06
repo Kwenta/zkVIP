@@ -1,4 +1,3 @@
-import { error } from "console";
 import { GraphRpc, Trade } from "./common.ts";
 import { getReceiptByHash, getTrade, insertReceipt, insertTrade } from "../db/index.ts";
 import { TX_TYPE_EXECUTION, TX_TYPE_ORDER_FEE_FLOW } from "../constants/index.ts";

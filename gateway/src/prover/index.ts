@@ -8,9 +8,7 @@ import {
   updateUserTradeVolumeFeeWithCreateTime,
 } from "../db/index.ts";
 import {
-  isValidPositionModifiedContract,
   PositionModifiedContracts,
-  PositionModifiedEvent,
   PROOF_STATUS_BREVIS_QUERY_ERROR,
   PROOF_STATUS_INELIGIBLE_ACCOUNT_ID,
   PROOF_STATUS_INPUT_READY,
@@ -19,12 +17,10 @@ import {
   PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
   PROOF_STATUS_PROVING_SENT,
   STATUS_READY,
-  TX_TYPE_EXECUTION,
-  TX_TYPE_ORDER_FEE_FLOW,
 } from "../constants/index.ts";
-import { Contract, ethers } from "ethers";
 import { ReceiptInfo } from "../rpc/index.ts";
 import moment from "moment";
+import * as dotenv from "dotenv";
 
 const {
   Brevis,
@@ -32,17 +28,16 @@ const {
   ProofRequest,
   Prover,
   ReceiptData,
-  StorageData,
   asUint248,
-  asUint521,
 } = sdk;
 
-const provers = [
-  new Prover("54.189.38.119:53248"),
-  new Prover("54.189.38.119:53249"),
-  new Prover("54.189.38.119:53423"),
-  new Prover("54.189.38.119:53351")
-]
+dotenv.config();
+
+const provers = (process.env.PROVERS ?? "").split(',').map(value => {
+  if (value.length > 0) {
+    return new Prover(value)
+  }
+})
 
 type DebugReceipt = {
   data: any;
@@ -202,6 +197,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       return receipt.id === trade.execution_tx_receipt_id
     }))
   })
+  unclaimableTradeReceipts = removeDuplicates(unclaimableTradeReceipts)
 
   if (unclaimableTradeReceipts.length > 4400) {
     unclaimableTradeReceipts = unclaimableTradeReceipts.slice(0,4400)
@@ -218,6 +214,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       return receipt.id === trade.order_fee_flow_tx_receipt_id
     }))
   })
+  claimableTradeOrderFeeFlowReceipts = removeDuplicates(claimableTradeOrderFeeFlowReceipts)
   claimableTradeOrderFeeFlowReceipts.sort(sortByBlk)
 
   var claimableTradeExecutionReceipts: Receipt[] = []
@@ -226,6 +223,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       return receipt.id === trade.execution_tx_receipt_id
     }))
   })
+  claimableTradeExecutionReceipts = removeDuplicates(claimableTradeExecutionReceipts)
   claimableTradeExecutionReceipts.sort(sortByBlk)
 
   if (claimableTradeOrderFeeFlowReceipts.length !== claimableTradeExecutionReceipts.length) {
@@ -409,6 +407,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
 };
 
 async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee) {
+  
   const utvf = await getUserTradeVolumeFee(utvfOld.account, utvfOld.ymd)
   if (utvf.status != PROOF_STATUS_INPUT_READY) {
     return 
@@ -423,7 +422,16 @@ async function sendUserTradeVolumeFeeProvingRequest(utvfOld: UserTradeVolumeFee)
       console.log("Cannot proceed cause prover index is invalid", utvf.id, (new Date()).toLocaleString())
       return 
     }
-    const proofRes = await provers[r.proverIndex].proveAsync(r.proofReq);
+    if (provers.length <= r.proverIndex) {
+      console.log(`Provers are not set for index ${r.proverIndex}: ${process.env.PROVERS}`)
+      return 
+    }
+    const prover = provers[r.proverIndex]
+    if (prover === undefined) {
+      console.log(`Provers are not set for index ${r.proverIndex}: ${process.env.PROVERS}`)
+      return 
+    }
+    const proofRes = await prover.proveAsync(r.proofReq);
     console.log("proofRes proof_id ready",proofRes.proof_id, (new Date()).toLocaleString())
     // error handling
     if (proofRes.has_err) {
@@ -507,10 +515,23 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
       console.log("Cannot proceed upload proof cause prover index is invalid", utvf.id, (new Date()).toLocaleString())
       return 
     }
-    const getProofRes = await provers[r.proverIndex].getProof(utvf.prover_id)
+
+    if (provers.length <= r.proverIndex) {
+      console.log(`Provers are not set for index ${r.proverIndex}: ${process.env.PROVERS}`)
+      return 
+    }
+    const prover = provers[r.proverIndex]
+    if (prover === undefined) {
+      console.log(`Provers are not set for index ${r.proverIndex}: ${process.env.PROVERS}`)
+      return 
+    }
+
+    const getProofRes = await prover.getProof(utvf.prover_id)
 
     if (getProofRes.has_err) {
-      console.error(getProofRes.err.msg);
+      if (!getProofRes.err.msg.includes("failed to find this prove:")){
+        console.error(`failed to download proof from prover: ${getProofRes.err.msg}`);
+      }
       utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
       await updateUserTradeVolumeFee(utvf)
       return;
@@ -616,6 +637,10 @@ function sortByBlk(a: Receipt, b: Receipt) {
     } else {
       return 1
     } 
+}
+
+function removeDuplicates(receipts: Receipt[]) {
+  return receipts.filter((item, index) => receipts.findIndex(i => i.id === item.id) === index)
 }
 
 export {
