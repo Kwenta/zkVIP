@@ -197,6 +197,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       return receipt.id === trade.execution_tx_receipt_id
     }))
   })
+  unclaimableTradeReceipts = removeDuplicates(unclaimableTradeReceipts)
 
   if (unclaimableTradeReceipts.length > 4400) {
     unclaimableTradeReceipts = unclaimableTradeReceipts.slice(0,4400)
@@ -213,6 +214,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       return receipt.id === trade.order_fee_flow_tx_receipt_id
     }))
   })
+  claimableTradeOrderFeeFlowReceipts = removeDuplicates(claimableTradeOrderFeeFlowReceipts)
   claimableTradeOrderFeeFlowReceipts.sort(sortByBlk)
 
   var claimableTradeExecutionReceipts: Receipt[] = []
@@ -221,6 +223,7 @@ const buildUserTradeVolumeFeeProofReq = async (utvf: UserTradeVolumeFee) => {
       return receipt.id === trade.execution_tx_receipt_id
     }))
   })
+  claimableTradeExecutionReceipts = removeDuplicates(claimableTradeExecutionReceipts)
   claimableTradeExecutionReceipts.sort(sortByBlk)
 
   if (claimableTradeOrderFeeFlowReceipts.length !== claimableTradeExecutionReceipts.length) {
@@ -526,7 +529,9 @@ async function uploadUserTradeVolumeFeeProof(utvfOld: UserTradeVolumeFee) {
     const getProofRes = await prover.getProof(utvf.prover_id)
 
     if (getProofRes.has_err) {
-      console.error(getProofRes.err.msg);
+      if (!getProofRes.err.msg.includes("failed to find this prove:")){
+        console.error(`failed to download proof from prover: ${getProofRes.err.msg}`);
+      }
       utvf.status = PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED
       await updateUserTradeVolumeFee(utvf)
       return;
@@ -632,6 +637,10 @@ function sortByBlk(a: Receipt, b: Receipt) {
     } else {
       return 1
     } 
+}
+
+function removeDuplicates(receipts: Receipt[]) {
+  return receipts.filter((item, index) => receipts.findIndex(i => i.id === item.id) === index)
 }
 
 export {
