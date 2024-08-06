@@ -113,8 +113,8 @@ github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM
 github.com/blang/semver/v4 v4.0.0/go.mod h1:IbckMUScFkM3pff0VJDNKRiT6TG/YpiHIM2yvyW5YoQ=
 github.com/bmizerany/pat v0.0.0-20170815010413-6226ea591a40/go.mod h1:8rLXio+WjiTceGBHIoTvn60HIbs7Hm7bcHjyrSqYB9c=
 github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
-github.com/brevis-network/brevis-sdk v0.0.0-20240619052828-f14ead978334 h1:zObbWYpqBjA9xDOfqHb2B9XKvDduR9vX7mBcmtmjHCo=
-github.com/brevis-network/brevis-sdk v0.0.0-20240619052828-f14ead978334/go.mod h1:vo/l0O5xqXffsTK00zTi9Jc9t6slbgluVYo/dIl8Cd0=
+github.com/brevis-network/brevis-sdk v0.0.0-20240806045131-c0e1b685469f h1:D0EGtC02hMllegHaCciprc3nbMlMLPcuA+gdb57T+SE=
+github.com/brevis-network/brevis-sdk v0.0.0-20240806045131-c0e1b685469f/go.mod h1:zPnktTVNO+kAmU4jy12OBexmSqnmWyBQ83rWOMsMbto=
 github.com/brevis-network/zk-utils v0.0.0-20240223081048-7daf41d41dee h1:Cdwp9DUDjTdALs7M0px0y36Y1XqR1hUe2Sud3BP+EYc=
 github.com/brevis-network/zk-utils v0.0.0-20240223081048-7daf41d41dee/go.mod h1:qdDGBm7848xJ08PKSsFnpmUD7qw7yZXo1qMO5HUkr7E=
 github.com/btcsuite/btcd/btcec/v2 v2.2.0/go.mod h1:U7MHm051Al6XmscBQ0BoNydpOTsFAn707034b5nY8zU=
@@ -123,6 +123,8 @@ github.com/btcsuite/btcd/btcec/v2 v2.3.2/go.mod h1:zYzJ8etWJQIv1Ogk7OzpWjowwOdXY
 github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 h1:q0rUy8C/TYNBQS1+CGKw68tLOFYSNEs0TFnxxnS9+4U=
 github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1/go.mod h1:7SFka0XMvUgj3hfZtydOrQY2mwhPclbT2snogU7SQQc=
 github.com/c-bata/go-prompt v0.2.2/go.mod h1:VzqtzE2ksDBcdln8G7mk2RX9QyGjH+OVqOCSiVIqS34=
+github.com/cbergoon/merkletree v0.2.0 h1:Bttqr3OuoiZEo4ed1L7fTasHka9II+BF9fhBfbNEEoQ=
+github.com/cbergoon/merkletree v0.2.0/go.mod h1:5c15eckUgiucMGDOCanvalj/yJnD+KAZj1qyJtRW5aM=
 github.com/celer-network/gnark v0.0.2-0.20240225054745-d02f18f0de79 h1:itquh7PY2N4lKEyXt54GDX8n9u9i7mA9p3ePFWIhUFQ=
 github.com/celer-network/gnark v0.0.2-0.20240225054745-d02f18f0de79/go.mod h1:ADyECY7hSqe+hSyFuIrm1t3fCZ1VCX5gQbiGC2iPjy8=
 github.com/celer-network/goutils v0.1.60 h1:/FfVaK4j1zzRXGUHlH0QGnBRDzxwYhOaUFnoZQphkAU=
