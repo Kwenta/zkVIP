@@ -111,7 +111,6 @@ contract FeeReimbursementClaimTest is Test {
     }
 
     function test_claim() public {
-
         assertEq(mockRewardToken.balanceOf(account), 0);
         assertEq(mockRewardToken.balanceOf(address(feeReimbursementClaim)), TEST_VALUE);
 
