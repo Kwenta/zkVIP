@@ -14,6 +14,7 @@
     "@noble/bls12-381": "^1.4.0",
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.7",
     "@nomicfoundation/hardhat-ethers": "^3.0.6",
+    "@nomicfoundation/hardhat-foundry": "^1.1.2",
     "@nomicfoundation/hardhat-ignition": "^0.15.5",
     "@nomicfoundation/hardhat-ignition-ethers": "^0.15.5",
     "@nomicfoundation/hardhat-network-helpers": "^1.0.11",
@@ -53,9 +54,10 @@
     "typescript": "^4.6.2"
   },
   "dependencies": {
+    "@chainlink/contracts": "^1.2.0",
+    "brevis-contracts": "1.0.3",
     "merkletreejs": "0.3.10",
     "solidity-bytes-utils": "^0.8.0",
-    "solidity-rlp": "^2.0.7",
-    "brevis-contracts": "1.0.3"
+    "solidity-rlp": "^2.0.7"
   }
 }
