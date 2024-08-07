@@ -14,6 +14,11 @@ contract MockFactory is IFactory {
         _accountOwners[_account] = _owner;
     }
 
+    // Function to set the account owner for a specific address
+    function createAccount(address _account) external {
+        accounts[_account] = true;
+    }
+
     // Function to get the account owner for a specific address
     function getAccountOwner(address _account) external view override returns (address) {
         return _accountOwners[_account];
