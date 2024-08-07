@@ -2,6 +2,7 @@ import {
   PROOF_STATUS_INPUT_READY,
 } from "../constants/index.ts";
 import {
+  findBrevisErrorUTVFS,
   findBrevisRequestSentUTVFS,
   findNotReadyReceipts, 
   findNotReadyStorages, 
@@ -15,12 +16,14 @@ import {
   insertDailyTrack,
   insertUserTradeVolumeFee,
   updateUserTradeVolumeFee,
+  updateUserTradeVolumeFeeWithCreateTime,
 } from "../db/index.ts";
 import { getAllTradesWithin30Day, getAccountTradesList, saveTrades } from "../graphql/index.ts";
 import { sendUserTradeVolumeFeeProvingRequest, submitProofForBrevis, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
 import moment from "moment";
 import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
+import { UserTradeVolumeFee } from "../server/type.ts";
 
 export async function prepareNewDayTradeClaims() {
   try {
@@ -200,6 +203,27 @@ export async function uploadProofs() {
     let promises = Array<Promise<void>>();
     for (let i = 0; i < utvfs.length; i++) {
       promises.push(submitProofForBrevis(utvfs[i]));
+    }
+    await Promise.all(promises);
+  } catch (error) {
+
+  }
+}
+
+export async function retryBrevisError() {
+  try {
+    const utvfs = await findBrevisErrorUTVFS();
+    let promises = Array<Promise<void>>();
+    for (let i = 0; i < utvfs.length; i++) {
+      const utvfObject = utvfs[i] as UserTradeVolumeFee
+      const now = new Date()
+      const timeDiff = now.getTime() - utvfObject.create_time.getTime()
+      if (timeDiff >= 3600 *1000) {
+        console.log(`Retry for Brevis Error utvf ${utvfObject.id}`)
+        utvfObject.status = PROOF_STATUS_INPUT_READY
+        utvfObject.create_time = now
+        promises.push(updateUserTradeVolumeFeeWithCreateTime(utvfObject))
+      }
     }
     await Promise.all(promises);
   } catch (error) {

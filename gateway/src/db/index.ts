@@ -320,6 +320,22 @@ async function findBrevisRequestSentUTVFS(): Promise<any> {
   });
 }
 
+async function findBrevisErrorUTVFS(): Promise<any> {
+  return prisma.user_trade_volume_fee.findMany({
+    take: 1,
+    where: {
+      status: {
+        equals: PROOF_STATUS_BREVIS_QUERY_ERROR,
+      },
+    },
+    orderBy: [
+      {
+        create_time: 'asc',
+      }
+    ]
+  });
+}
+
 async function findProofToUpload(): Promise<any> {
   const a = new Date()
   a.setMinutes(a.getMinutes() - 3)
@@ -527,4 +543,5 @@ export {
   findUTVFToUploadProof,
   findRequestSentsUTVF,
   updateUserTradeVolumeFeeWithCreateTime,
+  findBrevisErrorUTVFS,
 };

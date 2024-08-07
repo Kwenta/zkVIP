@@ -4,6 +4,7 @@ import {
   prepareNewDayTradeClaims,
   prepareTrades,
   prepareUserSwapAmountProof,
+  retryBrevisError,
   submitUserSwapAmountTx,
   uploadProofs,
   uploadUserSwapAmountProof,
@@ -39,3 +40,6 @@ setInterval(submitUserSwapAmountTx, 2000);
 
 uploadProofs();
 setInterval(uploadProofs, 5000);
+
+retryBrevisError();
+setInterval(retryBrevisError, 5000);
