@@ -516,7 +516,7 @@ async function updateTrade(
 async function findUserExistingLatestEndBlockNumber(
   account: string,
 ): Promise<any> {
-  return prisma.user_trade_volume_fee?.findMany({
+  const utvfs = await prisma.user_trade_volume_fee?.findMany({
     take: 1,
     where: {
       account: account?.toLowerCase(),
@@ -526,13 +526,12 @@ async function findUserExistingLatestEndBlockNumber(
         end_blk_num: 'desc',
       }
     ]
-  }).then(values => {
-    if (values.length > 0) {
-      Number(values[0].end_blk_num)
-    } else {
-      return 0
-    }
-  });
+  })
+  if (utvfs.length > 0) {
+    return utvfs[0].end_blk_num
+  } else {
+    return BigInt(0)
+  }
 }
 
 export {
