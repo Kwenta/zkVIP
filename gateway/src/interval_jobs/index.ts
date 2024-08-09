@@ -9,6 +9,7 @@ import {
   findNotReadyTrades, 
   findProofToUpload, 
   findTxToBeSent, 
+  findUserExistingLatestEndBlockNumber, 
   findUserExistingUTVFByDate, 
   findUserTradeVolumeFees,
   findUTVFToUploadProof,
@@ -88,15 +89,29 @@ export async function prepareNewDayTradeClaims() {
         );
       }
      
-      const trade_ids = await saveTrades(trades, account)
-      const claimPeriod = await userSwapAmountApp.accountClaimPeriod(account)
-    
-      // Make sure start block number is bigger than claim period in contract
+      const trade_ids = await saveTrades(trades, account)    
       var startBlockNumber = claimableTrades[0].blockNumber
-
-      if (claimPeriod[1] > BigInt(startBlockNumber)) {
-        startBlockNumber = Number(claimPeriod[1]) + 1
+      const blkInDB = await findUserExistingLatestEndBlockNumber(account);
+      var userExistingLatestBlockNumber = blkInDB as number
+      if (userExistingLatestBlockNumber === undefined
+         || userExistingLatestBlockNumber === null
+         || isNaN(userExistingLatestBlockNumber) ) {
+        userExistingLatestBlockNumber = 0
       }
+
+      const claimedPeriod = await userSwapAmountApp.accountClaimPeriod(account);
+      const maxEndBlockNumber = Math.max(userExistingLatestBlockNumber, Number(claimedPeriod[1]))
+
+      // Make block numbers are consecutive 
+      if (maxEndBlockNumber > 0) {
+        if (startBlockNumber <= maxEndBlockNumber) {
+          console.error(`account ${account} start block number ${startBlockNumber} on day ${yesterday} 
+            is overlapping with info ${userExistingLatestBlockNumber} in db and info ${Number(claimedPeriod[1])} in contract.`)
+          continue
+        } else if (startBlockNumber >= maxEndBlockNumber + 1) {
+          startBlockNumber = maxEndBlockNumber + 1
+        }
+      } 
 
       utvf.start_blk_num = BigInt(startBlockNumber)
       utvf.end_blk_num = BigInt(claimableTrades[claimableTrades.length - 1].blockNumber)

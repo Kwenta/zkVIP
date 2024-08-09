@@ -513,6 +513,28 @@ async function updateTrade(
   })
 }
 
+async function findUserExistingLatestEndBlockNumber(
+  account: string,
+): Promise<any> {
+  return prisma.user_trade_volume_fee?.findMany({
+    take: 1,
+    where: {
+      account: account?.toLowerCase(),
+    },
+    orderBy: [
+      {
+        end_blk_num: 'desc',
+      }
+    ]
+  }).then(values => {
+    if (values.length > 0) {
+      Number(values[0].end_blk_num)
+    } else {
+      return 0
+    }
+  });
+}
+
 export {
   insertReceipt,
   updateReceipt,
@@ -544,4 +566,5 @@ export {
   findRequestSentsUTVF,
   updateUserTradeVolumeFeeWithCreateTime,
   findBrevisErrorUTVFS,
+  findUserExistingLatestEndBlockNumber,
 };
