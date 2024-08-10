@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import {
   PROOF_STATUS_BREVIS_QUERY_ERROR,
   PROOF_STATUS_INIT,
+  PROOF_STATUS_INPUT_READY,
   PROOF_STATUS_PROOF_UPLOAD_SENT,
   PROOF_STATUS_PROOF_UPLOADED,
   PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
@@ -520,6 +521,9 @@ async function findUserExistingLatestEndBlockNumber(
     take: 1,
     where: {
       account: account?.toLowerCase(),
+      status: {
+        gte: PROOF_STATUS_INPUT_READY,
+      },
     },
     orderBy: [
       {
