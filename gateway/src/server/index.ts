@@ -37,7 +37,7 @@ prepareNewDayTradeClaims();
 setInterval(prepareNewDayTradeClaims, 60000);
 
 submitUserSwapAmountTx();
-setInterval(submitUserSwapAmountTx, 2000);
+setInterval(submitUserSwapAmountTx, 5000);
 
 uploadProofs();
 setInterval(uploadProofs, 5000);
