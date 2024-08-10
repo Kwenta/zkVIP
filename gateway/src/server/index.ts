@@ -5,6 +5,7 @@ import {
   prepareTrades,
   prepareUserSwapAmountProof,
   retryBrevisError,
+  retryPendingBrevis,
   submitUserSwapAmountTx,
   uploadProofs,
   uploadUserSwapAmountProof,
@@ -43,3 +44,6 @@ setInterval(uploadProofs, 5000);
 
 retryBrevisError();
 setInterval(retryBrevisError, 5000);
+
+retryPendingBrevis();
+setInterval(retryPendingBrevis, 5000);

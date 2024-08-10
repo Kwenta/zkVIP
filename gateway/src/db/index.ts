@@ -7,6 +7,7 @@ import {
   PROOF_STATUS_PROOF_UPLOAD_SENT,
   PROOF_STATUS_PROOF_UPLOADED,
   PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
+  PROOF_STATUS_PROVING_SENT,
   STATUS_INIT,
 } from "../constants/index.ts";
 import { Trade } from "../graphql/common.ts";
@@ -538,6 +539,22 @@ async function findUserExistingLatestEndBlockNumber(
   }
 }
 
+async function findPendingBrevisUTVFS(): Promise<any> {
+  return prisma.user_trade_volume_fee.findMany({
+    take: 1,
+    where: {
+      status: {
+        equals: PROOF_STATUS_PROVING_SENT,
+      },
+    },
+    orderBy: [
+      {
+        create_time: 'asc',
+      }
+    ]
+  });
+}
+
 export {
   insertReceipt,
   updateReceipt,
@@ -570,4 +587,5 @@ export {
   updateUserTradeVolumeFeeWithCreateTime,
   findBrevisErrorUTVFS,
   findUserExistingLatestEndBlockNumber,
+  findPendingBrevisUTVFS,
 };

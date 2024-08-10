@@ -7,6 +7,7 @@ import {
   findNotReadyReceipts, 
   findNotReadyStorages, 
   findNotReadyTrades, 
+  findPendingBrevisUTVFS, 
   findProofToUpload, 
   findTxToBeSent, 
   findUserExistingLatestEndBlockNumber, 
@@ -228,6 +229,27 @@ export async function uploadProofs() {
 export async function retryBrevisError() {
   try {
     const utvfs = await findBrevisErrorUTVFS();
+    let promises = Array<Promise<void>>();
+    for (let i = 0; i < utvfs.length; i++) {
+      const utvfObject = utvfs[i] as UserTradeVolumeFee
+      const now = new Date()
+      const timeDiff = now.getTime() - utvfObject.create_time.getTime()
+      if (timeDiff >= 3600 *1000) {
+        console.log(`Retry for Brevis Error utvf ${utvfObject.id}`)
+        utvfObject.status = PROOF_STATUS_INPUT_READY
+        utvfObject.create_time = now
+        promises.push(updateUserTradeVolumeFeeWithCreateTime(utvfObject))
+      }
+    }
+    await Promise.all(promises);
+  } catch (error) {
+
+  }
+}
+
+export async function retryPendingBrevis() {
+  try {
+    const utvfs = await findPendingBrevisUTVFS();
     let promises = Array<Promise<void>>();
     for (let i = 0; i < utvfs.length; i++) {
       const utvfObject = utvfs[i] as UserTradeVolumeFee
