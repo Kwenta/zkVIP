@@ -92,7 +92,7 @@ export async function prepareNewDayTradeClaims() {
       const trade_ids = await saveTrades(trades, account)    
       var startBlockNumber = claimableTrades[0].blockNumber
       const blkInDB = await findUserExistingLatestEndBlockNumber(account);
-      var userExistingLatestBlockNumber = blkInDB as number
+      var userExistingLatestBlockNumber = Number(blkInDB) 
       if (userExistingLatestBlockNumber === undefined
          || userExistingLatestBlockNumber === null
          || isNaN(userExistingLatestBlockNumber) ) {
