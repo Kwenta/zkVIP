@@ -120,6 +120,7 @@ func (c *OPV2VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) err
 			uint248.IsEqual(r.Fields[3].Contract, r.Fields[2].Contract),
 			uint248.IsZero(r.Fields[3].IsTopic),
 			uint248.IsEqual(r.Fields[3].Index, sdk.ConstUint248(6)), // keeperDeposit index
+			uint248.IsLessThan(r.BlockNum, c.EndBlkNum),             // r.BlockNum < c.EndBlkNum
 		)
 	})
 
