@@ -101,6 +101,9 @@ func (c *OPV2VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) err
 	claimableOrderFeeFlowReceipts := sdk.RangeUnderlying(receipts, MaxReceipts-MaxClaimableTradesPerCircuit*2, MaxReceipts-MaxClaimableTradesPerCircuit)
 
 	sdk.AssertEach(claimableOrderFeeFlowReceipts, func(r sdk.Receipt) sdk.Uint248 {
+		blockNumber := uint248.Select(uint248.IsZero(r.BlockNum), c.StartBlkNum, r.BlockNum)
+		uint248.AssertIsLessOrEqual(c.StartBlkNum, blockNumber)
+		uint248.AssertIsLessOrEqual(blockNumber, c.EndBlkNum)
 		return uint248.And(
 			uint248.IsEqual(r.Fields[0].EventID, OrderFlowFeeImposedEventID),
 			uint248.IsEqual(r.Fields[0].Contract, OrderFlowFeeImposedEventContract),
@@ -120,7 +123,6 @@ func (c *OPV2VolumeFeeCircuit) Define(api *sdk.CircuitAPI, in sdk.DataInput) err
 			uint248.IsEqual(r.Fields[3].Contract, r.Fields[2].Contract),
 			uint248.IsZero(r.Fields[3].IsTopic),
 			uint248.IsEqual(r.Fields[3].Index, sdk.ConstUint248(6)), // keeperDeposit index
-			uint248.IsLessThan(r.BlockNum, c.EndBlkNum),             // r.BlockNum < c.EndBlkNum
 		)
 	})
 

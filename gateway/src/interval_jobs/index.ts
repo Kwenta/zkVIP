@@ -24,7 +24,7 @@ import { getAllTradesWithin30Day, getAccountTradesList, saveTrades } from "../gr
 import { sendUserTradeVolumeFeeProvingRequest, submitProofForBrevis, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
 import moment from "moment";
-import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
+import { sourceChainProvider, submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
 import { UserTradeVolumeFee } from "../server/type.ts";
 
 export async function prepareNewDayTradeClaims() {
@@ -92,6 +92,12 @@ export async function prepareNewDayTradeClaims() {
      
       const trade_ids = await saveTrades(trades, account)    
       var startBlockNumber = claimableTrades[0].blockNumber
+    
+      const orderFeeFlowReceipt = await sourceChainProvider.getTransactionReceipt(claimableTrades[0].orderFeeFlowTxhash)
+      if (orderFeeFlowReceipt != null) {
+        startBlockNumber = orderFeeFlowReceipt.blockNumber
+      }
+
       const blkInDB = await findUserExistingLatestEndBlockNumber(account);
       var userExistingLatestBlockNumber = Number(blkInDB) 
       if (userExistingLatestBlockNumber === undefined
