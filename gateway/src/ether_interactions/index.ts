@@ -45,8 +45,18 @@ async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
         value: 0,
       }
   ).then(tx => {
-     updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
-     console.log(`tx: ${tx.hash} sent for ${utvf.account}, ${utvf.ymd}`)
+    return tx.wait()
+  }).then(receipt => {
+    if (receipt == null) {
+      console.error(`failed to get tx receipt for ${utvf.account}-${utvf.ymd}`);
+      return 
+    }
+    if (receipt.status == 1) {
+      updateUserTradeVolumeFeeRequestSent(utvf.account, utvf.ymd, true)
+      console.log(`tx: ${receipt.hash} sent for ${utvf.account}, ${utvf.ymd}`)
+    } else {
+      console.error(`tx: ${receipt.hash} is reverted for ${utvf.account}, ${utvf.ymd}`)
+    }
   }).catch(error => {
     const msg = `${error}`
     if (msg.includes("request already in queue")) {
@@ -57,7 +67,6 @@ async function submitBrevisRequestTx(utvf: UserTradeVolumeFee) {
     }
   })
 }
-
 
 export {
   dstChainProvider,

@@ -128,14 +128,9 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
             claimPeriod.endBlockNumber = endBlockNumber;
             return claimPeriod;
         }
-        // startB --> endB ---> claimed.startB ---> claimed.endB
-        if (endBlockNumber < claimPeriod.startBlockNumber) {
-            claimPeriod.startBlockNumber = startBlockNumber;
-            return claimPeriod;
-        }
-
-        // claimed.startB ---> claimed.endB ---> startB --> endB
-        if (startBlockNumber > claimPeriod.endBlockNumber) {
+        // Make sure block numbers in claimPeriod are consecutive.
+        // claimed.startB ---> claimed.endB ---> claimed.endB+1 = startB --> endB
+        if (startBlockNumber == claimPeriod.endBlockNumber + 1) {
             claimPeriod.endBlockNumber = endBlockNumber;
             return claimPeriod;
         }

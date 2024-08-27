@@ -3,9 +3,11 @@ import { v4 as uuidv4 } from "uuid";
 import {
   PROOF_STATUS_BREVIS_QUERY_ERROR,
   PROOF_STATUS_INIT,
+  PROOF_STATUS_INPUT_READY,
   PROOF_STATUS_PROOF_UPLOAD_SENT,
   PROOF_STATUS_PROOF_UPLOADED,
   PROOF_STATUS_PROVING_BREVIS_REQUEST_GENERATED,
+  PROOF_STATUS_PROVING_SENT,
   STATUS_INIT,
 } from "../constants/index.ts";
 import { Trade } from "../graphql/common.ts";
@@ -513,6 +515,46 @@ async function updateTrade(
   })
 }
 
+async function findUserExistingLatestEndBlockNumber(
+  account: string,
+): Promise<any> {
+  const utvfs = await prisma.user_trade_volume_fee?.findMany({
+    take: 1,
+    where: {
+      account: account?.toLowerCase(),
+      status: {
+        gte: PROOF_STATUS_INPUT_READY,
+      },
+    },
+    orderBy: [
+      {
+        end_blk_num: 'desc',
+      }
+    ]
+  })
+  if (utvfs.length > 0) {
+    return utvfs[0].end_blk_num
+  } else {
+    return BigInt(0)
+  }
+}
+
+async function findPendingBrevisUTVFS(): Promise<any> {
+  return prisma.user_trade_volume_fee.findMany({
+    take: 1,
+    where: {
+      status: {
+        equals: PROOF_STATUS_PROVING_SENT,
+      },
+    },
+    orderBy: [
+      {
+        create_time: 'asc',
+      }
+    ]
+  });
+}
+
 export {
   insertReceipt,
   updateReceipt,
@@ -544,4 +586,6 @@ export {
   findRequestSentsUTVF,
   updateUserTradeVolumeFeeWithCreateTime,
   findBrevisErrorUTVFS,
+  findUserExistingLatestEndBlockNumber,
+  findPendingBrevisUTVFS,
 };
