@@ -98,7 +98,7 @@ contract FeeReimbursementClaim is Ownable {
         }
 
         IAccount smAccount = IAccount(_smartMarginAccount);
-        if (!smAccount.isAuth()) {
+        if (smAccount.owner() != account && !(smAccount.delegates(account))) {
             revert Unauthorized();
         }
 
