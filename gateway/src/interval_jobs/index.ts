@@ -7,8 +7,10 @@ import {
   findNotReadyReceipts, 
   findNotReadyStorages, 
   findNotReadyTrades, 
+  findPendingBrevisUTVFS, 
   findProofToUpload, 
   findTxToBeSent, 
+  findUserExistingLatestEndBlockNumber, 
   findUserExistingUTVFByDate, 
   findUserTradeVolumeFees,
   findUTVFToUploadProof,
@@ -22,7 +24,7 @@ import { getAllTradesWithin30Day, getAccountTradesList, saveTrades } from "../gr
 import { sendUserTradeVolumeFeeProvingRequest, submitProofForBrevis, uploadUserTradeVolumeFeeProof } from "../prover/index.ts";
 import { querySingleReceipt, querySingleStorage, queryTrade } from "../rpc/index.ts";
 import moment from "moment";
-import { submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
+import { sourceChainProvider, submitBrevisRequestTx, userSwapAmountApp } from "../ether_interactions/index.ts";
 import { UserTradeVolumeFee } from "../server/type.ts";
 
 export async function prepareNewDayTradeClaims() {
@@ -39,7 +41,7 @@ export async function prepareNewDayTradeClaims() {
     var tsEnd = yesterdayStart.utc().add(1, "d").unix() - 1
     var ts30DAgo = yesterdayStart.utc().subtract(29, "d").unix()
 
-    const eventStartDay = moment.utc("20240724", "YYYYMMDD", true).utc().unix()
+    const eventStartDay = moment.utc("20240816", "YYYYMMDD", true).utc().unix()
 
     if (ts30DAgo < eventStartDay) {
       ts30DAgo = eventStartDay
@@ -88,15 +90,35 @@ export async function prepareNewDayTradeClaims() {
         );
       }
      
-      const trade_ids = await saveTrades(trades, account)
-      const claimPeriod = await userSwapAmountApp.accountClaimPeriod(account)
-    
-      // Make sure start block number is bigger than claim period in contract
+      const trade_ids = await saveTrades(trades, account)    
       var startBlockNumber = claimableTrades[0].blockNumber
-
-      if (claimPeriod[1] > BigInt(startBlockNumber)) {
-        startBlockNumber = Number(claimPeriod[1]) + 1
+    
+      const orderFeeFlowReceipt = await sourceChainProvider.getTransactionReceipt(claimableTrades[0].orderFeeFlowTxhash)
+      if (orderFeeFlowReceipt != null) {
+        startBlockNumber = orderFeeFlowReceipt.blockNumber
       }
+
+      const blkInDB = await findUserExistingLatestEndBlockNumber(account);
+      var userExistingLatestBlockNumber = Number(blkInDB) 
+      if (userExistingLatestBlockNumber === undefined
+         || userExistingLatestBlockNumber === null
+         || isNaN(userExistingLatestBlockNumber) ) {
+        userExistingLatestBlockNumber = 0
+      }
+
+      const claimedPeriod = await userSwapAmountApp.accountClaimPeriod(account);
+      const maxEndBlockNumber = Math.max(userExistingLatestBlockNumber, Number(claimedPeriod[1]))
+
+      // Make block numbers are consecutive 
+      if (maxEndBlockNumber > 0) {
+        if (startBlockNumber <= maxEndBlockNumber) {
+          console.error(`account ${account} start block number ${startBlockNumber} on day ${yesterday} 
+            is overlapping with info ${userExistingLatestBlockNumber} in db and info ${Number(claimedPeriod[1])} in contract.`)
+          continue
+        } else if (startBlockNumber >= maxEndBlockNumber + 1) {
+          startBlockNumber = maxEndBlockNumber + 1
+        }
+      } 
 
       utvf.start_blk_num = BigInt(startBlockNumber)
       utvf.end_blk_num = BigInt(claimableTrades[claimableTrades.length - 1].blockNumber)
@@ -213,6 +235,27 @@ export async function uploadProofs() {
 export async function retryBrevisError() {
   try {
     const utvfs = await findBrevisErrorUTVFS();
+    let promises = Array<Promise<void>>();
+    for (let i = 0; i < utvfs.length; i++) {
+      const utvfObject = utvfs[i] as UserTradeVolumeFee
+      const now = new Date()
+      const timeDiff = now.getTime() - utvfObject.create_time.getTime()
+      if (timeDiff >= 3600 *1000) {
+        console.log(`Retry for Brevis Error utvf ${utvfObject.id}`)
+        utvfObject.status = PROOF_STATUS_INPUT_READY
+        utvfObject.create_time = now
+        promises.push(updateUserTradeVolumeFeeWithCreateTime(utvfObject))
+      }
+    }
+    await Promise.all(promises);
+  } catch (error) {
+
+  }
+}
+
+export async function retryPendingBrevis() {
+  try {
+    const utvfs = await findPendingBrevisUTVFS();
     let promises = Array<Promise<void>>();
     for (let i = 0; i < utvfs.length; i++) {
       const utvfObject = utvfs[i] as UserTradeVolumeFee
