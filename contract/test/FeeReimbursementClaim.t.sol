@@ -67,8 +67,8 @@ contract FeeReimbursementClaimTest is Test {
 
         vm.mockCall(
             mockAccount,
-            abi.encodeWithSignature("isAuth()"),
-            abi.encode(true) // Mocked return value
+            abi.encodeWithSignature("owner()"),
+            abi.encode(account) // Mocked return value
         );
 
         // Mock chainlink data feed responses
@@ -157,7 +157,7 @@ contract FeeReimbursementClaimTest is Test {
         );
 
         vm.expectRevert(FeeReimbursementClaim.NoFeeRebateAvailable.selector);
-        vm.prank(owner);
+        vm.prank(account);
         feeReimbursementClaim.claim(smartMarginAccount);
     }
 }
