@@ -8,10 +8,12 @@ import {AggregatorV2V3Interface} from
 import {IFeeReimbursementApp} from "./interfaces/IFeeReimbursementApp.sol";
 import {IFactory} from "./interfaces/IFactory.sol";
 import {IAccount} from "./interfaces/IAccount.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title Fee Reimbursement Claim Contract for zkVIP Program
 /// @author Flocqst (florian@kwenta.io)
 contract FeeReimbursementClaim is Ownable {
+    using SafeERC20 for IERC20;
     /*///////////////////////////////////////////////////////////////
                         IMPORTS AND STATE VARIABLES
     //////////////////////////////////////////////////////////////*/
@@ -116,7 +118,7 @@ contract FeeReimbursementClaim is Ownable {
         feeReimbursementApp.claim(_smartMarginAccount);
 
         // transfer fee rebate from this contract to the user
-        rewardToken.transfer(account, feeRebateOP);
+        rewardToken.safeTransfer(account, feeRebateOP);
 
         emit FeeRebateClaimed(account, opPrice);
     }
