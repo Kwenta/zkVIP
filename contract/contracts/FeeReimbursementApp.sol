@@ -46,6 +46,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     event BrevisProofUpdated(address);
     event FeeRebateTireModuleUpdated(address);
     event ContractsHashUpdated(uint256);
+    event ClaimContractUpdated(address);
 
     constructor(address _brevisProof) BrevisApp(IBrevisProof(_brevisProof)) {}
 
@@ -172,5 +173,6 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     function setClaimContract(address _claimContract) external onlyOwner {
         if (_claimContract == address(0)) revert ZeroAddress();
         claimContract = _claimContract;
+        emit ClaimContractUpdated(_claimContract);
     }
 }
