@@ -22,16 +22,11 @@ error InvalidNewClaimPeriod();
 error onlyClaimContractCanAccess();
 /// @notice cannot set this value to the zero address
 error ZeroAddress();
-/// @notice Claim contract was already set
-error AlreadySet();
 
 contract FeeReimbursementApp is BrevisApp, Ownable {
     using SafeERC20 for IERC20;
 
-    address public rewardToken;
-    uint24 public rewardTokenDecimals;
     IFeeRebateTierModule public feeRebateTierModule;
-    address public claimer;
     uint256 public contractsHash;
     mapping(bytes32 => uint16) public vkHashesToCircuitSize; // batch tier vk hashes => tier batch size
     mapping(address => ClaimPeriod) public accountClaimPeriod;
@@ -50,12 +45,7 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
     event FeeReimbursed(address account, uint248 feeRebate);
     event BrevisProofUpdated(address);
     event FeeRebateTireModuleUpdated(address);
-    event ClaimerUpdated(address);
     event ContractsHashUpdated(uint256);
-    event MigrationDone();
-    event MigrationFinishedForAccount(
-        address account, uint248 feeAccumulated, uint64 startBlockNumber, uint64 endBlockNumber
-    );
 
     constructor(address _brevisProof) BrevisApp(IBrevisProof(_brevisProof)) {}
 
@@ -147,19 +137,9 @@ contract FeeReimbursementApp is BrevisApp, Ownable {
         emit VkHashesUpdated(_vkHashes, _sizes);
     }
 
-    function setRewardToken(address _rewardToken, uint24 _decimals) external onlyOwner {
-        rewardToken = _rewardToken;
-        rewardTokenDecimals = _decimals;
-    }
-
     function setFeeRebateTierModule(IFeeRebateTierModule _feeRebateTierModule) external onlyOwner {
         feeRebateTierModule = _feeRebateTierModule;
         emit FeeRebateTireModuleUpdated(address(_feeRebateTierModule));
-    }
-
-    function setClaimer(address _claimer) external onlyOwner {
-        claimer = _claimer;
-        emit ClaimerUpdated(_claimer);
     }
 
     function setContractsHash(uint256 _contractsHash) external onlyOwner {

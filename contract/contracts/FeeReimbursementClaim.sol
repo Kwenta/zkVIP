@@ -22,8 +22,8 @@ contract FeeReimbursementClaim is Ownable {
     IFactory public immutable factory;
     IERC20 public immutable rewardToken;
 
-    AggregatorV2V3Interface internal dataFeed;
-    AggregatorV2V3Interface internal sequencerUptimeFeed;
+    AggregatorV2V3Interface internal immutable dataFeed;
+    AggregatorV2V3Interface internal immutable sequencerUptimeFeed;
 
     /// @dev Grace period time in seconds used for the Chainlink price feed
     /// If the sequencer is up and the GRACE_PERIOD_TIME has passed, the _getChainlinkDataFeedLatestAnswer function retrieves
@@ -55,7 +55,6 @@ contract FeeReimbursementClaim is Ownable {
     error Unauthorized();
     error UsdAmountTooSmall(uint248 amount);
     error NoFeeRebateAvailable();
-    error InsufficientContractBalance(uint256 available, uint256 required);
 
     /*//////////////////////////////////////////////////////////////
                                 CONSTRUCTOR
@@ -145,8 +144,6 @@ contract FeeReimbursementClaim is Ownable {
         uint256 opPriceInWei = uint256(price) * 1e10;
 
         opAmount = (uint256(_usdAmount) * 1 ether) / opPriceInWei;
-
-        return (opAmount, price);
     }
 
     /// @notice Check the sequencer status and return the latest data
