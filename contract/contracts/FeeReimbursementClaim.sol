@@ -154,7 +154,8 @@ contract FeeReimbursementClaim is Ownable {
             ,
             int256 answer,
             uint256 startedAt,
-            uint256 updatedAt,
+            /*uint256 updatedAt*/
+            ,
             /*uint80 answeredInRound*/
         ) = sequencerUptimeFeed.latestRoundData();
 
@@ -163,11 +164,6 @@ contract FeeReimbursementClaim is Ownable {
         bool isSequencerUp = answer == 0;
         if (!isSequencerUp) {
             revert SequencerDown();
-        }
-
-        // If reported answer is not updated within the heartbeat (OP Data feed hearbeat is 20min), price is considered stale
-        if (updatedAt < block.timestamp - 20 minutes) {
-            revert StaleData();
         }
 
         // Make sure the grace period has passed after the
@@ -184,10 +180,14 @@ contract FeeReimbursementClaim is Ownable {
             int256 data,
             /*uint startedAt*/
             ,
-            /*uint timeStamp*/
-            ,
+            uint256 timeStamp,
             /*uint80 answeredInRound*/
         ) = dataFeed.latestRoundData();
+
+        // If reported answer is not updated within the heartbeat (OP Data feed hearbeat is 20min), price is considered stale
+        if (timeStamp < block.timestamp - 20 minutes) {
+            revert StaleData();
+        }
 
         return data;
     }
