@@ -81,7 +81,7 @@ contract FeeReimbursementClaimTest is Test {
         vm.mockCall(
             address(opDataFeed),
             abi.encodeWithSignature("latestRoundData()"),
-            abi.encode(0, MOCK_OP_PRICE, 0, 0, 0)
+            abi.encode(0, MOCK_OP_PRICE, 0, block.timestamp, 0)
         );
     }
 
